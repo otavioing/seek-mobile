@@ -1,5 +1,5 @@
-import { StyleSheet, View, Image, TextInput, TouchableOpacity, Text  } from "react-native";
-import { Link, Stack } from 'expo-router';
+import { Link } from 'expo-router';
+import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 const logoapp = require('@/assets/images/logo_seek.png');
 const logogoogle = require('@/assets/images/logo_Google.png'); 
@@ -22,7 +22,7 @@ export default function Login() {
 
                 <Link href="/(tabs)" asChild>
                     <TouchableOpacity style={styles.button}>
-                        <Text style={styles.buttonText}>Confirmar</Text>
+                        <Text style={styles.buttonText}><Link href={"/(tabs)"}>Confirmar</Link></Text>
                     </TouchableOpacity>
                 </Link>
 
