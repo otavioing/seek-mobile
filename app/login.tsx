@@ -1,5 +1,5 @@
 import { Link } from 'expo-router';
-import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, Text, TextInput, TouchableOpacity,colorScheme, View } from "react-native";
 
 const logoapp = require('@/assets/images/logo_seek.png');
 const logogoogle = require('@/assets/images/logo_Google.png'); 
@@ -15,7 +15,7 @@ export default function Login() {
                 <Image style={styles.logo} source={logoapp} />
             </View>
             <View style={styles.main}>
-                <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 45 }}>Login</Text>
+                <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 45,color: "#FFFFFF" }}>Login</Text>
 
                 <TextInput style={styles.input} placeholder="email"/>
                 <TextInput style={styles.input} placeholder="senha" secureTextEntry/>
@@ -28,13 +28,9 @@ export default function Login() {
 
                 <View style={{width: '80%', borderBottomWidth: 1, borderBottomColor: '#b5b5b5', marginTop: 25 }} />
 
-
-                <View style={styles.loginGoogle}> <Image style={styles.logobotaogoogle} source={logogoogle} /> <Text>Entrar com Google</Text> </View>
-                <View style={styles.loginApple}> <Image style={styles.logobotaoapple} source={logoapple} /> <Text style={{ color: '#FFFFFF' }}>Entrar com Apple</Text> </View>
-
                 </View>
             <View style={styles.footer}>
-                <Text>Não tenho conta. </Text>
+                <Text style={styles.footerA}>Não tenho conta. </Text>
                     <Link href="/cadastro">
                         <Text style={styles.footerLink}>Criar conta agora.</Text>
                     </Link>
@@ -47,7 +43,7 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 45,
+    backgroundColor: colorScheme === "light" ? "#FFFFFF" : "#0F0F0F",
   },
     header: {
         flex: 2/12,
@@ -75,6 +71,7 @@ const styles = StyleSheet.create({
 
     },
     logo: {
+        marginTop:45,
         width: 150,
         height: 70,
     },
@@ -133,6 +130,9 @@ const styles = StyleSheet.create({
         width: '55%',
         backgroundColor: '#000000',
         color: '#FFFFFF',
+    },
+    footerA:{
+        color:'#FFFFFF',
     },
     footerLink: {
         color: '#2563EB',
