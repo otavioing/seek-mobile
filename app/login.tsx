@@ -17,25 +17,26 @@ export default function Login() {
             <View style={styles.main}>
                 <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 45,color: "#FFFFFF" }}>Login</Text>
 
-                <TextInput style={styles.input} placeholder="email"/>
-                <TextInput style={styles.input} placeholder="senha" secureTextEntry/>
+                <TextInput style={styles.input} placeholder="Email"/>
+                <TextInput style={styles.input} placeholder="Senha" secureTextEntry/>
 
-                <Link href="/(tabs)" asChild>
+                <Link href="/filtrarC" asChild>
                     <TouchableOpacity style={styles.button}>
-                        <Text style={styles.buttonText}><Link href={"/(tabs)"}>Confirmar</Link></Text>
+                        <Text style={styles.buttonText}><Link href={"/filtrarC"}>Confirmar</Link></Text>
                     </TouchableOpacity>
                 </Link>
 
                 <View style={{width: '80%', borderBottomWidth: 1, borderBottomColor: '#b5b5b5', marginTop: 25 }} />
 
-                </View>
-            <View style={styles.footer}>
+                <View style={styles.footer}>
                 <Text style={styles.footerA}>Não tenho conta. </Text>
                     <Link href="/cadastro">
                         <Text style={styles.footerLink}>Criar conta agora.</Text>
                     </Link>
 
+                </View>
             </View>
+            
         </View>
     )
 }
@@ -58,22 +59,22 @@ const styles = StyleSheet.create({
         width: '100%',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 30,
-        
+        paddingLeft:30,
+        paddingRight:30,
     },
     footer: {
-        flex: 1/5,
+        margin:10,
         width: '100%',
         flexDirection: 'row',
         alignItems: 'flex-end',
         justifyContent: 'center',
-        padding: 20,
 
     },
     logo: {
-        marginTop:45,
-        width: 150,
-        height: 70,
+        width: 160,
+        height: undefined,
+        aspectRatio: 0.65,
+        resizeMode: 'contain',
     },
     input: {
         backgroundColor: '#ffffff',
@@ -96,41 +97,41 @@ const styles = StyleSheet.create({
     buttonText: {
         color: '#FFFFFF',
     },
-    logobotaogoogle: {
-        width: 35,
-        height: 40,
-    },
-    logobotaoapple: {
-        width: 45,
-        height: 40,
-    },
-    loginGoogle: {
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 20,
-        padding: 10,
-        gap: 28,
-        boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
-        borderRadius: 15,
-        width: '55%',
-        backgroundColor: '#FFFFFF',
-    },
-    loginApple: {
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 20,
-        padding: 10,
-        gap: 28,
-        boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
-        borderRadius: 10,
-        width: '55%',
-        backgroundColor: '#000000',
-        color: '#FFFFFF',
-    },
+    // logobotaogoogle: {
+    //     width: 35,
+    //     height: 40,
+    // },
+    // logobotaoapple: {
+    //     width: 45,
+    //     height: 40,
+    // },
+    // loginGoogle: {
+    //     display: 'flex',
+    //     flexDirection: 'row',
+    //     alignItems: 'center',
+    //     justifyContent: 'center',
+    //     marginTop: 20,
+    //     padding: 10,
+    //     gap: 28,
+    //     boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
+    //     borderRadius: 15,
+    //     width: '55%',
+    //     backgroundColor: '#FFFFFF',
+    // },
+    // loginApple: {
+    //     display: 'flex',
+    //     flexDirection: 'row',
+    //     alignItems: 'center',
+    //     justifyContent: 'center',
+    //     marginTop: 20,
+    //     padding: 10,
+    //     gap: 28,
+    //     boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
+    //     borderRadius: 10,
+    //     width: '55%',
+    //     backgroundColor: '#000000',
+    //     color: '#FFFFFF',
+    // },
     footerA:{
         color:'#FFFFFF',
     },
