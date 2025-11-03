@@ -1,6 +1,5 @@
-import { Link } from 'expo-router';
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, Dimensions, Image, Modal, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Animated, Dimensions, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function HomeScreen() {
   const [isMainMenuVisible, setIsMainMenuVisible] = useState(false);
@@ -97,95 +96,22 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
 
-      {/* MODAL DO MENU LATERAL (HAMBÚRGUER) */}
-      <Modal
-        transparent={true}
-        visible={isMainMenuVisible}
-        onRequestClose={handleCloseMainMenu}
-      >
-        <Animated.View style={[styles.animatedOverlay, { opacity: mainMenuOverlayOpacity }]}>
-          <TouchableOpacity style={styles.menuOverlay} onPress={handleCloseMainMenu} activeOpacity={1}>
-            <Animated.View style={[styles.mainMenuContainer, { transform: [{ translateY: mainMenuPosition }] }]}>
-              <TouchableOpacity onPress={handleCloseMainMenu} style={styles.closeButton}>
-                <Text style={styles.closeButtonText}>X</Text>
-              </TouchableOpacity>
-              <View style={styles.menuLinks}>
-                <Link href="/" onPress={handleCloseMainMenu} style={styles.menuText}>Explorar</Link>
-                <Link href="/" onPress={handleCloseMainMenu} style={styles.menuText}>Cursos</Link>
-                <Link href="/" onPress={handleCloseMainMenu} style={styles.menuText}>Vagas</Link>
-                <Link href="/" onPress={handleCloseMainMenu} style={styles.menuText}>Sobre Nós</Link>
-                <Link href="/" onPress={handleCloseMainMenu} style={styles.menuText}>Ajuda</Link>
-                <Link href="/" onPress={handleCloseMainMenu} style={styles.menuText}>Atualizações</Link>
-                <Link href="/" onPress={handleCloseUserMenu} style={styles.menuText}>Configurações</Link>
-              </View>
-            </Animated.View>
-          </TouchableOpacity>
-        </Animated.View>
-      </Modal>
-
-      {/* MODAL DO MENU DO USUÁRIO (PARTE INFERIOR DIREITA) */}
-      <Modal
-        transparent={true}
-        visible={isUserMenuVisible}
-        onRequestClose={handleCloseUserMenu}
-      >
-        <Animated.View style={[styles.animatedOverlay, { opacity: userMenuOverlayOpacity }]}>
-          <TouchableOpacity style={styles.userMenuOverlay} onPress={handleCloseUserMenu} activeOpacity={1}>
-            <Animated.View style={[styles.userMenuContainer, { transform: [{ translateY: userMenuPosition }] }]}>
-              <View style={styles.userMenuLinks}>
-                <Link href="/" onPress={handleCloseUserMenu} style={styles.userMenuItem}>
-                  <Text style={styles.userMenuText}>Meu Perfil</Text>
-                </Link>
-                <Link href="/" onPress={handleCloseUserMenu} style={styles.userMenuItem}>
-                  <Text style={styles.userMenuText}>Configurações</Text>
-                </Link>
-              </View>
-              
-              <View style={styles.darkModeToggle}>
-                <Text style={styles.iconText}>🌙</Text>
-                <Switch
-                  trackColor={{ false: "#767577", true: "#f4f3f4" }}
-                  thumbColor={isDarkMode ? "#000" : "#f4f3f4"}
-                  ios_backgroundColor="#3e3e3e"
-                  onValueChange={toggleSwitch}
-                  value={isDarkMode}
-                />
-                <Text style={styles.iconText}>☀️</Text>
-              </View>
-
-              <Link href="/" onPress={handleCloseUserMenu} style={styles.userMenuItem}>
-                <Text style={[styles.userMenuText, styles.loginText]}>Login</Text>
-              </Link>
-            </Animated.View>
-          </TouchableOpacity>
-        </Animated.View>
-      </Modal>
-
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleMainMenuPress}>
-          <Image style={styles.menuBurger} source={require('@/assets/images/menuBurger.png')} />
-        </TouchableOpacity>
-        <Image style={styles.logo} source={require('@/assets/images/logoSeekBranca.png')} />
-        <TouchableOpacity onPress={handleUserMenuPress}>
-          <Image style={styles.menuBurger} source={require('@/assets/images/logoUser.png')} />
-        </TouchableOpacity>
-      </View>
-
-      {/* RESTANTE DO CÓDIGO DA TELA */}
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Pesquisar"
-        />
-        <TouchableOpacity style={styles.searchBtn}>
-          <Text style={styles.searchText}><Image style={styles.lupaPesquisa} source={require('@/assets/images/lupaSearch.png')} /></Text>
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity style={styles.customizeBtn}>
-        <Text style={styles.customizeText}><Image style={styles.personalizarGaleriaIcon} source={require('@/assets/images/editarIcon.png')} /> Personalizar a Galeria</Text>
+        <Text style={styles.textoHeader}>Explorar</Text>
+        <Text style={styles.textoHeader}>Tendências</Text>
+        <Text style={styles.textoHeader}>Seguindo</Text>
+        <TouchableOpacity>
+        <Image style={styles.filtroHeader} source={require('@/assets/images/filtroHeader.png')} />
       </TouchableOpacity>
+      </View>
+
+      <View style={styles.divCategorias}>
+        <Text style={styles.categorias}>Para você</Text>
+        <Text style={styles.categorias}>Ruas</Text>
+        <Text style={styles.categorias}>Modernismo</Text>
+        <Text style={styles.categorias}>Paisagem</Text>
+      </View>
 
       <ScrollView style={styles.gallery}>
         <Image
@@ -208,72 +134,38 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#090909",
   },
   header: {
-    width: "100%",
-    height: 100,
+    width: "96%",
+    height: 60,
+    display: "flex",
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
-    backgroundColor: "#000",
-  },
-  menuBurger: {
-    width: 25,
-    height: 25,
-    tintColor: "#fff",
-  },
-  logo: {
-    width: 100,
-    height: 40,
-    resizeMode: "contain",
-  },
-  searchContainer: {
-    flexDirection: "row",
-    margin: 16,
-    borderWidth: 1,
-    borderColor: "#ccc",
+    justifyContent: "space-around",
+    backgroundColor: "#0f0f0f",
+    marginTop: 40,
+    marginLeft: "2%",
     borderRadius: 20,
-    overflow: "hidden",
   },
-  input: {
-    flex: 1,
-    paddingHorizontal: 12,
+  textoHeader: {
+    color: "white",
   },
-  searchBtn: {
-    paddingHorizontal: 12,
-    justifyContent: "center",
-    backgroundColor: "#f5f5f5",
+  filtroHeader: {
+    backgroundColor: "none",
   },
-  searchText: {
-    fontSize: 16,
-  },
-  lupaPesquisa: {
-    width: 16,
-    height: 16,
-    marginRight: 6,
-  },
-  customizeBtn: {
+  divCategorias: {
+    width: "85%",
+    marginLeft: "7.5%",
+    display: "flex",
     flexDirection: "row",
-    justifyContent: "center",
-    marginHorizontal: 16,
-    marginBottom: 12,
-    backgroundColor: "#f5f5f5",
-    padding: 10,
-    borderRadius: 20,
-    alignItems: "center",
+    gap: 20,
+    paddingTop: 20,
+    height: 60,
   },
-  personalizarGaleriaIcon: {
-    width: 16,
-    height: 16,
-    marginRight: 10,
-  },
-  customizeText: {
-    flexDirection: "row",
-    alignItems: "center",
-    fontSize: 14,
-    color: "#333",
+  categorias: {
+    color: "white",
+    fontSize: 17,
   },
   gallery: {
     flex: 1,
