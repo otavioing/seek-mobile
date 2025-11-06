@@ -1,5 +1,5 @@
-import { StyleSheet, View, Image, TextInput, TouchableOpacity, Text  } from "react-native";
-import { Link, Stack } from 'expo-router';
+import { Link } from 'expo-router';
+import { Image, StyleSheet, Text, TextInput, TouchableOpacity,colorScheme, View } from "react-native";
 
 const logoapp = require('@/assets/images/logo_seek.png');
 const logogoogle = require('@/assets/images/logo_Google.png'); 
@@ -15,32 +15,29 @@ export default function Login() {
                 <Image style={styles.logo} source={logoapp} />
             </View>
             <View style={styles.main}>
-                <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 45 }}>Cadastro</Text>
+                <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 45,color: "#FFFFFF" }}>Cadastro</Text>
 
-                <TextInput style={styles.input} placeholder="email"/>
-                <TextInput style={styles.input} placeholder="senha" secureTextEntry/>
-                <TextInput style={styles.input} placeholder="confirmar senha" secureTextEntry/>
+                <TextInput style={styles.input} placeholder="Email"/>
+                <TextInput style={styles.input} placeholder="Senha" secureTextEntry/>
+                <TextInput style={styles.input} placeholder="Confirmar senha" secureTextEntry/>
 
-                <Link href="/(tabs)" asChild>
+                <Link href="login" asChild>
                     <TouchableOpacity style={styles.button}>
-                        <Text style={styles.buttonText}>Confirmar</Text>
+                        <Text style={styles.buttonText}><Link href={"login"}>Confirmar</Link></Text>
                     </TouchableOpacity>
                 </Link>
 
                 <View style={{width: '80%', borderBottomWidth: 1, borderBottomColor: '#b5b5b5', marginTop: 25 }} />
 
-
-                <View style={styles.loginGoogle}><Image style={styles.logobotaogoogle} source={logogoogle}/><Text>Entrar com Google</Text></View>
-                <View style={styles.loginApple}><Image style={styles.logobotaoapple} source={logoapple}/><Text style={{ color: '#FFFFFF' }}>Entrar com Apple</Text></View>
-
-                </View>
-            <View style={styles.footer}>
-                <Text>Já possui uma conta?</Text>
-                    <Link href="/login">
-                        <Text style={styles.footerLink}>   Entrar</Text>
+                <View style={styles.footer}>
+                <Text style={styles.footerA}>Não tenho conta. </Text>
+                    <Link href="/cadastro">
+                        <Text style={styles.footerLink}>Criar conta agora.</Text>
                     </Link>
 
+                </View>
             </View>
+            
         </View>
     )
 }
@@ -48,7 +45,7 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 45,
+    backgroundColor: colorScheme === "light" ? "#FFFFFF" : "#0F0F0F",
   },
     header: {
         flex: 2/12,
@@ -63,21 +60,22 @@ const styles = StyleSheet.create({
         width: '100%',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 30,
-        
+        paddingLeft:30,
+        paddingRight:30,
     },
     footer: {
-        flex: 1/5,
+        margin:10,
         width: '100%',
         flexDirection: 'row',
         alignItems: 'flex-end',
         justifyContent: 'center',
-        padding: 20,
 
     },
     logo: {
-        width: 150,
-        height: 70,
+        width: 160,
+        height: undefined,
+        aspectRatio: 0.65,
+        resizeMode: 'contain',
     },
     input: {
         backgroundColor: '#ffffff',
@@ -100,40 +98,8 @@ const styles = StyleSheet.create({
     buttonText: {
         color: '#FFFFFF',
     },
-    logobotaogoogle: {
-        width: 35,
-        height: 40,
-    },
-    logobotaoapple: {
-        width: 45,
-        height: 40,
-    },
-    loginGoogle: {
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 20,
-        padding: 10,
-        gap: 28,
-        boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
-        borderRadius: 15,
-        width: '55%',
-        backgroundColor: '#FFFFFF',
-    },
-    loginApple: {
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 20,
-        padding: 10,
-        gap: 28,
-        boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
-        borderRadius: 10,
-        width: '55%',
-        backgroundColor: '#000000',
-        color: '#FFFFFF',
+    footerA:{
+        color:'#FFFFFF',
     },
     footerLink: {
         color: '#2563EB',
