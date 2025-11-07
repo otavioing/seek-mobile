@@ -59,7 +59,7 @@ export default function FilterV() {
 
                         <View style={{width: '100%', borderBottomWidth: 2, borderBottomColor: '#FFFFFF', marginTop: 25 }} />
 
-                        <Text style={{fontSize:32, fontWeight:800, color:"#FFFFFF",}}>Habiliddadess</Text>
+                        <Text style={{fontSize:32, fontWeight:800, color:"#FFFFFF",}}>Habilidades</Text>
 
                         <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Figma</Text>
