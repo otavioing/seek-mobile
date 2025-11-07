@@ -1,5 +1,5 @@
 import { Link } from 'expo-router';
-import { Image, StyleSheet, Text, TextInput, TouchableOpacity,colorScheme, View } from "react-native";
+import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 const logoapp = require('@/assets/images/logo_seek.png');
 const logogoogle = require('@/assets/images/logo_Google.png'); 
@@ -22,7 +22,7 @@ export default function Login() {
 
                 <Link href="/filtrarC" asChild>
                     <TouchableOpacity style={styles.button}>
-                        <Text style={styles.buttonText}><Link href={"/filtrarC"}>Confirmar</Link></Text>
+                        <Text style={styles.buttonText}><Link href={"/principal"}>Confirmar</Link></Text>
                     </TouchableOpacity>
                 </Link>
 
@@ -44,7 +44,7 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colorScheme === "light" ? "#FFFFFF" : "#0F0F0F",
+    backgroundColor: '#0F0F0F',
   },
     header: {
         flex: 2/12,
