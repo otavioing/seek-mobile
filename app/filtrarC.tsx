@@ -1,5 +1,5 @@
 import { Link } from 'expo-router';
-import { Image, StyleSheet, Text, TextInput, TouchableOpacity,colorScheme, View } from "react-native";
+import { Image, StyleSheet,ScrollView, Text, TextInput, TouchableOpacity,colorScheme, View } from "react-native";
 import { Svg, Path } from "react-native-svg";
 
 
@@ -30,7 +30,7 @@ export default function FilterV() {
                 </TouchableOpacity>
 
             </View>
-            <View style={styles.main}>
+            <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
                     <View style={styles.containerfilter}>
                         <Text style={{fontSize:32, fontWeight:800, color:"#FFFFFF",}}>Campos de criação</Text>
                         <View style={styles.fbtContainer}>
@@ -124,7 +124,7 @@ export default function FilterV() {
                         </View>
                    
                     </View>
-            </View>
+            </ScrollView>
             
         </View>
     )
@@ -133,113 +133,67 @@ export default function FilterV() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colorScheme === "light" ? "#FFFFFF" : "#090909",
   },
-  closebutton: {
-    padding:10,
+  header: {
+    flexDirection: "row",
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: 20,
+    paddingHorizontal: 20,
+    backgroundColor: "#0F0F0F",
+    paddingBottom: 10,
+  },
+  headerText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  scroll: {
+    flex: 1,
+    backgroundColor: "#090909",
+  },
+  scrollContent: {
+    paddingHorizontal: 30,
+    paddingBottom: 80,
+  },
+  containerfilter: {
+    width: "100%",
+    alignItems: "flex-start",
+  },
+  sectionTitle: {
+    fontSize: 32,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    marginTop: 15,
+  },
+  fbtContainer: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+    marginBottom:10,
+    width: "100%",
+  },
+  textoFiltro: {
+    fontSize: 17,
+    color: "#FFFFFF",
+    fontWeight: "700",
+  },
+  radiusButton: {
+    width: 30,
+    height: 30,
     backgroundColor: "#313131",
-    borderRadius:50,
+    borderRadius: 50,
   },
-  filterbutton:{
-    padding:10,
-    backgroundColor: "#313131", 
-    borderRadius:50,
+  plusButton: {
+    alignItems: "center",
+    justifyContent: "center",
   },
-    header: {
-        flex: 0.8/10,
-        flexDirection: "row",
-        width: '100%',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingTop:20,
-        paddingHorizontal:20,
-        backgroundColor:"#0F0F0F",
-    },
-    main: {
-        flex: 1/1,
-        width: '100%',
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingLeft:30,
-        paddingRight:30,
-        paddingBottom:50,
-    },
-    filter:{
-        flex: 1/1,
-        width:'100%',
-        marginTop:20,
-        alignItems:'flex-start',
-        justifyContent:'flex-start',
-    },
-    textoFiltro:{
-        fontSize:17,
-        color:"#FFFFFF",   
-        fontWeight:700, 
-    },
-    radiusButton:{
-        width:0,
-        height:0,
-        backgroundColor: '#313131',
-        padding:15,
-        borderRadius: 50,
-    },
-    plusButton:{
-        alignItems:'center',
-        justifyContent:'center'
-    },
-    footer: {
-        margin:10,
-        width: '100%',
-        flexDirection: 'row',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-        
-    },
-    containerfilter:{
-        flex: 1/1,
-        width:'100%',
-        alignItems:'flex-start',
-    },
-    fbtContainer:{
-        alignItems:'center',
-        flexDirection:'row',
-        justifyContent:'space-between',
-        marginTop:10,
-        flex: 1/10,
-        width:'100%',
-    },
-    logo: {
-        width: 160,
-        height: undefined,
-        aspectRatio: 0.65,
-        resizeMode: 'contain',
-    },
-    input: {
-        backgroundColor: '#ffffff',
-        borderWidth: 1,
-        borderColor: '#000000',
-        borderRadius: 8,
-        padding: 15,
-        marginBottom: 12,
-        width: '100%',
-    },
-    button:{
-        backgroundColor: '#322BF0',
-        padding: 10,
-        borderRadius: 8,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '35%',
-    },
-    buttonText: {
-        color: '#FFFFFF',
-    },
-    footerA:{
-        color:'#FFFFFF',
-    },
-    footerLink: {
-        color: '#2563EB',
-        fontWeight: 'bold',
-    },
+  divisor: {
+    width: "100%",
+    borderBottomWidth: 2,
+    borderBottomColor: "#FFFFFF",
+    marginTop: 25,
+  },
 });
