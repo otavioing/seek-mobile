@@ -22,6 +22,7 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="login" options={{ headerShown: false }}/>
         <Stack.Screen name="index" options={{ headerShown: false }}/>
+        <Stack.Screen name="menuUser" options={{ headerShown: false }}/>
         <Stack.Screen name="filtrarV" options={{ headerShown: false }}/>
         <Stack.Screen name="filtrarC" options={{ headerShown: false }}/>
         <Stack.Screen name="filtrarP" options={{ headerShown: false }}/>
