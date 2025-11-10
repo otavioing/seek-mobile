@@ -69,127 +69,108 @@ export default function FilterV() {
 
             </View>
             <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-                    <View style={styles.containerfilter}>
-                        <Text style={{fontSize:32, fontWeight:800, color:"#FFFFFF",}}>Campos de criação</Text>
-                        <View style={styles.fbtContainer}>
-                                <Text style={styles.textoFiltro}>Logotipo</Text>
-                                <TouchableOpacity onPress={() => toggleConfirmed("Logotipo")} style={styles.radiusButton}>
-                                        {isConfirmed.Logotipo && <View style={styles.radiusConfirmed}/>}
-                                </TouchableOpacity>
-                        </View>
-                        <View style={styles.fbtContainer}>
-                                <Text style={styles.textoFiltro}>Ilustração</Text>
-                                <TouchableOpacity onPress={() => toggleConfirmed("Ilustracao")} style={styles.radiusButton}>
-                                        {isConfirmed.Ilustracao && <View style={styles.radiusConfirmed}/>}
-                                </TouchableOpacity>
-                        </View>
-                         <View style={styles.fbtContainer}>
-                                <Text style={styles.textoFiltro}>Fotografia</Text>
-                                <TouchableOpacity onPress={() => toggleConfirmed("Fotografia")} style={styles.radiusButton}>
-                                        {isConfirmed.Fotografia && <View style={styles.radiusConfirmed}/>}
-                                </TouchableOpacity>
-                        </View>
-                         <View style={styles.fbtContainer}>
-                                <Text style={styles.textoFiltro}>Outros</Text>
-                                <TouchableOpacity style={styles.plusButton}>
-                                     <Svg width={26} height={26} viewBox="0 0 26 26" fill="none">
-                                        <Path
-                                            d="M12.8164 0C13.7721 0 14.5467 0.774841 14.5469 1.73047V11.0039H23.8203C24.776 11.0039 25.5507 11.7787 25.5508 12.7344C25.5508 13.6902 24.7761 14.4648 23.8203 14.4648H14.5469V23.8203C14.5469 24.7761 13.7722 25.5508 12.8164 25.5508C11.8607 25.5507 11.0859 24.7761 11.0859 23.8203V14.4648H1.73047C0.774658 14.4648 -4.17798e-08 13.6902 0 12.7344C0.00012159 11.7787 0.774733 11.0039 1.73047 11.0039H11.0859V1.73047C11.0862 0.774897 11.8608 9.2196e-05 12.8164 0Z"
-                                            fill="#E3E3E3"
-                                        />
-                                     </Svg>
-                                </TouchableOpacity>
-                        </View>
+  <View style={styles.containerfilter}>
+    <Text style={{ fontSize: 32, fontWeight: 800, color: "#FFFFFF" }}>Campos de criação</Text>
 
-                        <View style={{width: '100%', borderBottomWidth: 2, borderBottomColor: '#FFFFFF', marginTop: 25 }} />
+    {[
+      "Logotipo",
+      "Ilustracao",
+      "Fotografia",
+    ].map((campo) => (
+      <TouchableOpacity
+        key={campo}
+        onPress={() => toggleConfirmed(campo)}
+        style={styles.fbtContainer}
+      >
+        <Text style={styles.textoFiltro}>{campo === "Ilustracao" ? "Ilustração" : campo}</Text>
+        <View style={styles.radiusButton}>
+          {isConfirmed[campo] && <View style={styles.radiusConfirmed} />}
+        </View>
+      </TouchableOpacity>
+    ))}
 
-                        <Text style={{fontSize:32, fontWeight:800, color:"#FFFFFF",}}>Habilidades</Text>
+    {/* Outros (com o botão de adicionar separado) */}
+    <View style={styles.fbtContainer}>
+      <Text style={styles.textoFiltro}>Outros</Text>
+      <TouchableOpacity style={styles.plusButton}>
+        <Svg width={26} height={26} viewBox="0 0 26 26" fill="none">
+          <Path
+            d="M12.8164 0C13.7721 0 14.5467 0.774841 14.5469 1.73047V11.0039H23.8203C24.776 11.0039 25.5507 11.7787 25.5508 12.7344C25.5508 13.6902 24.7761 14.4648 23.8203 14.4648H14.5469V23.8203C14.5469 24.7761 13.7722 25.5508 12.8164 25.5508C11.8607 25.5507 11.0859 24.7761 11.0859 23.8203V14.4648H1.73047C0.774658 14.4648 -4.17798e-08 13.6902 0 12.7344C0.00012159 11.7787 0.774733 11.0039 1.73047 11.0039H11.0859V1.73047C11.0862 0.774897 11.8608 9.2196e-05 12.8164 0Z"
+            fill="#E3E3E3"
+          />
+        </Svg>
+      </TouchableOpacity>
+    </View>
 
-                        <View style={styles.fbtContainer}>
-                                <Text style={styles.textoFiltro}>Figma</Text>
-                                <TouchableOpacity onPress={() => toggleConfirmed("Figma")} style={styles.radiusButton}>
-                                        {isConfirmed.Figma && <View style={styles.radiusConfirmed}/>}
-                                </TouchableOpacity>
-                        </View>
-                        <View style={styles.fbtContainer}>
-                                <Text style={styles.textoFiltro}>Photoshop</Text>
-                                <TouchableOpacity onPress={() => toggleConfirmed("Photoshop")} style={styles.radiusButton}>
-                                        {isConfirmed.Photoshop && <View style={styles.radiusConfirmed}/>}
-                                </TouchableOpacity>
-                        </View>
-                         <View style={styles.fbtContainer}>
-                                <Text style={styles.textoFiltro}>Illustrator</Text>
-                                <TouchableOpacity onPress={() => toggleConfirmed("Illustrator")} style={styles.radiusButton}>
-                                        {isConfirmed.Illustrator && <View style={styles.radiusConfirmed}/>}
-                                </TouchableOpacity>
-                        </View>
-                        <View style={styles.fbtContainer}>
-                                <Text style={styles.textoFiltro}>Canva</Text>
-                                <TouchableOpacity onPress={() => toggleConfirmed("Canva")} style={styles.radiusButton}>
-                                        {isConfirmed.Canva && <View style={styles.radiusConfirmed}/>}
-                                </TouchableOpacity>
-                        </View>
-                         <View style={styles.fbtContainer}>
-                                <Text style={styles.textoFiltro}>Outros</Text>
-                                <TouchableOpacity style={styles.plusButton}>
-                                     <Svg width={26} height={26} viewBox="0 0 26 26" fill="none">
-                                        <Path
-                                            d="M12.8164 0C13.7721 0 14.5467 0.774841 14.5469 1.73047V11.0039H23.8203C24.776 11.0039 25.5507 11.7787 25.5508 12.7344C25.5508 13.6902 24.7761 14.4648 23.8203 14.4648H14.5469V23.8203C14.5469 24.7761 13.7722 25.5508 12.8164 25.5508C11.8607 25.5507 11.0859 24.7761 11.0859 23.8203V14.4648H1.73047C0.774658 14.4648 -4.17798e-08 13.6902 0 12.7344C0.00012159 11.7787 0.774733 11.0039 1.73047 11.0039H11.0859V1.73047C11.0862 0.774897 11.8608 9.2196e-05 12.8164 0Z"
-                                            fill="#E3E3E3"
-                                        />
-                                     </Svg>
-                                </TouchableOpacity>
-                        </View>
+    <View style={{ width: "100%", borderBottomWidth: 2, borderBottomColor: "#FFFFFF", marginTop: 25 }} />
 
-                        <View style={{width: '100%', borderBottomWidth: 2, borderBottomColor: '#FFFFFF', marginTop: 25 }} />
+    <Text style={{ fontSize: 32, fontWeight: 800, color: "#FFFFFF" }}>Habilidades</Text>
 
-                        <Text style={{fontSize:32, fontWeight:800, color:"#FFFFFF",}}>Tempo de postagem</Text>
+    {["Figma", "Photoshop", "Illustrator", "Canva"].map((habilidade) => (
+      <TouchableOpacity
+        key={habilidade}
+        onPress={() => toggleConfirmed(habilidade)}
+        style={styles.fbtContainer}
+      >
+        <Text style={styles.textoFiltro}>{habilidade}</Text>
+        <View style={styles.radiusButton}>
+          {isConfirmed[habilidade] && <View style={styles.radiusConfirmed} />}
+        </View>
+      </TouchableOpacity>
+    ))}
 
-                        <View style={styles.fbtContainer}>
-                                <Text style={styles.textoFiltro}>Mais recente</Text>
-                                <TouchableOpacity onPress={() => toggleConfirmed("Recente")} style={styles.radiusButton}>
-                                        {isConfirmed.Recente && <View style={styles.radiusConfirmed}/>}
-                                </TouchableOpacity>
-                        </View>
-                         <View style={styles.fbtContainer}>
-                                <Text style={styles.textoFiltro}>Esta semana</Text>
-                                <TouchableOpacity onPress={() => toggleConfirmed("Semana")} style={styles.radiusButton}>
-                                        {isConfirmed.Semana && <View style={styles.radiusConfirmed}/>}
-                                </TouchableOpacity>
-                        </View>
-                        <View style={styles.fbtContainer}>
-                                <Text style={styles.textoFiltro}>Este mês</Text>
-                                <TouchableOpacity onPress={() => toggleConfirmed("Mes")} style={styles.radiusButton}>
-                                        {isConfirmed.Mes && <View style={styles.radiusConfirmed}/>}
-                                </TouchableOpacity>
-                        </View>
+    {/* Outros habilidades */}
+    <View style={styles.fbtContainer}>
+      <Text style={styles.textoFiltro}>Outros</Text>
+      <TouchableOpacity style={styles.plusButton}>
+        <Svg width={26} height={26} viewBox="0 0 26 26" fill="none">
+          <Path
+            d="M12.8164 0C13.7721 0 14.5467 0.774841 14.5469 1.73047V11.0039H23.8203C24.776 11.0039 25.5507 11.7787 25.5508 12.7344C25.5508 13.6902 24.7761 14.4648 23.8203 14.4648H14.5469V23.8203C14.5469 24.7761 13.7722 25.5508 12.8164 25.5508C11.8607 25.5507 11.0859 24.7761 11.0859 23.8203V14.4648H1.73047C0.774658 14.4648 -4.17798e-08 13.6902 0 12.7344C0.00012159 11.7787 0.774733 11.0039 1.73047 11.0039H11.0859V1.73047C11.0862 0.774897 11.8608 9.2196e-05 12.8164 0Z"
+            fill="#E3E3E3"
+          />
+        </Svg>
+      </TouchableOpacity>
+    </View>
 
-                        <View style={{width: '100%', borderBottomWidth: 2, borderBottomColor: '#FFFFFF', marginTop: 25 }} />
+    <View style={{ width: "100%", borderBottomWidth: 2, borderBottomColor: "#FFFFFF", marginTop: 25 }} />
 
-                        <Text style={{fontSize:32, fontWeight:800, color:"#FFFFFF",}}>Modelo de trabalho</Text>
+    <Text style={{ fontSize: 32, fontWeight: 800, color: "#FFFFFF" }}>Tempo de postagem</Text>
 
-                        <View style={styles.fbtContainer}>
-                                <Text style={styles.textoFiltro}>Remoto</Text>
-                                <TouchableOpacity onPress={() => toggleConfirmed("Remoto")} style={styles.radiusButton}>
-                                        {isConfirmed.Remoto && <View style={styles.radiusConfirmed}/>}
-                                </TouchableOpacity>
-                        </View>
-                         <View style={styles.fbtContainer}>
-                                <Text style={styles.textoFiltro}>Presencial</Text>
-                                <TouchableOpacity onPress={() => toggleConfirmed("Presencial")} style={styles.radiusButton}>
-                                        {isConfirmed.Presencial && <View style={styles.radiusConfirmed}/>}
-                                </TouchableOpacity>
-                        </View>
-                        <View style={styles.fbtContainer}>
-                                <Text style={styles.textoFiltro}>Híbrido</Text>
-                                <TouchableOpacity onPress={() => toggleConfirmed("Hibrido")} style={styles.radiusButton}>
-                                        {isConfirmed.Hibrido && <View style={styles.radiusConfirmed}/>}
-                                </TouchableOpacity>
-                        </View>
-                   
-                    </View>
-            </ScrollView>
-            
+    {[
+      { label: "Mais recente", key: "Recente" },
+      { label: "Esta semana", key: "Semana" },
+      { label: "Este mês", key: "Mes" },
+    ].map(({ label, key }) => (
+      <TouchableOpacity
+        key={key}
+        onPress={() => toggleConfirmed(key)}
+        style={styles.fbtContainer}      >
+        <Text style={styles.textoFiltro}>{label}</Text>
+        <View style={styles.radiusButton}>
+          {isConfirmed[key] && <View style={styles.radiusConfirmed} />}
+        </View>
+      </TouchableOpacity>
+    ))}
+
+    <View style={{ width: "100%", borderBottomWidth: 2, borderBottomColor: "#FFFFFF", marginTop: 25 }} />
+
+    <Text style={{ fontSize: 32, fontWeight: 800, color: "#FFFFFF" }}>Modelo de trabalho</Text>
+
+    {["Remoto", "Presencial", "Hibrido"].map((modelo) => (
+      <TouchableOpacity
+        key={modelo}
+        onPress={() => toggleConfirmed(modelo)}
+        style={styles.fbtContainer}
+      >
+        <Text style={styles.textoFiltro}>{modelo}</Text>
+        <View style={styles.radiusButton}>
+          {isConfirmed[modelo] && <View style={styles.radiusConfirmed} />}
+        </View>
+      </TouchableOpacity>
+    ))}
+  </View>
+</ScrollView>
+
         </View>
     )
 }
@@ -235,8 +216,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
-    marginBottom:10,
+    paddingStart:5,
+    paddingVertical:10,
     width: "100%",
   },
   textoFiltro: {
