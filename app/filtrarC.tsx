@@ -1,12 +1,50 @@
 import { Link } from 'expo-router';
 import { Image, StyleSheet,ScrollView, Text, TextInput, TouchableOpacity,colorScheme, View } from "react-native";
 import { Svg, Path } from "react-native-svg";
+import { createContext, useState, useContext } from "react";
 
 
 
 
 
 export default function FilterV() {
+
+
+        const [isConfirmed, setIsConfirmed] = useState({
+                Logotipo: false,
+                Ilustracao: false,
+                Fotografia: false,
+                Figma: false,
+                Photoshop: false,
+                Illustrator: false,
+                Canva: false,
+                Recente: false,
+                Semana: false,
+                Mes: false,
+                Remoto: false,
+                Presencial: false,
+                Hibrido: false,
+              });
+        const toggleConfirmed = (nome) => {
+                setIsConfirmed((prev) => ({
+                  ...prev,
+                  [nome]: !prev[nome],
+                }));
+              };
+        const filtrosAtivos = Object.keys(isConfirmed).filter((key) => isConfirmed[key]);
+        console.log(filtrosAtivos);
+
+        // const resultadosFiltrados = listaDeProjetos.filter((item) =>
+        //         filtrosAtivos.every((filtro) => item.habilidades.includes(filtro))
+        //       );
+
+
+
+
+
+
+              
+
  return(
         <View style={styles.container}>
             <View style={styles.header}>
@@ -35,15 +73,21 @@ export default function FilterV() {
                         <Text style={{fontSize:32, fontWeight:800, color:"#FFFFFF",}}>Campos de criação</Text>
                         <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Logotipo</Text>
-                                <TouchableOpacity style={styles.radiusButton}></TouchableOpacity>
+                                <TouchableOpacity onPress={() => toggleConfirmed("Logotipo")} style={styles.radiusButton}>
+                                        {isConfirmed.Logotipo && <View style={styles.radiusConfirmed}/>}
+                                </TouchableOpacity>
                         </View>
                         <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Ilustração</Text>
-                                <TouchableOpacity style={styles.radiusButton}></TouchableOpacity>
+                                <TouchableOpacity onPress={() => toggleConfirmed("Ilustracao")} style={styles.radiusButton}>
+                                        {isConfirmed.Ilustracao && <View style={styles.radiusConfirmed}/>}
+                                </TouchableOpacity>
                         </View>
                          <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Fotografia</Text>
-                                <TouchableOpacity style={styles.radiusButton}></TouchableOpacity>
+                                <TouchableOpacity onPress={() => toggleConfirmed("Fotografia")} style={styles.radiusButton}>
+                                        {isConfirmed.Fotografia && <View style={styles.radiusConfirmed}/>}
+                                </TouchableOpacity>
                         </View>
                          <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Outros</Text>
@@ -63,19 +107,27 @@ export default function FilterV() {
 
                         <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Figma</Text>
-                                <TouchableOpacity style={styles.radiusButton}></TouchableOpacity>
+                                <TouchableOpacity onPress={() => toggleConfirmed("Figma")} style={styles.radiusButton}>
+                                        {isConfirmed.Figma && <View style={styles.radiusConfirmed}/>}
+                                </TouchableOpacity>
                         </View>
                         <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Photoshop</Text>
-                                <TouchableOpacity style={styles.radiusButton}></TouchableOpacity>
+                                <TouchableOpacity onPress={() => toggleConfirmed("Photoshop")} style={styles.radiusButton}>
+                                        {isConfirmed.Photoshop && <View style={styles.radiusConfirmed}/>}
+                                </TouchableOpacity>
                         </View>
                          <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Illustrator</Text>
-                                <TouchableOpacity style={styles.radiusButton}></TouchableOpacity>
+                                <TouchableOpacity onPress={() => toggleConfirmed("Illustrator")} style={styles.radiusButton}>
+                                        {isConfirmed.Illustrator && <View style={styles.radiusConfirmed}/>}
+                                </TouchableOpacity>
                         </View>
                         <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Canva</Text>
-                                <TouchableOpacity style={styles.radiusButton}></TouchableOpacity>
+                                <TouchableOpacity onPress={() => toggleConfirmed("Canva")} style={styles.radiusButton}>
+                                        {isConfirmed.Canva && <View style={styles.radiusConfirmed}/>}
+                                </TouchableOpacity>
                         </View>
                          <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Outros</Text>
@@ -95,15 +147,21 @@ export default function FilterV() {
 
                         <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Mais recente</Text>
-                                <TouchableOpacity style={styles.radiusButton}></TouchableOpacity>
+                                <TouchableOpacity onPress={() => toggleConfirmed("Recente")} style={styles.radiusButton}>
+                                        {isConfirmed.Recente && <View style={styles.radiusConfirmed}/>}
+                                </TouchableOpacity>
                         </View>
                          <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Esta semana</Text>
-                                <TouchableOpacity style={styles.radiusButton}></TouchableOpacity>
+                                <TouchableOpacity onPress={() => toggleConfirmed("Semana")} style={styles.radiusButton}>
+                                        {isConfirmed.Semana && <View style={styles.radiusConfirmed}/>}
+                                </TouchableOpacity>
                         </View>
                         <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Este mês</Text>
-                                <TouchableOpacity style={styles.radiusButton}></TouchableOpacity>
+                                <TouchableOpacity onPress={() => toggleConfirmed("Mes")} style={styles.radiusButton}>
+                                        {isConfirmed.Mes && <View style={styles.radiusConfirmed}/>}
+                                </TouchableOpacity>
                         </View>
 
                         <View style={{width: '100%', borderBottomWidth: 2, borderBottomColor: '#FFFFFF', marginTop: 25 }} />
@@ -112,15 +170,21 @@ export default function FilterV() {
 
                         <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Remoto</Text>
-                                <TouchableOpacity style={styles.radiusButton}></TouchableOpacity>
+                                <TouchableOpacity onPress={() => toggleConfirmed("Remoto")} style={styles.radiusButton}>
+                                        {isConfirmed.Remoto && <View style={styles.radiusConfirmed}/>}
+                                </TouchableOpacity>
                         </View>
                          <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Presencial</Text>
-                                <TouchableOpacity style={styles.radiusButton}></TouchableOpacity>
+                                <TouchableOpacity onPress={() => toggleConfirmed("Presencial")} style={styles.radiusButton}>
+                                        {isConfirmed.Presencial && <View style={styles.radiusConfirmed}/>}
+                                </TouchableOpacity>
                         </View>
                         <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Híbrido</Text>
-                                <TouchableOpacity style={styles.radiusButton}></TouchableOpacity>
+                                <TouchableOpacity onPress={() => toggleConfirmed("Hibrido")} style={styles.radiusButton}>
+                                        {isConfirmed.Hibrido && <View style={styles.radiusConfirmed}/>}
+                                </TouchableOpacity>
                         </View>
                    
                     </View>
@@ -183,8 +247,16 @@ const styles = StyleSheet.create({
   radiusButton: {
     width: 30,
     height: 30,
+    alignItems:"center",
+    justifyContent: "center",
     backgroundColor: "#313131",
     borderRadius: 50,
+  },
+  radiusConfirmed:{
+    width: 20,
+    height: 20,
+    backgroundColor: "#E3E3E3",
+    borderRadius:50,
   },
   plusButton: {
     alignItems: "center",
