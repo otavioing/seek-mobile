@@ -12,6 +12,7 @@ import {
   ViewStyle
 } from "react-native";
 
+
 interface PostData {
   id: string;
   author: string;
@@ -161,15 +162,24 @@ export default function HomeScreen() {
       <StatusBar barStyle="light-content" />
 
       {/* CATEGORIAS (Seu código original) */}
-      <View style={styles.divCategorias}>
-        <Text style={styles.categorias}>Para você</Text>
-        <Text style={styles.categorias}>Ruas</Text>
-        <Text style={styles.categorias}>Modernismo</Text>
-        <Text style={styles.categorias}>Paisagem</Text>
-      </View>
+
 
       {/* 6. GALERIA ATUALIZADA */}
       <ScrollView style={styles.gallery}>
+      <View style={styles.divCategorias}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.carouselContainer}>
+          <Text style={styles.categorias}>Para você</Text>
+          <Text style={styles.categorias}>Ruas</Text>
+          <Text style={styles.categorias}>Arte digital</Text>
+          <Text style={styles.categorias}>Modernismo</Text>
+          <Text style={styles.categorias}>Paisagem</Text>
+          <Text style={styles.categorias}>Abstrato</Text>
+          <Text style={styles.categorias}>Retratos</Text>
+        </ScrollView>
+      </View>
         {posts.map((post) => (
           // O card agora contém a imagem e as informações
           <View key={post.id} style={styles.cardContainer}>
@@ -182,11 +192,11 @@ export default function HomeScreen() {
             
             {/* Informações do autor (logo + nome) abaixo da imagem */}
             <View style={styles.cardInfo}>
-              <AuthorAvatar />
-              <View style={styles.cardTextContainer}>
+                <View style={styles.cardTextContainer}>
                 <Text style={styles.cardAuthor}>{post.author}</Text>
                 <Text style={styles.cardFollowers}>{post.followers}</Text>
               </View>
+              <AuthorAvatar />
             </View>
           </View>
         ))}
@@ -215,18 +225,18 @@ export default function HomeScreen() {
               activeOpacity={1}
               style={styles.modalContainer}
             >
+              <View style={styles.modalInfoBox}>
+                <View style={styles.modalTextContainer}>
+                <AuthorAvatar style={styles.modalAvatar} />
+                  <Text style={styles.modalAuthor}>{selectedPost.author}</Text>
+                  <Text style={styles.modalFollowers}>{selectedPost.followers}</Text>
+                </View>
+              </View>
               <Image
                 source={selectedPost.imageUrl}
                 style={styles.modalImage} // Mostra a imagem completa
               />
               {/* Informações do autor no modal */}
-              <View style={styles.modalInfoBox}>
-                <AuthorAvatar style={styles.modalAvatar} />
-                <View style={styles.modalTextContainer}>
-                  <Text style={styles.modalAuthor}>{selectedPost.author}</Text>
-                  <Text style={styles.modalFollowers}>{selectedPost.followers}</Text>
-                </View>
-              </View>
             </TouchableOpacity>
           </TouchableOpacity>
         </Modal>
@@ -262,8 +272,8 @@ const styles = StyleSheet.create({
     backgroundColor: "none",
   },
   divCategorias: {
-    width: "85%",
-    marginLeft: "7.5%",
+    // width: "85%",
+    // marginLeft: "7.5%",
     display: "flex",
     flexDirection: "row",
     gap: 20,
@@ -273,6 +283,21 @@ const styles = StyleSheet.create({
   categorias: {
     color: "white",
     fontSize: 17,
+    paddingLeft: 15,
+    flexDirection:"row",
+    
+  },
+   carouselContainer: {
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginLeft: 16,
+    marginBottom: 16,
   },
   gallery: {
     flex: 1,

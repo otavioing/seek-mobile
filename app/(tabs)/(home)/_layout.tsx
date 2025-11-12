@@ -40,6 +40,7 @@ export default function HomeTopLayout() {
         
         // Opções para estilizar as abas
         screenOptions={{
+          swipeEnabled: false,
           tabBarActiveTintColor: '#fff',
           tabBarInactiveTintColor: '#888',
           tabBarIndicatorStyle: { backgroundColor: 'white', height: 3 },
