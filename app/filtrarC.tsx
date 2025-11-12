@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: "#090909" },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 80 },
   containerfilter: { width: "100%", alignItems: "flex-start" },
-  sectionTitle: { fontSize: 31, fontWeight: "800", color: "#FFFFFF", marginTop: 15 },
+  sectionTitle: { fontSize: 32, fontWeight: "800", color: "#FFFFFF", marginTop: 15 },
   fbtContainer: {
     alignItems: "center",
     flexDirection: "row",
