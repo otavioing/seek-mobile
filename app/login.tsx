@@ -20,9 +20,9 @@ export default function Login() {
                 <TextInput style={styles.input} placeholder="Email"/>
                 <TextInput style={styles.input} placeholder="Senha" secureTextEntry/>
 
-                <Link href="/filtrarC" asChild>
+                <Link href="/principal" asChild>
                     <TouchableOpacity style={styles.button}>
-                        <Text style={styles.buttonText}><Link href={"/principal"}>Confirmar</Link></Text>
+                        <Text style={styles.buttonText}>Confirmar</Text>
                     </TouchableOpacity>
                 </Link>
 

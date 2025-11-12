@@ -6,11 +6,11 @@ import { Svg, Path } from "react-native-svg";
 
 
 
-export default function Filter() {
+export default function FilterP() {
  return(
         <View style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity style={styles.filterbutton}>
+                <TouchableOpacity style={styles.filterButton}>
                     <Svg width={23} height={23} viewBox="0 0 20 23" fill="none">
                         <Path d="M1.06396 3.28613H14.3981" stroke="white" strokeWidth={2.12819} strokeLinecap="round" />
                         <Path d="M1.06396 11.0642H7.73104" stroke="white" strokeWidth={2.12819} strokeLinecap="round" />
@@ -185,6 +185,11 @@ const styles = StyleSheet.create({
     marginBottom:10,
     width: "100%",
   },
+   filterButton: {
+  backgroundColor:"#313131",
+  borderRadius:50,
+  padding:10,
+},
   textoFiltro: {
     fontSize: 17,
     color: "#FFFFFF",

@@ -23,7 +23,7 @@ export default function Login() {
 
                 <Link href="login" asChild>
                     <TouchableOpacity style={styles.button}>
-                        <Text style={styles.buttonText}><Link href={"login"}>Confirmar</Link></Text>
+                        <Text style={styles.buttonText}>Confirmar</Text>
                     </TouchableOpacity>
                 </Link>
 
