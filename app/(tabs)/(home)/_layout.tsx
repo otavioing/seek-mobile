@@ -31,7 +31,7 @@ export default function HomeTopLayout() {
             
             {/* 2. Ícone de filtro */}
             {showFilterIcon && (
-              <TouchableOpacity style={styles.filterButton}>
+              <TouchableOpacity href="/filtrarP" style={styles.filterButton}>
                 <Svg width={23} height={23} viewBox="0 0 20 23" fill="none">
                                         <Path d="M1.06396 3.28613H14.3981" stroke="white" strokeWidth={2.12819} strokeLinecap="round" />
                                         <Path d="M1.06396 11.0642H7.73104" stroke="white" strokeWidth={2.12819} strokeLinecap="round" />

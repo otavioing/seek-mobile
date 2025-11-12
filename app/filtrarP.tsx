@@ -10,7 +10,7 @@ export default function FilterP() {
  return(
         <View style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity style={styles.filterButton}>
+                <TouchableOpacity href="/principal" style={styles.filterButton}>
                     <Svg width={23} height={23} viewBox="0 0 20 23" fill="none">
                         <Path d="M1.06396 3.28613H14.3981" stroke="white" strokeWidth={2.12819} strokeLinecap="round" />
                         <Path d="M1.06396 11.0642H7.73104" stroke="white" strokeWidth={2.12819} strokeLinecap="round" />
