@@ -34,30 +34,30 @@ const AuthorInfo: React.FC<AuthorInfoProps> = ({ author, followers }) => (
 );
 
 // --- Sub-componente: Card Grande (Fotografia) ---
-interface LargeCardProps {
+interface cardProps {
   imageUrl: string;
   author: string;
   followers: string;
 }
-const LargePostCard: React.FC<LargeCardProps> = ({ imageUrl, author, followers }) => {
+const LargePostCard: React.FC<cardProps> = ({ imageUrl, author, followers }) => {
   return (
-    <View style={styles.largeCard}>
-      <Image source={{ uri: imageUrl }} style={styles.largeCardImage} />
+    <View style={styles.card}>
+      <Image source={{ uri: imageUrl }} style={styles.cardImage} />
       <AuthorInfo author={author} followers={followers} />
     </View>
   );
 };
 
 // --- Sub-componente: Card Pequeno (Modernismo) ---
-interface SmallCardProps {
+interface cardProps {
   imageUrl: string;
   author: string;
   followers: string;
 }
-const SmallPostCard: React.FC<SmallCardProps> = ({ imageUrl, author, followers }) => {
+const SmallPostCard: React.FC<cardProps> = ({ imageUrl, author, followers }) => {
   return (
-    <View style={styles.smallCard}>
-      <Image source={{ uri: imageUrl }} style={styles.smallCardImage} />
+    <View style={styles.card}>
+      <Image source={{ uri: imageUrl }} style={styles.cardImage} />
       <AuthorInfo author={author} followers={followers} />
     </View>
   );
@@ -159,29 +159,17 @@ const styles = StyleSheet.create({
   carouselContainer: {
     paddingLeft: 16,
   },
-  // Card Grande
-  largeCard: {
-    width: width * 0.7, // 70% da tela
+
+  card: {
+    width: width * 0.89, // 70% da tela
     marginRight: 16,
     borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#1a1a1a',
   },
-  largeCardImage: {
+  cardImage: {
     width: '100%',
     height: 250,
-  },
-  // Card Pequeno
-  smallCard: {
-    width: width * 0.45, // 45% da tela
-    marginRight: 16,
-    borderRadius: 16,
-    overflow: 'hidden',
-    backgroundColor: '#1a1a1a',
-  },
-  smallCardImage: {
-    width: '100%',
-    height: 180,
   },
   // Info do Autor
   authorInfo: {
