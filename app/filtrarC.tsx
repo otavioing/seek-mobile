@@ -83,8 +83,8 @@ export default function FilterV() {
         style={styles.fbtContainer}
       >
         <Text style={styles.textoFiltro}>{campo === "Ilustracao" ? "Ilustração" : campo}</Text>
-        <View style={styles.radiusButton}>
-          {isConfirmed[campo] && <View style={styles.radiusConfirmed} />}
+        <View style={styles.squareButton}>
+          {isConfirmed[campo] && <View style={styles.squareConfirmed} />}
         </View>
       </TouchableOpacity>
     ))}
@@ -113,8 +113,8 @@ export default function FilterV() {
         style={styles.fbtContainer}
       >
         <Text style={styles.textoFiltro}>{habilidade}</Text>
-        <View style={styles.radiusButton}>
-          {isConfirmed[habilidade] && <View style={styles.radiusConfirmed} />}
+        <View style={styles.squareButton}>
+          {isConfirmed[habilidade] && <View style={styles.squareConfirmed} />}
         </View>
       </TouchableOpacity>
     ))}
@@ -163,8 +163,8 @@ export default function FilterV() {
         style={styles.fbtContainer}
       >
         <Text style={styles.textoFiltro}>{modelo}</Text>
-        <View style={styles.radiusButton}>
-          {isConfirmed[modelo] && <View style={styles.radiusConfirmed} />}
+        <View style={styles.squareButton}>
+          {isConfirmed[modelo] && <View style={styles.squareConfirmed} />}
         </View>
       </TouchableOpacity>
     ))}
@@ -225,6 +225,15 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "700",
   },
+  squareButton: {
+    alignContent: "center",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 30,
+    height: 30,
+    backgroundColor: "#313131",
+    borderRadius: 10,
+  },
   radiusButton: {
     width: 30,
     height: 30,
@@ -232,6 +241,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#313131",
     borderRadius: 50,
+  },
+  squareConfirmed:{
+    width: 20,
+    height: 20,
+    backgroundColor: "#E3E3E3",
+    borderRadius:5,
   },
   radiusConfirmed:{
     width: 20,

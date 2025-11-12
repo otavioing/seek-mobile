@@ -35,15 +35,15 @@ export default function FilterV() {
                         <Text style={{fontSize:32, fontWeight:800, color:"#FFFFFF",}}>Campos de criação</Text>
                         <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Logotipo</Text>
-                                <TouchableOpacity style={styles.radiusButton}></TouchableOpacity>
+                                <TouchableOpacity style={styles.squareButton}></TouchableOpacity>
                         </View>
                         <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Ilustração</Text>
-                                <TouchableOpacity style={styles.radiusButton}></TouchableOpacity>
+                                <TouchableOpacity style={styles.squareButton}></TouchableOpacity>
                         </View>
                          <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Fotografia</Text>
-                                <TouchableOpacity style={styles.radiusButton}></TouchableOpacity>
+                                <TouchableOpacity style={styles.squareButton}></TouchableOpacity>
                         </View>
                          <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Outros</Text>
@@ -63,19 +63,19 @@ export default function FilterV() {
 
                         <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Figma</Text>
-                                <TouchableOpacity style={styles.radiusButton}></TouchableOpacity>
+                                <TouchableOpacity style={styles.squareButton}></TouchableOpacity>
                         </View>
                         <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Photoshop</Text>
-                                <TouchableOpacity style={styles.radiusButton}></TouchableOpacity>
+                                <TouchableOpacity style={styles.squareButton}></TouchableOpacity>
                         </View>
                          <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Illustrator</Text>
-                                <TouchableOpacity style={styles.radiusButton}></TouchableOpacity>
+                                <TouchableOpacity style={styles.squareButton}></TouchableOpacity>
                         </View>
                         <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Canva</Text>
-                                <TouchableOpacity style={styles.radiusButton}></TouchableOpacity>
+                                <TouchableOpacity style={styles.squareButton}></TouchableOpacity>
                         </View>
                          <View style={styles.fbtContainer}>
                                 <Text style={styles.textoFiltro}>Outros</Text>
@@ -163,11 +163,29 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "700",
   },
+  squareButton: {
+    width: 30,
+    height: 30,
+    backgroundColor: "#313131",
+    borderRadius: 10,
+  },
   radiusButton: {
     width: 30,
     height: 30,
     backgroundColor: "#313131",
     borderRadius: 50,
+  },
+  squareConfirmed:{
+    width: 20,
+    height: 20,
+    backgroundColor: "#E3E3E3",
+    borderRadius:10,
+  },
+  radiusConfirmed:{
+    width: 20,
+    height: 20,
+    backgroundColor: "#E3E3E3",
+    borderRadius:50,
   },
   plusButton: {
     alignItems: "center",
