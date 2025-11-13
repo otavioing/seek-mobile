@@ -34,8 +34,8 @@ export default function menuUser() {
           </View>
 
           <Svg
-            width={(26 / 45) * size}
-            height={size}
+            width={"19.88px"}
+            height={"39.75px"}
             viewBox="0 0 26 45"
             fill="none"
           >
@@ -147,8 +147,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
-    gap:30,
+    gap:25,
     paddingHorizontal:10,
+    paddingTop:20,
   },
   fbtContainer: {
     alignItems: "center",
