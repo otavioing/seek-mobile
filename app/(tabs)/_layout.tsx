@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 // Importe seus ícones (ajuste o caminho se necessário)
-import { Ionicons } from '@expo/vector-icons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 export default function TabsLayout() {
   return (
@@ -22,17 +22,17 @@ export default function TabsLayout() {
         options={{
           title: 'Início',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'home' : 'home-outline'} size={24} color={color} />
+            <MaterialIcons name={focused ? 'home' : 'home-outline'} size={24} color={color} />
           ),
         }}
       />
 
        <Tabs.Screen
-        name="buscar"
+        name="tendencias"
         options={{
           title: 'Buscar',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'search' : 'search-outline'} size={24} color={color} />
+            <MaterialIcons name={focused ? 'search' : 'search-outline'} size={24} color={color} />
           ),
         }}
       />
@@ -42,7 +42,7 @@ export default function TabsLayout() {
         options={{
           title: 'Perfil',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
+            <MaterialIcons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
           ),
         }}
       />

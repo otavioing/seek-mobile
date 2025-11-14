@@ -14,7 +14,7 @@ export default function HomeTopLayout() {
   const showFilterIcon = true; 
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: 'black' }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0F0F0F' }} edges={['top']}>
       <StatusBar barStyle="light-content" />
       <TopTabs
         // Usamos 'tabBar' para renderizar nosso próprio cabeçalho
@@ -52,14 +52,21 @@ export default function HomeTopLayout() {
           swipeEnabled: false,
           tabBarActiveTintColor: '#fff',
           tabBarInactiveTintColor: '#888',
-          tabBarIndicatorStyle: { backgroundColor: 'white', height: 3 },
+          tabBarIndicatorStyle: { backgroundColor: 'white', height: 3},
           tabBarLabelStyle: {
             textTransform: 'none',
             fontSize: 16,
             fontWeight: 'bold',
           },
           // Esta é a correção para o fundo branco
-          tabBarStyle: { backgroundColor: 'black' } 
+          tabBarStyle: { 
+            backgroundColor:"#0F0F0F",
+            shadowOpacity: 0,
+            elevation: 0,
+            borderWidth: 0,
+            borderBottomWidth: 0,
+            borderTopWidth: 0
+          } 
         }}
       >
         {/* Suas três telas */}
@@ -74,12 +81,12 @@ export default function HomeTopLayout() {
 // Estilos para o cabeçalho customizado
 const styles = StyleSheet.create({
   headerContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 5,
     paddingTop: 20,
     paddingBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'black',
+    backgroundColor: '#0F0F0F',
   },
   filterButton: {
     backgroundColor:"#313131",
