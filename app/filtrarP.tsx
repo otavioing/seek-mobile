@@ -1,7 +1,7 @@
 import { Link } from 'expo-router';
-import { Image, StyleSheet, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, ScrollView, Modal,Text, TextInput, TouchableOpacity, View } from "react-native";
 import { Svg, Path } from "react-native-svg";
-import { useState } from "react";
+import React,{ useState } from "react";
 
 export default function FilterP() {
 
@@ -26,6 +26,7 @@ export default function FilterP() {
   Roxo: "#B027FF"
   };
 
+  const [visible, setVisible] = useState(false);
   //  Novo estado só pros botões redondos
   const [selectedRadios, setSelectedRadios] = useState({
     cor: "", // "Recente", "Semana" ou "Mes"
@@ -117,7 +118,13 @@ export default function FilterP() {
           {["Illustrator", "Photoshop", "Figma", "Canva","Outros"].map((ferramentas) => (
             <TouchableOpacity
               key={ferramentas}
-              onPress={() => toggleConfirmed(ferramentas)}
+              onPress={() => {
+                toggleConfirmed(ferramentas);
+              
+                if (ferramentas === "Outros") {
+                  setVisible(true); // 🔥 abre modal só no “Outros”
+                }
+              }}
               style={styles.fbtContainer}
             >
               <Text style={styles.textoFiltro}>{ferramentas}</Text>
@@ -194,6 +201,21 @@ export default function FilterP() {
 
         </View>
       </ScrollView>
+      <Modal
+        visible={visible}
+        transparent={true}
+        animationType="fade" // 'none' | 'slide' | 'fade'
+        onRequestClose={() => setVisible(false)} // android back button
+      >
+        <View style={styles.backdrop}>
+          <View style={styles.modalBox}>
+            <Text style={styles.title}>Olá, sou um modal!</Text>
+            <TouchableOpacity style={styles.closeBtn} onPress={() => setVisible(false)}>
+              <Text style={styles.closeBtnText}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -210,6 +232,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#0F0F0F",
     paddingBottom: 10,
   },
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  modalBox: { width: '85%', backgroundColor: '#fff', padding: 20, borderRadius: 12, alignItems: 'center' },
+  title: { fontSize: 18, marginBottom: 12 },
+  closeBtn: { marginTop: 8, padding: 10 },
+  closeBtnText: { color: '#0f62fe' },
   scroll: { flex: 1, backgroundColor: "#090909" },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 80 },
   containerfilter: { width: "100%", alignItems: "flex-start" },
