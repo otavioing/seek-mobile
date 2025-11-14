@@ -57,7 +57,8 @@ export default function FilterP() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity href="/principal" style={styles.filterButton}>
+      <Link href="/principal" asChild>
+        <TouchableOpacity style={styles.filterButton}>
           <Svg width={23} height={23} viewBox="0 0 20 23" fill="none">
             <Path d="M1.06396 3.28613H14.3981" stroke="white" strokeWidth={2.12819} strokeLinecap="round" />
             <Path d="M1.06396 11.0642H7.73104" stroke="white" strokeWidth={2.12819} strokeLinecap="round" />
@@ -68,6 +69,7 @@ export default function FilterP() {
             <Path d="M3.28632 21.0642C4.5137 21.0642 5.50868 20.0693 5.50868 18.842C5.50868 17.6148 4.5137 16.6199 3.28632 16.6199C2.05895 16.6199 1.06396 17.6148 1.06396 18.842C1.06396 20.0693 2.05895 21.0642 3.28632 21.0642Z" stroke="white" strokeWidth={2.12819} strokeLinecap="round" />
           </Svg>
         </TouchableOpacity>
+      </Link>
         <Text style={{ color: "#FFFFFF", fontSize: 18, fontWeight: 700 }}>Filtrar</Text>
         <TouchableOpacity style={styles.closebutton}>
           <Svg width={18} height={18} viewBox="0 0 18 18" fill="none">

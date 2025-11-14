@@ -4,6 +4,7 @@ import { Svg, Path } from "react-native-svg";
 import React from 'react';
 import { StatusBar, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Link } from 'expo-router';
 
 // Cria o componente de Abas Superiores (Top Tabs)
 const { Navigator } = createMaterialTopTabNavigator();
@@ -30,8 +31,8 @@ export default function HomeTopLayout() {
             </View>
             
               {/* 2. Ícone de filtro */}
-                {showFilterIcon && (
-                  <TouchableOpacity href="/filtrarP" style={styles.filterButton}>
+              <Link href="/filtrarP" asChild>
+                  <TouchableOpacity  style={styles.filterButton}>
                     <Svg width={23} height={23} viewBox="0 0 20 23" fill="none">
                                             <Path d="M1.06396 3.28613H14.3981" stroke="white" strokeWidth={2.12819} strokeLinecap="round" />
                                             <Path d="M1.06396 11.0642H7.73104" stroke="white" strokeWidth={2.12819} strokeLinecap="round" />
@@ -42,8 +43,8 @@ export default function HomeTopLayout() {
                                             <Path d="M3.28632 21.0642C4.5137 21.0642 5.50868 20.0693 5.50868 18.842C5.50868 17.6148 4.5137 16.6199 3.28632 16.6199C2.05895 16.6199 1.06396 17.6148 1.06396 18.842C1.06396 20.0693 2.05895 21.0642 3.28632 21.0642Z" stroke="white" strokeWidth={2.12819} strokeLinecap="round" />
                                         </Svg>
                   </TouchableOpacity>
-                )}
-            
+                  </Link>
+
           </View>
         )}
         
