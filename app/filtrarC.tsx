@@ -5,7 +5,7 @@ import { useState } from "react";
 
 export default function FilterC() {
 
-  //  Separei o estado de quadrados e de rádios (mantendo o mesmo padrão de chaves)
+  
   const [isConfirmed, setIsConfirmed] = useState({
     Logotipo: false,
     Ilustracao: false,
@@ -77,33 +77,52 @@ export default function FilterC() {
           {/* CAMPOS DE CRIAÇÃO */}
           <Text style={{ fontSize: 32, fontWeight: 800, color: "#FFFFFF" }}>Campos de criação</Text>
 
-          {["Logotipo", "Ilustracao", "Fotografia"].map((campo) => (
+          {["Logotipo", "Ilustracao", "Fotografia","Outros"].map((campo) => (
             <TouchableOpacity
               key={campo}
               onPress={() => toggleConfirmed(campo)}
               style={styles.fbtContainer}
             >
               <Text style={styles.textoFiltro}>{campo === "Ilustracao" ? "Ilustração" : campo}</Text>
-              <View style={styles.squareButton}>
-                {isConfirmed[campo] && <View style={styles.squareConfirmed} />}
-              </View>
+              {campo === "Outros" ? (
+                                  <Svg width={26} height={26} viewBox="0 0 26 26" fill="none">
+                                    <Path
+                                      d="M12.8164 0C13.7721 0 14.5467 0.774841 14.5469 1.73047V11.0039H23.8203C24.776 11.0039 25.5507 11.7787 25.5508 12.7344C25.5508 13.6902 24.7761 14.4648 23.8203 14.4648H14.5469V23.8203C14.5469 24.7761 13.7722 25.5508 12.8164 25.5508C11.8607 25.5507 11.0859 24.7761 11.0859 23.8203V14.4648H1.73047C0.774658 14.4648 -4.17798e-08 13.6902 0 12.7344C0.00012159 11.7787 0.774733 11.0039 1.73047 11.0039H11.0859V1.73047C11.0862 0.774897 11.8608 9.2196e-05 12.8164 0Z"
+                                      fill="#E3E3E3"
+                                    />
+                                  </Svg>
+                                ) : (
+                                  <View style={styles.squareButton}>
+                                    {isConfirmed[campo] && <View style={styles.squareConfirmed} />}
+                                  </View>
+                                )}
             </TouchableOpacity>
           ))}
 
           {/* HABILIDADES */}
           <View style={styles.divisor} />
-          <Text style={styles.sectionTitle}>Habilidades</Text>
+          <Text style={styles.sectionTitle}>Ferramentas</Text>
 
-          {["Figma", "Photoshop", "Illustrator", "Canva"].map((habilidade) => (
+          {["Figma", "Photoshop", "Illustrator", "Canva","Outros"].map((habilidade) => (
             <TouchableOpacity
               key={habilidade}
               onPress={() => toggleConfirmed(habilidade)}
               style={styles.fbtContainer}
             >
               <Text style={styles.textoFiltro}>{habilidade}</Text>
-              <View style={styles.squareButton}>
-                {isConfirmed[habilidade] && <View style={styles.squareConfirmed} />}
-              </View>
+              {habilidade === "Outros" ? (
+                                  <Svg width={26} height={26} viewBox="0 0 26 26" fill="none">
+                                    <Path
+                                      d="M12.8164 0C13.7721 0 14.5467 0.774841 14.5469 1.73047V11.0039H23.8203C24.776 11.0039 25.5507 11.7787 25.5508 12.7344C25.5508 13.6902 24.7761 14.4648 23.8203 14.4648H14.5469V23.8203C14.5469 24.7761 13.7722 25.5508 12.8164 25.5508C11.8607 25.5507 11.0859 24.7761 11.0859 23.8203V14.4648H1.73047C0.774658 14.4648 -4.17798e-08 13.6902 0 12.7344C0.00012159 11.7787 0.774733 11.0039 1.73047 11.0039H11.0859V1.73047C11.0862 0.774897 11.8608 9.2196e-05 12.8164 0Z"
+                                      fill="#E3E3E3"
+                                    />
+                                  </Svg>
+                                ) : (
+                                  <View style={styles.squareButton}>
+                                    {isConfirmed[habilidade] && <View style={styles.squareConfirmed} />}
+                                  </View>
+                                )}
+              
             </TouchableOpacity>
           ))}
 
@@ -127,7 +146,7 @@ export default function FilterC() {
             </TouchableOpacity>
           ))}
 
-          {/* MODELO DE TRABALHO */}
+          {/* MODELO DE TRABALHO
           <View style={styles.divisor} />
           <Text style={styles.sectionTitle}>Modelo de trabalho</Text>
 
@@ -142,7 +161,7 @@ export default function FilterC() {
                 {isConfirmed[modelo] && <View style={styles.squareConfirmed} />}
               </View>
             </TouchableOpacity>
-          ))}
+          ))} */}
         </View>
       </ScrollView>
     </View>
