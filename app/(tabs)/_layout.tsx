@@ -1,50 +1,59 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
-// Importe seus ícones (ajuste o caminho se necessário)
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 export default function TabsLayout() {
   return (
     <Tabs
-      screenOptions={{
-        headerShown: false, // Esconde o cabeçalho de todas as abas
+      screenOptions={({ route }) => ({
+        headerShown: false,
         tabBarActiveTintColor: '#fff',
         tabBarInactiveTintColor: '#888',
+        tabBarShowLabel: false, // Sem texto, como no protótipo
         tabBarStyle: {
           backgroundColor: '#000',
           borderTopColor: '#333',
         },
-      }}
+
+        // Esta função agora SÓ PROCURA as 3 abas que você tem
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName: string = 'help-circle-outline'; // Ícone padrão '?'
+
+          if (route.name === '(home)') {
+            iconName = focused ? 'home' : 'home-outline';
+          } 
+          else if (route.name === 'cursos') {
+            iconName = focused ? 'school' : 'school-outline';
+          } 
+          else if (route.name === 'perfil') {
+            iconName = focused ? 'person' : 'person-outline';
+          }
+          else if (route.name === 'vagas') {
+            iconName = focused ? 'briefcase' : 'briefcase-outline';
+          }
+          
+          return <Ionicons name={iconName as any} size={size} color={color} />;
+        },
+      })}
     >
-      
-      <Tabs.Screen
-        name="(home)" // Isso direciona para o seu grupo de abas superiores
-        options={{
-          title: 'Início',
-          tabBarIcon: ({ color, focused }) => (
-            <MaterialIcons name={focused ? 'home' : 'home-outline'} size={24} color={color} />
-          ),
-        }}
+      <Tabs.Screen 
+        name="(home)" 
+        options={{ title: 'Início' }} 
       />
 
-       <Tabs.Screen
-        name="tendencias"
-        options={{
-          title: 'Buscar',
-          tabBarIcon: ({ color, focused }) => (
-            <MaterialIcons name={focused ? 'search' : 'search-outline'} size={24} color={color} />
-          ),
-        }}
+      <Tabs.Screen 
+        name="cursos" 
+        options={{ title: 'Cursos' }} 
       />
 
-      <Tabs.Screen
-        name="perfil"
-        options={{
-          title: 'Perfil',
-          tabBarIcon: ({ color, focused }) => (
-            <MaterialIcons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
-          ),
-        }}
+      <Tabs.Screen 
+        name="vagas" 
+        options={{ title: 'Vagas' }} 
+      />
+
+      <Tabs.Screen 
+        name="perfil" 
+        options={{ title: 'Perfil' }} 
       />
     </Tabs>
   );

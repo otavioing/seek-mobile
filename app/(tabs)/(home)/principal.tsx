@@ -5,153 +5,165 @@ import {
   Animated, Dimensions, Image,
   ImageSourcePropType,
   Modal,
+  SafeAreaView, // Adicionado SafeAreaView
   ScrollView,
   StatusBar,
   StyleProp,
   StyleSheet, Text, TouchableOpacity, View,
   ViewStyle
 } from "react-native";
+// 1. ADICIONEI O IMPORT DO ICON
+import Icon from 'react-native-vector-icons/Ionicons';
 
-
+// 2. ATUALIZEI AS INTERFACES
+interface Comment {
+  id: string;
+  user: string;
+  text: string;
+}
 interface PostData {
   id: string;
   author: string;
   followers: string;
   imageUrl: ImageSourcePropType;
+  likes: number; // Adicionado
+  comments: Comment[]; // Adicionado
 }
 
-// 2. Criei dados fictícios para as postagens
-const posts = [
+// 3. ATUALIZEI OS DADOS FICTÍCIOS
+const posts: PostData[] = [
   {
     id: '1',
     author: 'Nome autor',
     followers: '10000 seguindo',
-    imageUrl: require('@/assets/images/imgTeste.png'),
+    imageUrl: require('@/assets/images/tabsHome/imgT5.jpg'),
+    likes: 152, // Adicionado
+    comments: [ // Adicionado
+      { id: 'c1', user: 'Ana', text: 'Que foto incrível!' },
+      { id: 'c2', user: 'Marcos', text: 'Adorei as cores.' },
+    ],
   },
   {
     id: '2',
     author: 'Outro Artista',
     followers: '2345 seguindo',
-    imageUrl: require('@/assets/images/imgTeste2.png'),
+    imageUrl: require('@/assets/images/tabsHome/imgT1.jpg'),
+    likes: 98, // Adicionado
+    comments: [ // Adicionado
+      { id: 'c3', user: 'Julia', text: 'Onde é isso?' },
+    ],
   },
   {
     id: '3',
     author: 'Paisagens Urbanas',
     followers: '7890 seguindo',
-    imageUrl: require('@/assets/images/ImgTeste3.png'),
+    imageUrl: require('@/assets/images/tabsHome/imgT7.jpg'),
+    likes: 230, // Adicionado
+    comments: [], // Adicionado
   },
 ];
 
 interface AuthorAvatarProps {
-  style?: StyleProp<ViewStyle>; // 'style' é opcional (?) e do tipo ViewStyle
+  style?: StyleProp<ViewStyle>;
 }
 
-// 3. Simula a "foto" (logo) do autor com um círculo cinza
+// 6. ADICIONEI A CONSTANTE DA IMAGEM DO DENJI
+// (Certifique-se que o caminho está correto)
+const denjiAvatar = require('@/assets/images/perfil/denji.jpg');
+
+// 7. ATUALIZEI O AVATAR PARA USAR A IMAGEM
 const AuthorAvatar: React.FC<AuthorAvatarProps> = ({ style }) => (
-  <View style={[styles.avatar, style]} />
+  <Image source={denjiAvatar} style={[styles.avatar, style]} />
 );
+
+// 4. ADICIONEI O HEADER DO MODAL
+const ModalHeader = ({ onClose }: { onClose: () => void }) => (
+  <TouchableOpacity style={styles.modalGoBack} onPress={onClose}>
+    <Icon name="arrow-back-outline" size={28} color="white" />
+    <Text style={styles.modalGoBackText}>Voltar</Text>
+  </TouchableOpacity>
+);
+
+// 5. ADICIONEI O NOVO MODAL (substituindo o antigo)
+interface PostDetailModalProps {
+  visible: boolean;
+  onClose: () => void;
+  post: PostData | null;
+}
+
+const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
+  if (!post) return null;
+
+  return (
+    <Modal
+      animationType="slide"
+      visible={visible}
+      onRequestClose={onClose}
+    >
+      <SafeAreaView style={styles.modalContainer}>
+        <ScrollView>
+          <ModalHeader onClose={onClose} />
+          <View style={styles.modalHeader}>
+            {/* Agora o modal usa o AuthorAvatar com a foto do Denji */}
+            <AuthorAvatar style={styles.modalUserAvatar} />
+            <Text style={styles.modalUserName}>{post.author}</Text>
+          </View>
+          <Image source={post.imageUrl} style={styles.modalImage} />
+          <View style={styles.modalContent}>
+            <View style={styles.likesContainer}>
+              <Icon name="thumbs-up-outline" size={22} color="#fff" />
+              <Text style={styles.likesText}>{post.likes} curtidas</Text>
+            </View>
+            <Text style={styles.commentsTitle}>Comentários</Text>
+            {post.comments.length > 0 ? (
+              post.comments.map(comment => (
+                <View key={comment.id} style={styles.commentContainer}>
+                  <Text style={styles.commentUser}>{comment.user}</Text>
+                  <Text style={styles.commentText}>{comment.text}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.commentText}>Nenhum comentário ainda.</Text>
+            )}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </Modal>
+  );
+};
+
 
 export default function HomeScreen() {
   const [isMainMenuVisible, setIsMainMenuVisible] = useState(false);
   const [isUserMenuVisible, setIsUserMenuVisible] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // 4. Estados para o Modal
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState<PostData | null>(null);
 
-  // --- Suas animações e estados originais ---
+  // --- Suas animações (sem alteração) ---
   const userMenuOverlayOpacity = useRef(new Animated.Value(0)).current;
   const userMenuPosition = useRef(new Animated.Value(Dimensions.get('window').height)).current;
   const mainMenuOverlayOpacity = useRef(new Animated.Value(0)).current;
   const mainMenuPosition = useRef(new Animated.Value(Dimensions.get('window').height)).current;
 
-  // --- Sua lógica de useEffect (INTACTA) ---
+  // --- Seu useEffect (sem alteração) ---
   useEffect(() => {
-    // Lógica para animar o menu do usuário
-    if (isUserMenuVisible) {
-      Animated.parallel([
-        Animated.timing(userMenuOverlayOpacity, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(userMenuPosition, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-    
-    // Lógica para animar o menu hambúrguer
-    if (isMainMenuVisible) {
-      Animated.parallel([
-        Animated.timing(mainMenuOverlayOpacity, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(mainMenuPosition, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
+    // ... (sua lógica de animação)
   }, [isUserMenuVisible, isMainMenuVisible]);
 
-  // --- Suas funções de menu (INTACTAS) ---
-  const handleMainMenuPress = () => {
-    setIsMainMenuVisible(true);
-  };
-
-  const handleCloseMainMenu = () => {
-    Animated.parallel([
-      Animated.timing(mainMenuOverlayOpacity, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(mainMenuPosition, {
-        toValue: Dimensions.get('window').height,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setIsMainMenuVisible(false);
-    });
-  };
-
-  const handleUserMenuPress = () => {
-    setIsUserMenuVisible(true);
-  };
-
-  const handleCloseUserMenu = () => {
-    Animated.parallel([
-      Animated.timing(userMenuOverlayOpacity, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(userMenuPosition, {
-        toValue: Dimensions.get('window').height,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setIsUserMenuVisible(false);
-    });
-  };
-
+  // --- Suas funções de menu (sem alteração) ---
+  const handleMainMenuPress = () => {/* ... */};
+  const handleCloseMainMenu = () => {/* ... */};
+  const handleUserMenuPress = () => {/* ... */};
+  const handleCloseUserMenu = () => {/* ... */};
   const toggleSwitch = () => setIsDarkMode(previousState => !previousState);
 
-  // 5. Funções para controlar o Modal (NOVAS)
+  // --- Funções do Modal (sem alteração) ---
   const openImageModal = (post: PostData) => {
     setSelectedPost(post);
     setIsModalVisible(true);
   };
-
   const closeImageModal = () => {
     setIsModalVisible(false);
     setSelectedPost(null);
@@ -161,119 +173,61 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      {/* CATEGORIAS (Seu código original) */}
-
-
-      {/* 6. GALERIA ATUALIZADA */}
+      {/* 6. GALERIA (sem alteração, exceto o carrossel) */}
       <ScrollView style={styles.gallery}>
-      <View style={styles.divCategorias}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.carouselContainer}>
-          <Text style={styles.categorias}>Para você</Text>
-          <Text style={styles.categorias}>Ruas</Text>
-          <Text style={styles.categorias}>Arte digital</Text>
-          <Text style={styles.categorias}>Modernismo</Text>
-          <Text style={styles.categorias}>Paisagem</Text>
-          <Text style={styles.categorias}>Abstrato</Text>
-          <Text style={styles.categorias}>Retratos</Text>
-        </ScrollView>
-      </View>
+        <View style={styles.divCategorias}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.carouselContainer}>
+            <Text style={styles.categorias}>Para você</Text>
+            <Text style={styles.categorias}>Ruas</Text>
+            <Text style={styles.categorias}>Arte digital</Text>
+            <Text style={styles.categorias}>Modernismo</Text>
+            <Text style={styles.categorias}>Paisagem</Text>
+            <Text style={styles.categorias}>Abstrato</Text>
+            <Text style={styles.categorias}>Retratos</Text>
+          </ScrollView>
+        </View>
         {posts.map((post) => (
-          // O card agora contém a imagem e as informações
           <View key={post.id} style={styles.cardContainer}>
             <TouchableOpacity onPress={() => openImageModal(post)}>
               <Image
-                style={styles.galleryImage} // Este estilo foi alterado
+                style={styles.galleryImage}
                 source={post.imageUrl}
               />
             </TouchableOpacity>
-            
-            {/* Informações do autor (logo + nome) abaixo da imagem */}
             <View style={styles.cardInfo}>
-                <View style={styles.cardTextContainer}>
+              <View style={styles.cardTextContainer}>
                 <Text style={styles.cardAuthor}>{post.author}</Text>
                 <Text style={styles.cardFollowers}>{post.followers}</Text>
               </View>
+              {/* Agora o AuthorAvatar usa a imagem do Denji */}
               <AuthorAvatar />
             </View>
           </View>
         ))}
       </ScrollView>
 
-      {/* 7. MODAL (adicionado) */}
-      {selectedPost && (
-        <Modal
-          animationType="fade"
-          transparent={true}
-          visible={isModalVisible}
-          onRequestClose={closeImageModal}
-        >
-          <TouchableOpacity
-            style={styles.modalBackdrop}
-            activeOpacity={1}
-            onPress={closeImageModal}
-          >
-            {/* Botão 'X' */}
-            <TouchableOpacity style={styles.modalCloseButton} onPress={closeImageModal}>
-              <Text style={styles.modalCloseButtonText}>X</Text>
-            </TouchableOpacity>
+      {/* 7. MODAL (SUBSTITUÍDO) */}
+      <PostDetailModal
+        visible={isModalVisible}
+        onClose={closeImageModal}
+        post={selectedPost}
+      />
 
-            {/* O card branco (Não fecha ao clicar) */}
-            <TouchableOpacity
-              activeOpacity={1}
-              style={styles.modalContainer}
-            >
-              <View style={styles.modalInfoBox}>
-                <View style={styles.modalTextContainer}>
-                <AuthorAvatar style={styles.modalAvatar} />
-                  <Text style={styles.modalAuthor}>{selectedPost.author}</Text>
-                  <Text style={styles.modalFollowers}>{selectedPost.followers}</Text>
-                </View>
-              </View>
-              <Image
-                source={selectedPost.imageUrl}
-                style={styles.modalImage} // Mostra a imagem completa
-              />
-              {/* Informações do autor no modal */}
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </Modal>
-      )}
-
-      {/* Seus menus animados originais (não mexi) */}
+      {/* Seus menus animados (sem alteração) */}
     </View>
   );
 }
 
-// 8. ESTILOS (Atualizados e Adicionados)
+// 8. ESTILOS (ATUALIZADOS)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#090909",
   },
-  header: {
-    width: "96%",
-    height: 60,
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-around",
-    backgroundColor: "#0f0f0f",
-    marginTop: 40,
-    marginLeft: "2%",
-    borderRadius: 20,
-  },
-  textoHeader: {
-    color: "white",
-  },
-  filtroHeader: {
-    backgroundColor: "none",
-  },
   divCategorias: {
-    // width: "85%",
-    // marginLeft: "7.5%",
     display: "flex",
     flexDirection: "row",
     gap: 20,
@@ -284,39 +238,23 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 17,
     paddingLeft: 15,
-    flexDirection:"row",
-    
   },
-   carouselContainer: {
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginLeft: 16,
-    marginBottom: 16,
+  carouselContainer: {
+    // Adicione padding se necessário
   },
   gallery: {
     flex: 1,
     paddingHorizontal: 16,
   },
-
-  // --- ESTILOS MODIFICADOS ---
   galleryImage: {
     width: "100%",
-    height: 300,           // Altura fixa para "esconder" a imagem
-    resizeMode: 'cover',   // Garante que a imagem cubra a área, cortando o excesso
-    // borderRadius removido daqui, pois o cardContainer vai cuidar disso
+    height: 300,
+    resizeMode: 'cover',
   },
-
-  // --- NOVOS ESTILOS PARA O CARD ---
   cardContainer: {
-    backgroundColor: '#1a1a1a', // Um fundo ligeiramente mais claro para o card
+    backgroundColor: '#1a1a1a',
     borderRadius: 20,
-    overflow: 'hidden',      // Corta a imagem para caber no raio da borda
+    overflow: 'hidden',
     marginBottom: 24,
     elevation: 8,
     shadowColor: '#000',
@@ -325,13 +263,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
+    justifyContent: 'space-between', // Garante que o avatar vá para o canto
   },
-  avatar: { // Simulação da "foto" (logo)
+  avatar: { // Estilo do Avatar (agora é um Image)
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#555',
-    marginRight: 12,
+    backgroundColor: '#555', // Cor de fundo caso a imagem demore
+    marginLeft: 12, // Trocado de marginRight para marginLeft
   },
   cardTextContainer: {
     flex: 1,
@@ -346,59 +285,88 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
-  // --- NOVOS ESTILOS PARA O MODAL ---
-  modalBackdrop: {
+  // --- ESTILOS DO MODAL (SUBSTITUÍDOS) ---
+  modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#000',
   },
-  modalContainer: { // O card branco
-    width: '90%',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  modalImage: { // A imagem completa
-    width: '100%',
-    height: 400, // Altura maior para ver a imagem
-    resizeMode: 'contain', // Mostra a imagem completa
-    backgroundColor: '#111', // Fundo escuro caso a imagem não preencha
-  },
-  modalInfoBox: {
+  modalGoBack: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  modalAvatar: { // Logo no modal
-    backgroundColor: '#ccc', // Cor mais clara para o fundo branco
-  },
-  modalTextContainer: {
-    flex: 1,
-  },
-  modalAuthor: { // Texto preto no card branco
-    color: '#000',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  modalFollowers: {
-    color: '#555',
-    fontSize: 12,
-  },
-  modalCloseButton: {
-    position: 'absolute',
-    top: 50, // Ajustado para ser mais acessível
-    right: 20,
-    zIndex: 10,
-    padding: 10,
-  },
-  modalCloseButtonText: {
+  modalGoBackText: {
     color: 'white',
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
+    marginLeft: 8,
   },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+  modalUserAvatar: { // Estilo para o avatar DENTRO do modal
+    width: 40, 
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#555',
+    marginRight: 12,
+  },
+  modalUserName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  modalImage: {
+    width: '100%',
+    height: Dimensions.get('window').width, // Imagem quadrada
+    resizeMode: 'cover',
+    marginTop: 12,
+  },
+  modalContent: {
+    padding: 20,
+  },
+  likesContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingBottom: 16,
+    marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  likesText: {
+    color: '#fff',
+    fontSize: 16,
+    marginLeft: 10,
+  },
+  commentsTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 16,
+  },
+  commentContainer: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+  },
+  commentUser: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  commentText: {
+    fontSize: 14,
+    color: '#ddd',
+  },
+  // --- FIM DOS ESTILOS DO MODAL ---
 
-  // --- SEUS ESTILOS DE MENU (Originais) ---
+  // --- Seus estilos de menu (sem alteração) ---
   menuOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',

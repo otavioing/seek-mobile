@@ -1,6 +1,6 @@
-import { View, Image, StyleSheet } from "react-native";
-import React, { useEffect } from "react";
 import { useRouter } from 'expo-router';
+import React, { useEffect } from "react";
+import { Image, StyleSheet, View } from "react-native";
 import Logo from "../assets/images/logoSplash.png";
 
 export default function Splash() {

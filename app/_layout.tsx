@@ -28,6 +28,9 @@ export default function RootLayout() {
         <Stack.Screen name="filtrarP" options={{ headerShown: false }}/>
         <Stack.Screen name="cadastro" options={{ headerShown: false }}/>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="explore" options={{ headerShown: false }} />
+        <Stack.Screen name="cursos" options={{ headerShown: false }} />
+        <Stack.Screen name="vagas" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />
