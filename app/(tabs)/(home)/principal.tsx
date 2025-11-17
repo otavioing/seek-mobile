@@ -1,21 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
-
-// 1. Modal e StatusBar foram importados
 import {
   Animated, Dimensions, Image,
   ImageSourcePropType,
   Modal,
-  SafeAreaView, // Adicionado SafeAreaView
+  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleProp,
   StyleSheet, Text, TouchableOpacity, View,
   ViewStyle
 } from "react-native";
-// 1. ADICIONEI O IMPORT DO ICON
 import Icon from 'react-native-vector-icons/Ionicons';
 
-// 2. ATUALIZEI AS INTERFACES
 interface Comment {
   id: string;
   user: string;
@@ -26,19 +22,18 @@ interface PostData {
   author: string;
   followers: string;
   imageUrl: ImageSourcePropType;
-  likes: number; // Adicionado
-  comments: Comment[]; // Adicionado
+  likes: number;
+  comments: Comment[];
 }
 
-// 3. ATUALIZEI OS DADOS FICTÍCIOS
 const posts: PostData[] = [
   {
     id: '1',
     author: 'Nome autor',
     followers: '10000 seguindo',
     imageUrl: require('@/assets/images/tabsHome/imgT5.jpg'),
-    likes: 152, // Adicionado
-    comments: [ // Adicionado
+    likes: 152,
+    comments: [
       { id: 'c1', user: 'Ana', text: 'Que foto incrível!' },
       { id: 'c2', user: 'Marcos', text: 'Adorei as cores.' },
     ],
@@ -48,8 +43,8 @@ const posts: PostData[] = [
     author: 'Outro Artista',
     followers: '2345 seguindo',
     imageUrl: require('@/assets/images/tabsHome/imgT1.jpg'),
-    likes: 98, // Adicionado
-    comments: [ // Adicionado
+    likes: 98,
+    comments: [
       { id: 'c3', user: 'Julia', text: 'Onde é isso?' },
     ],
   },
@@ -58,8 +53,8 @@ const posts: PostData[] = [
     author: 'Paisagens Urbanas',
     followers: '7890 seguindo',
     imageUrl: require('@/assets/images/tabsHome/imgT7.jpg'),
-    likes: 230, // Adicionado
-    comments: [], // Adicionado
+    likes: 230,
+    comments: [],
   },
 ];
 
@@ -67,16 +62,12 @@ interface AuthorAvatarProps {
   style?: StyleProp<ViewStyle>;
 }
 
-// 6. ADICIONEI A CONSTANTE DA IMAGEM DO DENJI
-// (Certifique-se que o caminho está correto)
 const denjiAvatar = require('@/assets/images/perfil/denji.jpg');
 
-// 7. ATUALIZEI O AVATAR PARA USAR A IMAGEM
 const AuthorAvatar: React.FC<AuthorAvatarProps> = ({ style }) => (
   <Image source={denjiAvatar} style={[styles.avatar, style]} />
 );
 
-// 4. ADICIONEI O HEADER DO MODAL
 const ModalHeader = ({ onClose }: { onClose: () => void }) => (
   <TouchableOpacity style={styles.modalGoBack} onPress={onClose}>
     <Icon name="arrow-back-outline" size={28} color="white" />
@@ -84,7 +75,6 @@ const ModalHeader = ({ onClose }: { onClose: () => void }) => (
   </TouchableOpacity>
 );
 
-// 5. ADICIONEI O NOVO MODAL (substituindo o antigo)
 interface PostDetailModalProps {
   visible: boolean;
   onClose: () => void;
@@ -104,7 +94,6 @@ const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
         <ScrollView>
           <ModalHeader onClose={onClose} />
           <View style={styles.modalHeader}>
-            {/* Agora o modal usa o AuthorAvatar com a foto do Denji */}
             <AuthorAvatar style={styles.modalUserAvatar} />
             <Text style={styles.modalUserName}>{post.author}</Text>
           </View>
@@ -141,25 +130,49 @@ export default function HomeScreen() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState<PostData | null>(null);
 
-  // --- Suas animações (sem alteração) ---
   const userMenuOverlayOpacity = useRef(new Animated.Value(0)).current;
   const userMenuPosition = useRef(new Animated.Value(Dimensions.get('window').height)).current;
   const mainMenuOverlayOpacity = useRef(new Animated.Value(0)).current;
   const mainMenuPosition = useRef(new Animated.Value(Dimensions.get('window').height)).current;
 
-  // --- Seu useEffect (sem alteração) ---
   useEffect(() => {
-    // ... (sua lógica de animação)
+    if (isUserMenuVisible) {
+      Animated.parallel([
+        Animated.timing(userMenuOverlayOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(userMenuPosition, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+    
+    if (isMainMenuVisible) {
+      Animated.parallel([
+        Animated.timing(mainMenuOverlayOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(mainMenuPosition, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
   }, [isUserMenuVisible, isMainMenuVisible]);
 
-  // --- Suas funções de menu (sem alteração) ---
   const handleMainMenuPress = () => {/* ... */};
   const handleCloseMainMenu = () => {/* ... */};
   const handleUserMenuPress = () => {/* ... */};
   const handleCloseUserMenu = () => {/* ... */};
   const toggleSwitch = () => setIsDarkMode(previousState => !previousState);
 
-  // --- Funções do Modal (sem alteração) ---
   const openImageModal = (post: PostData) => {
     setSelectedPost(post);
     setIsModalVisible(true);
@@ -173,7 +186,6 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      {/* 6. GALERIA (sem alteração, exceto o carrossel) */}
       <ScrollView style={styles.gallery}>
         <View style={styles.divCategorias}>
           <ScrollView
@@ -202,26 +214,21 @@ export default function HomeScreen() {
                 <Text style={styles.cardAuthor}>{post.author}</Text>
                 <Text style={styles.cardFollowers}>{post.followers}</Text>
               </View>
-              {/* Agora o AuthorAvatar usa a imagem do Denji */}
               <AuthorAvatar />
             </View>
           </View>
         ))}
       </ScrollView>
 
-      {/* 7. MODAL (SUBSTITUÍDO) */}
       <PostDetailModal
         visible={isModalVisible}
         onClose={closeImageModal}
         post={selectedPost}
       />
-
-      {/* Seus menus animados (sem alteração) */}
     </View>
   );
 }
 
-// 8. ESTILOS (ATUALIZADOS)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -240,7 +247,6 @@ const styles = StyleSheet.create({
     paddingLeft: 15,
   },
   carouselContainer: {
-    // Adicione padding se necessário
   },
   gallery: {
     flex: 1,
@@ -263,14 +269,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    justifyContent: 'space-between', // Garante que o avatar vá para o canto
+    justifyContent: 'space-between',
   },
-  avatar: { // Estilo do Avatar (agora é um Image)
+  avatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#555', // Cor de fundo caso a imagem demore
-    marginLeft: 12, // Trocado de marginRight para marginLeft
+    backgroundColor: '#555',
+    marginLeft: 12,
   },
   cardTextContainer: {
     flex: 1,
@@ -284,8 +290,6 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 12,
   },
-
-  // --- ESTILOS DO MODAL (SUBSTITUÍDOS) ---
   modalContainer: {
     flex: 1,
     backgroundColor: '#000',
@@ -308,7 +312,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 8,
   },
-  modalUserAvatar: { // Estilo para o avatar DENTRO do modal
+  modalUserAvatar: {
     width: 40, 
     height: 40,
     borderRadius: 20,
@@ -322,7 +326,7 @@ const styles = StyleSheet.create({
   },
   modalImage: {
     width: '100%',
-    height: Dimensions.get('window').width, // Imagem quadrada
+    height: Dimensions.get('window').width,
     resizeMode: 'cover',
     marginTop: 12,
   },
@@ -364,9 +368,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#ddd',
   },
-  // --- FIM DOS ESTILOS DO MODAL ---
-
-  // --- Seus estilos de menu (sem alteração) ---
   menuOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',

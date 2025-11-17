@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import {
-    FlatList,
-    Image,
-    ImageSourcePropType,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  FlatList,
+  Image,
+  ImageSourcePropType,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -70,7 +70,7 @@ const MOCK_DATA: Course[] = [
     ],
   },
   {
-    id: '4',
+    id: '4G',
     title: 'Curso de UI/UX Design',
     author: 'Ana Beatriz',
     price: 'R$29,90/mês',
@@ -116,6 +116,13 @@ const CourseCard = ({ item, onPressInfo }: CourseCardProps) => (
   </View>
 );
 
+const ModalHeader = ({ onClose }: { onClose: () => void }) => (
+  <TouchableOpacity style={styles.modalGoBack} onPress={onClose}>
+    <Icon name="arrow-back-outline" size={28} color="white" />
+    <Text style={styles.modalGoBackText}>Voltar</Text>
+  </TouchableOpacity>
+);
+
 interface CourseDetailModalProps {
   visible: boolean;
   onClose: () => void;
@@ -133,9 +140,7 @@ const CourseDetailModal = ({ visible, onClose, course }: CourseDetailModalProps)
     >
       <SafeAreaView style={styles.modalContainer}>
         <ScrollView>
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Icon name="close-circle" size={36} color="white" />
-          </TouchableOpacity>
+          <ModalHeader onClose={onClose} />
 
           <Image source={course.imageUrl} style={styles.modalImage} />
 
@@ -267,11 +272,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  closeButton: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    zIndex: 10,
+  
+  modalGoBack: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  modalGoBackText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 8,
   },
   modalImage: {
     width: '100%',

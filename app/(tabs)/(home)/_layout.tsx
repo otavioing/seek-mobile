@@ -1,36 +1,29 @@
 import { createMaterialTopTabNavigator, MaterialTopTabBar } from '@react-navigation/material-top-tabs';
-import { withLayoutContext } from 'expo-router';
-import { Svg, Path } from "react-native-svg";
+import { Link, withLayoutContext } from 'expo-router';
 import React from 'react';
 import { StatusBar, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link } from 'expo-router';
+import { Path, Svg } from "react-native-svg";
 
-// Cria o componente de Abas Superiores (Top Tabs)
 const { Navigator } = createMaterialTopTabNavigator();
 const TopTabs = withLayoutContext(Navigator);
 
 export default function HomeTopLayout() {
-  // Faz o ícone de filtro aparecer em TODAS as abas
   const showFilterIcon = true; 
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0F0F0F' }} edges={['top']}>
       <StatusBar barStyle="light-content" />
       <TopTabs
-        // Usamos 'tabBar' para renderizar nosso próprio cabeçalho
         tabBar={(props) => (
           <View style={styles.headerContainer}>
             
-            {/* 1. Wrapper para as abas */}
             <View style={{ flex: 1 }}>
               <MaterialTopTabBar
                 {...props}
-                // Esta prop é passada para 'screenOptions' abaixo
                 />
             </View>
             
-              {/* 2. Ícone de filtro */}
               <Link href="/filtrarP" asChild>
                   <TouchableOpacity  style={styles.filterButton}>
                     <Svg width={23} height={23} viewBox="0 0 20 23" fill="none">
@@ -48,7 +41,6 @@ export default function HomeTopLayout() {
           </View>
         )}
         
-        // Opções para estilizar as abas
         screenOptions={{
           swipeEnabled: false,
           tabBarActiveTintColor: '#fff',
@@ -59,7 +51,6 @@ export default function HomeTopLayout() {
             fontSize: 16,
             fontWeight: 'bold',
           },
-          // Esta é a correção para o fundo branco
           tabBarStyle: { 
             backgroundColor:"#0F0F0F",
             shadowOpacity: 0,
@@ -70,7 +61,6 @@ export default function HomeTopLayout() {
           } 
         }}
       >
-        {/* Suas três telas */}
         <TopTabs.Screen name="principal" options={{ title: 'Explorar' }} />
         <TopTabs.Screen name="tendencias" options={{ title: 'Tendências' }} />
         <TopTabs.Screen name="seguindo" options={{ title: 'Seguindo' }} />
@@ -78,8 +68,6 @@ export default function HomeTopLayout() {
     </SafeAreaView>
   );
 }
-
-// Estilos para o cabeçalho customizado
 const styles = StyleSheet.create({
   headerContainer: {
     paddingHorizontal: 5,

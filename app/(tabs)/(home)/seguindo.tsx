@@ -64,7 +64,6 @@ const posts: PostData[] = [
 ];
 
 
-// --- 4. COMPONENTES DO MODAL DE POST (Sem alteração) ---
 const { width } = Dimensions.get('window');
 
 const ModalHeader = ({ onClose }: { onClose: () => void }) => (
@@ -112,7 +111,6 @@ const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
 };
 
 
-// --- 5. COMPONENTE DO STORY MODAL (NOVO) ---
 interface StoryModalProps {
   visible: boolean;
   onClose: () => void;
@@ -124,26 +122,21 @@ const StoryModal = ({ visible, onClose, story }: StoryModalProps) => {
 
   useEffect(() => {
     if (visible) {
-      // Reseta a animação
       progressAnim.setValue(0);
-      // Inicia a animação de 5 segundos
       Animated.timing(progressAnim, {
-        toValue: 1, // Anima de 0 para 1
-        duration: 5000, // 5 segundos
-        useNativeDriver: false, // 'width' não suporta useNativeDriver
+        toValue: 1,
+        duration: 5000,
+        useNativeDriver: false, 
       }).start(({ finished }) => {
-        // Se a animação terminar (não for interrompida), fecha o modal
         if (finished) {
           onClose();
         }
       });
     } else {
-      // Para a animação se o modal for fechado manualmente
       Animated.timing(progressAnim).stop();
     }
   }, [visible, story]);
 
-  // Interpola o valor (0 a 1) para uma largura em porcentagem (0% a 100%)
   const progressBarWidth = progressAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0%', '100%'],
@@ -159,14 +152,11 @@ const StoryModal = ({ visible, onClose, story }: StoryModalProps) => {
       onRequestClose={onClose}
     >
       <SafeAreaView style={styles.storyModalContainer}>
-        {/* Tocar em qualquer lugar fecha o modal */}
         <TouchableOpacity style={{ flex: 1 }} onPress={onClose} activeOpacity={1}>
-          {/* Barra de Progresso */}
           <View style={styles.progressBarContainer}>
             <Animated.View style={[styles.progressBar, { width: progressBarWidth }]} />
           </View>
           
-          {/* Header do Story */}
           <View style={styles.storyModalHeader}>
             <Image source={denjiAvatar} style={styles.storyModalAvatar} />
             <Text style={styles.storyModalUser}>{story.user}</Text>
@@ -175,7 +165,6 @@ const StoryModal = ({ visible, onClose, story }: StoryModalProps) => {
             </TouchableOpacity>
           </View>
 
-          {/* Imagem do Story */}
           <Image
             source={story.storyImage}
             style={styles.storyModalImage}
@@ -188,7 +177,6 @@ const StoryModal = ({ visible, onClose, story }: StoryModalProps) => {
 };
 
 
-// --- 6. COMPONENTES DO CARD (Sem alteração) ---
 interface AuthorAvatarProps {
   style?: StyleProp<ViewStyle>;
   isStory?: boolean;
@@ -211,17 +199,13 @@ const PostCard = ({ post }: { post: PostData }) => (
 );
 
 
-// --- 7. TELA PRINCIPAL (ATUALIZADA) ---
 const SeguindoScreen = () => {
-  // Estado para o modal de POST
   const [isPostModalVisible, setIsPostModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState<PostData | null>(null);
 
-  // Estado para o modal de STORY
   const [isStoryModalVisible, setIsStoryModalVisible] = useState(false);
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
 
-  // Funções do Modal de Post
   const handleOpenPostModal = (post: PostData) => {
     setSelectedPost(post);
     setIsPostModalVisible(true);
@@ -231,7 +215,6 @@ const SeguindoScreen = () => {
     setSelectedPost(null);
   };
 
-  // Funções do Modal de Story
   const handleOpenStoryModal = (story: Story) => {
     setSelectedStory(story);
     setIsStoryModalVisible(true);
@@ -244,7 +227,6 @@ const SeguindoScreen = () => {
   return (
     <View style={styles.container}>
       <ScrollView>
-        {/* Carrossel de Stories (AGORA CLICÁVEL) */}
         <View style={styles.storiesContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
             {followingStories.map(story => (
@@ -257,7 +239,6 @@ const SeguindoScreen = () => {
           </ScrollView>
         </View>
         
-        {/* Feed de Posts (AGORA CLICÁVEL) */}
         <View style={styles.feedContainer}>
           {posts.map((post) => (
             <TouchableOpacity key={post.id} onPress={() => handleOpenPostModal(post)}>
@@ -267,13 +248,11 @@ const SeguindoScreen = () => {
         </View>
       </ScrollView>
 
-      {/* Renderiza o modal de Post */}
       <PostDetailModal
         visible={isPostModalVisible}
         onClose={handleClosePostModal}
         post={selectedPost}
       />
-      {/* Renderiza o modal de Story */}
       <StoryModal
         visible={isStoryModalVisible}
         onClose={handleCloseStoryModal}
@@ -283,9 +262,7 @@ const SeguindoScreen = () => {
   );
 };
 
-// --- 8. ESTILOS (ATUALIZADOS) ---
 const styles = StyleSheet.create({
-  // ... (seus estilos de .container até .cardFollowers)
   container: { flex: 1, backgroundColor: '#000' },
   storiesContainer: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#222' },
   story: { marginRight: 16, alignItems: 'center' },
@@ -298,7 +275,6 @@ const styles = StyleSheet.create({
   cardAuthor: { color: 'white', fontWeight: 'bold', fontSize: 16 },
   cardFollowers: { color: '#888', fontSize: 12 },
 
-  // ... (seus estilos de .modalContainer até .commentText)
   modalContainer: { flex: 1, backgroundColor: '#000' },
   modalGoBack: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
   modalGoBackText: { color: 'white', fontSize: 18, fontWeight: 'bold', marginLeft: 8 },
@@ -314,10 +290,9 @@ const styles = StyleSheet.create({
   commentUser: { fontSize: 14, fontWeight: 'bold', color: '#fff', marginBottom: 4 },
   commentText: { fontSize: 14, color: '#ddd' },
 
-  // --- NOVOS ESTILOS PARA O STORY MODAL ---
   storyModalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.95)', // Fundo escuro
+    backgroundColor: 'rgba(0,0,0,0.95)', 
   },
   progressBarContainer: {
     height: 3,
@@ -349,10 +324,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   storyCloseButton: {
-    marginLeft: 'auto', // Joga o 'X' para a direita
+    marginLeft: 'auto', 
   },
   storyModalImage: {
-    flex: 1, // Ocupa o espaço restante
+    flex: 1, 
     width: '100%',
     height: 'auto',
   },

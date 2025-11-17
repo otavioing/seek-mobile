@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-// --- (Sua estrutura de dados 'Comment' e 'Post' daqui) ---
 interface Comment {
   id: string;
   user: string;
@@ -32,9 +31,7 @@ type TabName = 'Postagens' | 'Cursos';
 const { width } = Dimensions.get('window');
 const photoSize = (width - 32 - 8) / 2;
 
-// --- (Seus dados 'postData' daqui) ---
 const postData: Post[] = [
-  // ... (seus 4 posts com likes e comments)
   {
     id: 'p1',
     imageUrl: require('../../assets/images/imgC1.png'),
@@ -62,8 +59,6 @@ const postData: Post[] = [
 ];
 
 
-// --- 1. COMPONENTE DE HEADER DO MODAL (NOVO E REUTILIZÁVEL) ---
-// Este componente tem a "seta para trás" e "Voltar"
 const ModalHeader = ({ onClose }: { onClose: () => void }) => (
   <TouchableOpacity style={styles.modalGoBack} onPress={onClose}>
     <Icon name="arrow-back-outline" size={28} color="white" />
@@ -71,9 +66,6 @@ const ModalHeader = ({ onClose }: { onClose: () => void }) => (
   </TouchableOpacity>
 );
 
-
-// --- 2. MODAL DOS POSTS (ATUALIZADO) ---
-// (Usa o novo ModalHeader)
 interface PostDetailModalProps {
   visible: boolean;
   onClose: () => void;
@@ -93,19 +85,15 @@ const PostDetailModal = ({ visible, onClose, post, userLogo, userName }: PostDet
     >
       <SafeAreaView style={styles.modalContainer}>
         <ScrollView>
-          {/* 1. Botão 'Voltar' (SUBSTITUÍDO) */}
           <ModalHeader onClose={onClose} />
 
-          {/* 2. Cabeçalho do Modal (Sua Logo e Nome) */}
           <View style={styles.modalHeader}>
             <Image source={userLogo} style={styles.modalUserAvatar} />
             <Text style={styles.modalUserName}>{userName}</Text>
           </View>
 
-          {/* 3. Imagem do Post */}
           <Image source={post.imageUrl} style={styles.modalImage} />
 
-          {/* 4. Conteúdo (Curtidas + Comentários) */}
           <View style={styles.modalContent}>
             <View style={styles.likesContainer}>
               <Icon name="thumbs-up-outline" size={22} color="#fff" />
@@ -130,8 +118,6 @@ const PostDetailModal = ({ visible, onClose, post, userLogo, userName }: PostDet
 };
 
 
-// --- 3. MODAL SIMPLES DE IMAGEM (NOVO) ---
-// (Para o banner e foto de perfil)
 interface SimpleImageModalProps {
   visible: boolean;
   onClose: () => void;
@@ -148,7 +134,6 @@ const SimpleImageModal = ({ visible, onClose, image }: SimpleImageModalProps) =>
       onRequestClose={onClose}
     >
       <SafeAreaView style={styles.modalContainer}>
-        {/* Usa o mesmo header de "Voltar" */}
         <ModalHeader onClose={onClose} />
         <View style={styles.simpleImageContainer}>
           <Image
@@ -163,23 +148,19 @@ const SimpleImageModal = ({ visible, onClose, image }: SimpleImageModalProps) =>
 };
 
 
-// --- Componente Principal da Tela (perfil.tsx) ---
 const ProfileScreen = () => {
   const [activeTab, setActiveTab] = useState<TabName>('Postagens');
 
-  // --- 4. ESTADOS DOS MODAIS (ATUALIZADO) ---
   const [isPostModalVisible, setIsPostModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
   const [isProfileModalVisible, setIsProfileModalVisible] = useState(false);
   const [selectedProfileImage, setSelectedProfileImage] = useState<ImageSourcePropType | null>(null);
 
-  // Imagens do perfil
   const headerImageUrl = require('../../assets/images/perfil/bannerDenji.jpg');
   const profileImageUrl = require('../../assets/images/perfil/denji.jpg');
   const userName = "Seek";
 
-  // --- 5. FUNÇÕES DOS MODAIS (ATUALIZADO) ---
   const handleOpenPostModal = (post: Post) => {
     setSelectedPost(post);
     setIsPostModalVisible(true);
@@ -198,7 +179,6 @@ const ProfileScreen = () => {
     setSelectedProfileImage(null);
   };
 
-  // Função de renderizar abas (sem alteração)
   const renderTabButton = (tabName: TabName) => (
     <TouchableOpacity style={styles.tabButton} onPress={() => setActiveTab(tabName)}>
       <Text style={[styles.tabText, activeTab === tabName && styles.activeTabText]}>
@@ -208,7 +188,6 @@ const ProfileScreen = () => {
     </TouchableOpacity>
   );
 
-  // Função de renderizar conteúdo (atualizada para usar handleOpenPostModal)
   const renderTabContent = () => {
     if (activeTab === 'Postagens') {
       return (
@@ -231,7 +210,6 @@ const ProfileScreen = () => {
       <StatusBar barStyle="light-content" backgroundColor="#000" />
       <ScrollView style={styles.scrollContainer}>
 
-        {/* --- 6. SEÇÃO HEADER (ATUALIZADA COM 'TouchableOpacity') --- */}
         <View style={styles.headerContainer}>
           <TouchableOpacity onPress={() => handleOpenProfileModal(headerImageUrl)}>
             <ImageBackground
@@ -247,7 +225,6 @@ const ProfileScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {/* --- (Resto do seu JSX de perfil, sem alterações) --- */}
         <View style={styles.userInfoContainer}>
           <Text style={styles.userName}>{userName}</Text>
           <Text style={styles.userRole}>Empresa</Text>
@@ -270,7 +247,6 @@ const ProfileScreen = () => {
         </View>
       </ScrollView>
 
-      {/* --- 7. RENDERIZAÇÃO DOS DOIS MODAIS --- */}
       <PostDetailModal
         visible={isPostModalVisible}
         onClose={handleClosePostModal}
@@ -287,13 +263,11 @@ const ProfileScreen = () => {
   );
 };
 
-// --- 8. ESTILOS (ATUALIZADOS) ---
 const styles = StyleSheet.create({
-  // ... (seus estilos de 'safeArea' até 'placeholderText' continuam aqui)
   safeArea: { flex: 1, backgroundColor: '#000' },
   scrollContainer: { flex: 1 },
   headerContainer: { alignItems: 'center' },
-  headerBackground: { width: '100%', height: 250, transform: [{ translateX: -276 }] },
+  headerBackground: { width: '100%', height: 200, transform: [{ translateX: -205 }] },
   profileImage: { width: 150, height: 150, borderRadius: 75, borderWidth: 4, borderColor: '#fff', marginTop: -75 },
   userInfoContainer: { alignItems: 'center', marginTop: 16 },
   userName: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
@@ -314,12 +288,10 @@ const styles = StyleSheet.create({
   photo: { width: photoSize, height: photoSize, borderRadius: 8, marginBottom: 8 },
   placeholderText: { color: '#fff', fontSize: 16, textAlign: 'center', marginTop: 30 },
 
-  // --- NOVOS ESTILOS PARA OS MODAIS ---
   modalContainer: {
     flex: 1,
     backgroundColor: '#000',
   },
-  // Botão "Voltar" (Seta + Texto)
   modalGoBack: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -332,12 +304,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 8,
   },
-  // Modal de Post
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 8, // Menor padding, 'modalGoBack' já deu espaço
+    paddingTop: 8, 
   },
   modalUserAvatar: {
     width: 50,
@@ -354,7 +325,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: width,
     resizeMode: 'cover',
-    marginTop: 12, // Espaço do header do usuário
+    marginTop: 12,
   },
   modalContent: {
     padding: 20,
@@ -395,15 +366,14 @@ const styles = StyleSheet.create({
     color: '#ddd',
   },
 
-  // Modal Simples (Banner/Perfil)
   simpleImageContainer: {
-    flex: 1, // Ocupa o resto da tela
+    flex: 1, 
     justifyContent: 'center',
     alignItems: 'center',
   },
   simpleImage: {
     width: '100%',
-    height: '80%', // 80% da altura
+    height: '80%',
   },
 });
 
