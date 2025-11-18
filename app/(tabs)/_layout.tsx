@@ -1,60 +1,133 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
-import React from 'react';
+// app/(tabs)/_layout.tsx
+import React from "react";
+import { View, TouchableOpacity, Image, StyleSheet, Platform } from "react-native";
+import { Tabs, useRouter, useSegments } from "expo-router";
+import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
+
+// >> AJUSTE AQUI o caminho da sua logo <<
+const seekLogo = require("../../assets/images/adaptive-icon.png");
+
+function CustomTabBar() {
+  const router = useRouter();
+  const segments = useSegments();
+  const current = "/" + segments.join("/");
+
+  const isActive = (path) => current.includes(path);
+  const go = (path) => router.push(path);
+
+  return (
+    <View style={styles.tabbar}>
+
+      {/* LUPA */}
+      <TouchableOpacity onPress={() => go("/(tabs)/(home)/tendencias")} style={styles.item}>
+        <MaterialIcons
+          name={isActive("/(home)/tendencias") ? "search" : "search"}
+          size={30}
+          color={isActive("/(home)/tendencias") ? "#fff" : "#777"}
+        />
+      </TouchableOpacity>
+
+
+      {/* CURSOS */}
+      <TouchableOpacity onPress={() => go("/(tabs)/cursos")} style={styles.item}>
+        <MaterialCommunityIcons
+          name={isActive("/cursos") ? "school" : "school-outline"}
+          size={30}
+          color={isActive("/cursos") ? "#fff" : "#777"}
+        />
+      </TouchableOpacity>
+
+      {/* LOGO CENTRAL */}
+<TouchableOpacity
+  onPress={() => go("/(tabs)/(home)/principal")}
+  style={isActive("/(home)/principal") ? styles.logoWrapperOn : styles.logoWrapperOff}
+>
+  <Image source={seekLogo} style={styles.logo} />
+</TouchableOpacity>
+
+      {/* VAGAS */}
+      <TouchableOpacity onPress={() => go("/(tabs)/vagas")} style={styles.item}>
+        <MaterialIcons
+          name={isActive("/vagas") ? "work" : "work-outline"}
+          size={30}
+          color={isActive("/vagas") ? "#fff" : "#777"}
+        />
+      </TouchableOpacity>
+
+      {/* PERFIL */}
+      <TouchableOpacity onPress={() => go("/(tabs)/perfil")} style={styles.item}>
+        <MaterialIcons
+          name={isActive("/perfil") ? "person" : "person-outline"}
+          size={30}
+          color={isActive("/perfil") ? "#fff" : "#777"}
+        />
+      </TouchableOpacity>
+
+    </View>
+  );
+}
 
 export default function TabsLayout() {
   return (
-    <Tabs
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarActiveTintColor: '#fff',
-        tabBarInactiveTintColor: '#888',
-        tabBarShowLabel: false, // Sem texto, como no protótipo
-        tabBarStyle: {
-          backgroundColor: '#000',
-          borderTopColor: '#333',
-        },
+    <View style={{ flex: 1 }}>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: { display: "none" }, // esconde a tab nativa
+        }}
+      >
+        <Tabs.Screen name="(home)/principal" />
+        <Tabs.Screen name="(home)/tendencias" />
+        <Tabs.Screen name="(home)/seguindo" />
 
-        // Esta função agora SÓ PROCURA as 3 abas que você tem
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName: string = 'help-circle-outline'; // Ícone padrão '?'
+        <Tabs.Screen name="cursos" />
+        <Tabs.Screen name="vagas" />
+        <Tabs.Screen name="perfil" />
+      </Tabs>
 
-          if (route.name === '(home)') {
-            iconName = focused ? 'home' : 'home-outline';
-          } 
-          else if (route.name === 'cursos') {
-            iconName = focused ? 'school' : 'school-outline';
-          } 
-          else if (route.name === 'perfil') {
-            iconName = focused ? 'person' : 'person-outline';
-          }
-          else if (route.name === 'vagas') {
-            iconName = focused ? 'briefcase' : 'briefcase-outline';
-          }
-          
-          return <Ionicons name={iconName as any} size={size} color={color} />;
-        },
-      })}
-    >
-      <Tabs.Screen 
-        name="(home)" 
-        options={{ title: 'Início' }} 
-      />
-
-      <Tabs.Screen 
-        name="cursos" 
-        options={{ title: 'Cursos' }} 
-      />
-
-      <Tabs.Screen 
-        name="vagas" 
-        options={{ title: 'Vagas' }} 
-      />
-
-      <Tabs.Screen 
-        name="perfil" 
-        options={{ title: 'Perfil' }} 
-      />
-    </Tabs>
+      <CustomTabBar />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  tabbar: {
+    position: "absolute",
+    bottom:0,
+    left: 0,
+    right: 0,
+    height: 110,
+    backgroundColor: "#090909",
+    flexDirection: "row",
+    paddingTop:10,
+    justifyContent: "space-around",
+    alignItems: "flex-start",
+  },
+
+  item: {
+    padding: 10,
+  },
+  logoWrapperOff: {
+    width: 40,
+    height: 40,
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  logoWrapperOn: {
+    width: 40,
+    height: 40,
+    borderRadius: 30,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  logo: {
+    width: "140%",
+    height: "140%",
+    borderRadius: 30,
+    resizeMode: "contain",
+  },
+});
