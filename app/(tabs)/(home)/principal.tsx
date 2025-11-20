@@ -187,7 +187,7 @@ export default function HomeScreen() {
       <StatusBar barStyle="light-content" />
 
       <ScrollView style={styles.gallery}>
-        <View style={styles.divCategorias}>
+        {/* <View style={styles.divCategorias}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -200,7 +200,7 @@ export default function HomeScreen() {
             <Text style={styles.categorias}>Abstrato</Text>
             <Text style={styles.categorias}>Retratos</Text>
           </ScrollView>
-        </View>
+        </View> */}
         {posts.map((post) => (
           <View key={post.id} style={styles.cardContainer}>
             <TouchableOpacity onPress={() => openImageModal(post)}>
@@ -250,6 +250,8 @@ const styles = StyleSheet.create({
   },
   gallery: {
     flex: 1,
+    paddingTop: 16,
+    paddingBottom:50,
     paddingHorizontal: 16,
   },
   galleryImage: {
