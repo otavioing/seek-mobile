@@ -58,8 +58,8 @@ function CustomTabBar() {
         />
       </TouchableOpacity>
 
-      {/* PERFIL */}
-      <TouchableOpacity onPress={() => go("/(tabs)/perfil")} style={styles.item}>
+      {/* PERFIL / MENU USUÁRIO */}
+      <TouchableOpacity onPress={() => go("/menuUser")} style={styles.item}>
         <MaterialIcons
           name={isActive("/perfil") ? "person" : "person-outline"}
           size={30}
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: "#090909",
     flexDirection: "row",
-    paddingTop:10,
+    paddingTop: 10,
     justifyContent: "space-around",
     alignItems: "flex-start",
   },

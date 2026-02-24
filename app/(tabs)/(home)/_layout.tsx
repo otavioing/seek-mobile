@@ -1,25 +1,15 @@
 import { createMaterialTopTabNavigator, MaterialTopTabBar } from '@react-navigation/material-top-tabs';
 import { Link, withLayoutContext } from 'expo-router';
 import React from 'react';
-import { StatusBar, StyleSheet, TouchableOpacity, View, Platform } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Path, Svg } from "react-native-svg";
 
 const { Navigator } = createMaterialTopTabNavigator();
 const TopTabs = withLayoutContext(Navigator);
 
 export default function HomeTopLayout() {
-  const insets = useSafeAreaInsets();
-
-  // Altura da área superior fora da Safe Area
-  const topPadding =
-    Platform.OS === "android"
-      ? (StatusBar.currentHeight ?? 0)
-      : insets.top;
-
   return (
-    <View style={{ flex: 1, backgroundColor: '#0F0F0F', paddingTop: topPadding }}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+    <View style={{ flex: 1, backgroundColor: '#0F0F0F' }}>
 
       <TopTabs
         tabBar={(props) => (
@@ -74,8 +64,7 @@ export default function HomeTopLayout() {
 const styles = StyleSheet.create({
   headerContainer: {
     paddingHorizontal: 5,
-    paddingTop: 10,
-    paddingBottom: 10,
+    paddingBottom: 5,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#0F0F0F',
