@@ -1,53 +1,93 @@
-import { Link } from 'expo-router';
-import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Link, router } from 'expo-router';
+import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from "react-native";
+import { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { api } from '@/src/services/api';
 
 const logoapp = require('@/assets/images/logo_seek.png');
-const logogoogle = require('@/assets/images/logo_Google.png'); 
-const logoapple = require('@/assets/images/logo-apple.png');
-
-
-
 
 export default function Login() {
- return(
+
+    const [email, setEmail] = useState('');
+    const [senha, setSenha] = useState('');
+
+    const handleLogin = async () => {
+        try {
+            const response = await api.post('/usuarios/login', {
+                email,
+                senha
+            });
+
+            const { usuario, token } = response.data;
+
+            // salva no storage
+            await AsyncStorage.setItem('token', token);
+            await AsyncStorage.setItem('userId', usuario.id.toString());
+
+            router.replace('/principal');
+
+        } catch (error: any) {
+            if (error.response?.status === 401) {
+                Alert.alert("Erro", "Email ou senha inválidos");
+            } else {
+                Alert.alert("Erro", "Erro ao conectar com servidor");
+                console.log(error);
+            }
+        }
+    };
+
+    return (
         <View style={styles.container}>
             <View style={styles.header}>
                 <Image style={styles.logo} source={logoapp} />
             </View>
+
             <View style={styles.main}>
-                <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 45,color: "#FFFFFF" }}>Login</Text>
+                <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 45, color: "#FFFFFF" }}>
+                    Login
+                </Text>
 
-                <TextInput style={styles.input} placeholder="Email"/>
-                <TextInput style={styles.input} placeholder="Senha" secureTextEntry/>
+                <TextInput
+                    style={styles.input}
+                    placeholder="Email"
+                    placeholderTextColor="#aaa"
+                    value={email}
+                    onChangeText={setEmail}
+                />
 
-                <Link href="/principal" asChild>
-                    <TouchableOpacity style={styles.button}>
-                        <Text style={styles.buttonText}>Confirmar</Text>
-                    </TouchableOpacity>
-                </Link>
+                <TextInput
+                    style={styles.input}
+                    placeholder="Senha"
+                    placeholderTextColor="#aaa"
+                    secureTextEntry
+                    value={senha}
+                    onChangeText={setSenha}
+                />
 
-                <View style={{width: '80%', borderBottomWidth: 1, borderBottomColor: '#b5b5b5', marginTop: 25 }} />
+                <TouchableOpacity style={styles.button} onPress={handleLogin}>
+                    <Text style={styles.buttonText}>Confirmar</Text>
+                </TouchableOpacity>
+
+                <View style={{ width: '80%', borderBottomWidth: 1, borderBottomColor: '#b5b5b5', marginTop: 25 }} />
 
                 <View style={styles.footer}>
-                <Text style={styles.footerA}>Não tenho conta. </Text>
+                    <Text style={styles.footerA}>Não tenho conta. </Text>
                     <Link href="/cadastro">
                         <Text style={styles.footerLink}>Criar conta agora.</Text>
                     </Link>
-
                 </View>
-            </View>
-            
-        </View>
-    )
-}
 
+            </View>
+        </View>
+    );
+}
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0F0F0F',
-  },
+    container: {
+        flex: 1,
+        backgroundColor: '#0F0F0F',
+    },
     header: {
-        flex: 2/12,
+        flex: 2 / 12,
         width: '100%',
         alignItems: 'flex-start',
         justifyContent: 'flex-start',
@@ -55,15 +95,15 @@ const styles = StyleSheet.create({
         paddingLeft: 45,
     },
     main: {
-        flex: 6/10,
+        flex: 6 / 10,
         width: '100%',
         justifyContent: 'center',
         alignItems: 'center',
-        paddingLeft:30,
-        paddingRight:30,
+        paddingLeft: 30,
+        paddingRight: 30,
     },
     footer: {
-        margin:10,
+        margin: 10,
         width: '100%',
         flexDirection: 'row',
         alignItems: 'flex-end',
@@ -85,7 +125,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         width: '100%',
     },
-    button:{
+    button: {
         backgroundColor: '#322BF0',
         padding: 10,
         borderRadius: 8,
@@ -132,8 +172,8 @@ const styles = StyleSheet.create({
     //     backgroundColor: '#000000',
     //     color: '#FFFFFF',
     // },
-    footerA:{
-        color:'#FFFFFF',
+    footerA: {
+        color: '#FFFFFF',
     },
     footerLink: {
         color: '#2563EB',

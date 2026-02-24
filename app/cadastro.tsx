@@ -1,45 +1,110 @@
-import { Link } from 'expo-router';
-import { Image, StyleSheet, Text, TextInput, TouchableOpacity,colorScheme, View } from "react-native";
+import { Link, router } from 'expo-router';
+import { Image, StyleSheet, Text, TextInput, TouchableOpacity, colorScheme, View, Alert } from "react-native";
+import { useState } from 'react';
+import { api } from '@/src/services/api';
 
 const logoapp = require('@/assets/images/logo_seek.png');
-const logogoogle = require('@/assets/images/logo_Google.png'); 
-const logoapple = require('@/assets/images/logo-apple.png');
 
+export default function Cadastro() {
 
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState('');
 
+  const handleCadastro = async () => {
 
-export default function Login() {
- return(
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <Image style={styles.logo} source={logoapp} />
-            </View>
-            <View style={styles.main}>
-                <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 45,color: "#FFFFFF" }}>Cadastro</Text>
+    if (!nome || !email || !senha || !confirmarSenha) {
+      return Alert.alert("Erro", "Preencha todos os campos");
+    }
 
-                <TextInput style={styles.input} placeholder="Email"/>
-                <TextInput style={styles.input} placeholder="Senha" secureTextEntry/>
-                <TextInput style={styles.input} placeholder="Confirmar senha" secureTextEntry/>
+    if (senha !== confirmarSenha) {
+      return Alert.alert("Erro", "As senhas não coincidem");
+    }
 
-                <Link href="login" asChild>
-                    <TouchableOpacity style={styles.button}>
-                        <Text style={styles.buttonText}>Confirmar</Text>
-                    </TouchableOpacity>
-                </Link>
+    try {
+      const response = await api.post('/usuarios', {
+        nome,
+        email,
+        senha
+      });
 
-                <View style={{width: '80%', borderBottomWidth: 1, borderBottomColor: '#b5b5b5', marginTop: 25 }} />
+      Alert.alert("Sucesso", response.data.message);
 
-                <View style={styles.footer}>
-                <Text style={styles.footerA}>Não tenho conta. </Text>
-                    <Link href="/cadastro">
-                        <Text style={styles.footerLink}>Criar conta agora.</Text>
-                    </Link>
+      router.replace('/login');
 
-                </View>
-            </View>
-            
+    } catch (error: any) {
+
+      if (error.response) {
+        Alert.alert("Erro", error.response.data.message || "Erro ao cadastrar");
+      } else {
+        Alert.alert("Erro", "Erro ao conectar com o servidor");
+      }
+
+      console.log(error);
+    }
+  };
+
+  return(
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Image style={styles.logo} source={logoapp} />
+      </View>
+
+      <View style={styles.main}>
+        <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 45, color: "#FFFFFF" }}>
+          Cadastro
+        </Text>
+
+        <TextInput
+          style={styles.input}
+          placeholder="Nome"
+          placeholderTextColor="#aaa"
+          value={nome}
+          onChangeText={setNome}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor="#aaa"
+          value={email}
+          onChangeText={setEmail}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Senha"
+          placeholderTextColor="#aaa"
+          secureTextEntry
+          value={senha}
+          onChangeText={setSenha}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Confirmar senha"
+          placeholderTextColor="#aaa"
+          secureTextEntry
+          value={confirmarSenha}
+          onChangeText={setConfirmarSenha}
+        />
+
+        <TouchableOpacity style={styles.button} onPress={handleCadastro}>
+          <Text style={styles.buttonText}>Confirmar</Text>
+        </TouchableOpacity>
+
+        <View style={{width: '80%', borderBottomWidth: 1, borderBottomColor: '#b5b5b5', marginTop: 25 }} />
+
+        <View style={styles.footer}>
+          <Text style={styles.footerA}>Já tenho conta. </Text>
+          <Link href="/login">
+            <Text style={styles.footerLink}>Fazer login.</Text>
+          </Link>
         </View>
-    )
+      </View>
+    </View>
+  )
 }
 
 const styles = StyleSheet.create({

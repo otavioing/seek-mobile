@@ -1,5 +1,6 @@
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Animated,
   SafeAreaView,
@@ -23,6 +24,19 @@ export default function Config() {
       useNativeDriver: true,
     }).start();
     setDarkMode(!darkMode);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem('userId');
+
+      router.replace('/login');
+
+    } catch (error) {
+      console.log('Erro', 'Erro ao sair da conta');
+      console.log(error);
+    }
   };
 
   return (
@@ -94,7 +108,7 @@ export default function Config() {
         </View>
 
         {/* Sair */}
-        <TouchableOpacity style={styles.itemRow}>
+        <TouchableOpacity onPress={handleLogout} style={styles.itemRow}>
           <Text style={styles.logoutText}>Sair</Text>
         </TouchableOpacity>
 
