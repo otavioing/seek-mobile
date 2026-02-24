@@ -1,7 +1,6 @@
-import { Link } from 'expo-router';
-import { Image, StyleSheet, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { Svg, Path } from "react-native-svg";
 import { useState } from "react";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Path, Svg } from "react-native-svg";
 
 export default function FilterC() {
 
@@ -19,12 +18,10 @@ export default function FilterC() {
     Hibrido: false,
   });
 
-  //  Novo estado só pros botões redondos
   const [selectedRadios, setSelectedRadios] = useState({
-    tempo: "", // "Recente", "Semana" ou "Mes"
+    tempo: "", 
   });
 
-  //  Função de múltipla escolha (quadrados)
   const toggleConfirmed = (nome) => {
     setIsConfirmed((prev) => ({
       ...prev,
@@ -32,7 +29,6 @@ export default function FilterC() {
     }));
   };
 
-  //  Função de escolha única (redondos)
   const selectRadio = (category, key) => {
     setSelectedRadios((prev) => ({
       ...prev,
@@ -74,7 +70,7 @@ export default function FilterC() {
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         <View style={styles.containerfilter}>
-          {/* CAMPOS DE CRIAÇÃO */}
+
           <Text style={{ fontSize: 32, fontWeight: 800, color: "#FFFFFF" }}>Campos de criação</Text>
 
           {["Logotipo", "Ilustracao", "Fotografia","Outros"].map((campo) => (
@@ -99,7 +95,6 @@ export default function FilterC() {
             </TouchableOpacity>
           ))}
 
-          {/* HABILIDADES */}
           <View style={styles.divisor} />
           <Text style={styles.sectionTitle}>Ferramentas</Text>
 
@@ -126,7 +121,6 @@ export default function FilterC() {
             </TouchableOpacity>
           ))}
 
-          {/* TEMPO DE POSTAGEM */}
           <View style={styles.divisor} />
           <Text style={styles.sectionTitle}>Tempo de postagem</Text>
 
@@ -145,7 +139,7 @@ export default function FilterC() {
               </View>
             </TouchableOpacity>
           ))}
-
+  
           {/* MODELO DE TRABALHO
           <View style={styles.divisor} />
           <Text style={styles.sectionTitle}>Modelo de trabalho</Text>

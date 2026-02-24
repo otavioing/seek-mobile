@@ -1,9 +1,9 @@
 // app/(tabs)/_layout.tsx
-import React from "react";
-import { View, TouchableOpacity, Image, StyleSheet, Platform } from "react-native";
+import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { Tabs, useRouter, useSegments } from "expo-router";
+import React from "react";
+import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 
 // >> AJUSTE AQUI o caminho da sua logo <<
 const seekLogo = require("../../assets/images/adaptive-icon.png");
@@ -98,10 +98,9 @@ export default function TabsLayout() {
 const styles = StyleSheet.create({
   tabbar: {
     position: "absolute",
-    bottom:0,
+    bottom: 0,
     left: 0,
     right: 0,
-    height: 60,
     backgroundColor: "#090909",
     flexDirection: "row",
     paddingTop:10,
@@ -112,6 +111,7 @@ const styles = StyleSheet.create({
   item: {
     padding: 10,
   },
+
   logoWrapperOff: {
     width: 40,
     height: 40,
