@@ -14,21 +14,25 @@ function CustomTabBar() {
   const segments = useSegments();
   const current = "/" + segments.join("/");
 
-  const isActive = (path) => current.includes(path);
-  const go = (path) => router.push(path);
+  const isActive = (path: string) => current.includes(path);
+  const go = (path: string) => router.push(path as any);
+  const refreshHome = () => {
+    const target = `/(tabs)/(home)/principal?refresh=${Date.now()}`;
+    router.replace(target as any);
+  };
 
   return (
     <View style={[styles.tabbar, { paddingBottom: insets.bottom || 10 }]}>
       
-      {/* LUPA */}
+      {/* HOME / EXPLORAR */}
       <TouchableOpacity 
-        onPress={() => go("/(tabs)/(home)/tendencias")} 
+        onPress={refreshHome} 
         style={styles.item}
       >
         <MaterialIcons
-          name="search"
+          name={isActive("/(home)/principal") ? "home" : "home"}
           size={30}
-          color={isActive("/(home)/tendencias") ? "#fff" : "#777"}
+          color={isActive("/(home)/principal") ? "#fff" : "#777"}
         />
       </TouchableOpacity>
 
@@ -43,7 +47,7 @@ function CustomTabBar() {
 
       {/* LOGO CENTRAL */}
       <TouchableOpacity
-        onPress={() => go("/(tabs)/(home)/principal")}
+        onPress={() => go("/upload")}
         style={isActive("/(home)/principal") ? styles.logoWrapperOn : styles.logoWrapperOff}
       >
         <Image source={seekLogo} style={styles.logo} />
@@ -58,12 +62,12 @@ function CustomTabBar() {
         />
       </TouchableOpacity>
 
-      {/* PERFIL / MENU USUÁRIO */}
+      {/* PERFIL / CONFIGURAÇÕES */}
       <TouchableOpacity onPress={() => go("/menuUser")} style={styles.item}>
         <MaterialIcons
-          name={isActive("/perfil") ? "person" : "person-outline"}
+          name={isActive("/menuUser") ? "person" : "person-outline"}
           size={30}
-          color={isActive("/perfil") ? "#fff" : "#777"}
+          color={isActive("/menuUser") ? "#fff" : "#777"}
         />
       </TouchableOpacity>
 
@@ -103,7 +107,8 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: "#090909",
     flexDirection: "row",
-    paddingTop: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     justifyContent: "space-around",
     alignItems: "flex-start",
   },

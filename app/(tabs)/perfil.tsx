@@ -1,63 +1,36 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-  Dimensions,
-  Image,
-  ImageBackground,
-  ImageSourcePropType,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Dimensions,
+    Image,
+    ImageBackground,
+    ImageSourcePropType,
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { Post, usePosts } from '../../src/context/PostsContext';
 
-interface Comment {
-  id: string;
-  user: string;
-  text: string;
-}
-interface Post {
-  id: string;
-  imageUrl: ImageSourcePropType;
-  comments: Comment[];
-  likes: number;
-}
+const formatRelativeTime = (timestamp: number) => {
+  const diff = Date.now() - timestamp;
+  const minutes = Math.floor(diff / (1000 * 60));
+  if (minutes < 1) return 'agora';
+  if (minutes < 60) return `${minutes}min atrás`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h atrás`;
+  const days = Math.floor(hours / 24);
+  return `${days}d atrás`;
+};
+
 type TabName = 'Postagens' | 'Cursos';
 
 const { width } = Dimensions.get('window');
 const photoSize = (width - 32 - 8) / 2;
-
-const postData: Post[] = [
-  {
-    id: 'p1',
-    imageUrl: require('../../assets/images/imgC1.png'),
-    comments: [{ id: 'c1', user: 'Ana', text: 'Que foto incrível!' }],
-    likes: 152,
-  },
-  {
-    id: 'p2',
-    imageUrl: require('../../assets/images/imgC2.png'),
-    comments: [{ id: 'c3', user: 'Julia', text: 'Onde é isso?' }],
-    likes: 98,
-  },
-  {
-    id: 'p3',
-    imageUrl: require('../../assets/images/imgC3.png'),
-    comments: [],
-    likes: 230,
-  },
-  {
-    id: 'p4',
-    imageUrl: require('../../assets/images/imgC4.png'),
-    comments: [{ id: 'c4', user: 'Lucas', text: 'Composição perfeita.' }],
-    likes: 42,
-  },
-];
-
 
 const ModalHeader = ({ onClose }: { onClose: () => void }) => (
   <TouchableOpacity style={styles.modalGoBack} onPress={onClose}>
@@ -91,13 +64,20 @@ const PostDetailModal = ({ visible, onClose, post, userLogo, userName }: PostDet
             <Image source={userLogo} style={styles.modalUserAvatar} />
             <Text style={styles.modalUserName}>{userName}</Text>
           </View>
-
-          <Image source={post.imageUrl} style={styles.modalImage} />
+          {post.images.map((img, idx) => (
+            <Image key={idx} source={img} style={styles.modalImage} />
+          ))}
 
           <View style={styles.modalContent}>
+            {post.description ? (
+              <Text style={styles.modalDescription}>{post.description}</Text>
+            ) : null}
             <View style={styles.likesContainer}>
-              <Icon name="thumbs-up-outline" size={22} color="#fff" />
-              <Text style={styles.likesText}>{post.likes} curtidas</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Icon name="thumbs-up-outline" size={22} color="#fff" />
+                <Text style={styles.likesText}>{post.likes} curtidas</Text>
+              </View>
+              <Text style={styles.timeText}>{formatRelativeTime(post.postedAt)}</Text>
             </View>
             <Text style={styles.commentsTitle}>Comentários</Text>
             {post.comments.length > 0 ? (
@@ -149,6 +129,7 @@ const SimpleImageModal = ({ visible, onClose, image }: SimpleImageModalProps) =>
 
 
 const ProfileScreen = () => {
+  const { posts } = usePosts();
   const [activeTab, setActiveTab] = useState<TabName>('Postagens');
 
   const [isPostModalVisible, setIsPostModalVisible] = useState(false);
@@ -160,6 +141,14 @@ const ProfileScreen = () => {
   const headerImageUrl = require('../../assets/images/perfil/bannerDenji.jpg');
   const profileImageUrl = require('../../assets/images/perfil/denji.jpg');
   const userName = "Seek";
+
+  const userPosts = useMemo(() => posts.filter((p) => p.author === 'Você'), [posts]);
+  const galleryPosts = useMemo(() => {
+    if (!posts.length) return [];
+    if (!userPosts.length) return posts;
+    const others = posts.filter((p) => p.author !== 'Você');
+    return [...userPosts, ...others];
+  }, [posts, userPosts]);
 
   const handleOpenPostModal = (post: Post) => {
     setSelectedPost(post);
@@ -190,13 +179,20 @@ const ProfileScreen = () => {
 
   const renderTabContent = () => {
     if (activeTab === 'Postagens') {
+      if (!galleryPosts.length) {
+        return <Text style={styles.placeholderText}>Você ainda não publicou nada.</Text>;
+      }
       return (
         <View style={styles.photoGrid}>
-          {postData.map((post) => (
-            <TouchableOpacity key={post.id} onPress={() => handleOpenPostModal(post)}>
-              <Image source={post.imageUrl} style={styles.photo} />
-            </TouchableOpacity>
-          ))}
+          {galleryPosts.map((post) => {
+            const cover = post.images[0];
+            if (!cover) return null;
+            return (
+              <TouchableOpacity key={post.id} onPress={() => handleOpenPostModal(post)}>
+                <Image source={cover} style={styles.photo} />
+              </TouchableOpacity>
+            );
+          })}
         </View>
       );
     }
@@ -208,7 +204,10 @@ const ProfileScreen = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor="#000" />
-      <ScrollView style={styles.scrollContainer}>
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
+      >
 
         <View style={styles.headerContainer}>
           <TouchableOpacity onPress={() => handleOpenProfileModal(headerImageUrl)}>
@@ -266,6 +265,7 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#000' },
   scrollContainer: { flex: 1 },
+  scrollContent: { paddingBottom: 120 },
   headerContainer: { alignItems: 'center' },
   headerBackground: { width: '100%', height: 200, transform: [{ translateX: -205 }] },
   profileImage: { width: 150, height: 150, borderRadius: 75, borderWidth: 4, borderColor: '#fff', marginTop: -75 },
@@ -333,10 +333,21 @@ const styles = StyleSheet.create({
   likesContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingBottom: 16,
     marginBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#333',
+  },
+  timeText: {
+    color: '#aaa',
+    fontSize: 12,
+    marginLeft: 12,
+  },
+  modalDescription: {
+    color: '#fff',
+    fontSize: 16,
+    marginBottom: 12,
   },
   likesText: {
     color: '#fff',

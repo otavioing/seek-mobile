@@ -1,18 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Animated,
-  Dimensions,
-  Image,
-  ImageSourcePropType,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleProp,
-  StyleSheet,
-  Text, // 1. Importações de Modal e Animação
-  TouchableOpacity,
-  View,
-  ViewStyle,
+    Animated,
+    Dimensions,
+    Image,
+    ImageSourcePropType,
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StyleProp,
+    StyleSheet,
+    Text, // 1. Importações de Modal e Animação
+    TouchableOpacity,
+    View,
+    ViewStyle,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -226,7 +226,7 @@ const SeguindoScreen = () => {
 
   return (
     <View style={styles.container}>
-      <ScrollView>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.storiesContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
             {followingStories.map(story => (
@@ -264,6 +264,7 @@ const SeguindoScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
+  scrollContent: { paddingBottom: 120 },
   storiesContainer: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#222' },
   story: { marginRight: 16, alignItems: 'center' },
   avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#555' },

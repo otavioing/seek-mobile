@@ -1,19 +1,21 @@
-import React, { useState, useRef } from "react";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useIsFocused } from "@react-navigation/native";
+import { useLocalSearchParams } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  Dimensions,
-  Image,
-  ImageSourcePropType,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  Keyboard,
-  TouchableWithoutFeedback,
-  Text,
-  TouchableOpacity,
-  View,
+    Dimensions,
+    Image,
+    ImageSourcePropType,
+    Keyboard,
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 
@@ -224,6 +226,8 @@ const TendenciasScreen = () => {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
   const inputRef = useRef<TextInput>(null);
+  const params = useLocalSearchParams();
+  const isFocused = useIsFocused();
 
   const handleOpenModal = (post: Post) => {
     setSelectedPost(post);
@@ -234,6 +238,15 @@ const TendenciasScreen = () => {
     setIsModalVisible(false);
     setSelectedPost(null);
   };
+
+  useEffect(() => {
+    const shouldFocus = params?.focusSearch;
+    const focusFlag = Array.isArray(shouldFocus) ? shouldFocus[0] : shouldFocus;
+    if (isFocused && focusFlag) {
+      const timer = setTimeout(() => inputRef.current?.focus(), 150);
+      return () => clearTimeout(timer);
+    }
+  }, [params, isFocused]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -256,7 +269,7 @@ const TendenciasScreen = () => {
             </View>
           </View>
 
-          <ScrollView style={{ flex: 1 }}>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent}>
 
             <SectionCarousel title="Fotografia">
               <PostCard post={foto1Post} onPress={handleOpenModal} style={styles.largeCard} />
@@ -299,6 +312,9 @@ const styles = StyleSheet.create({
 
   screen: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 120,
   },
 
   /* SEARCH BAR */

@@ -148,6 +148,9 @@ const CourseDetailModal = ({ visible, onClose, course }: CourseDetailModalProps)
             <Text style={styles.modalTitle}>{course.title}</Text>
             <Text style={styles.modalAuthor}>Por: {course.author}</Text>
             <Text style={styles.modalDescription}>{course.description}</Text>
+            <TouchableOpacity style={styles.subscribeButton}>
+              <Text style={styles.subscribeButtonText}>Assinar</Text>
+            </TouchableOpacity>
 
             <Text style={styles.commentsTitle}>Comentários</Text>
             {course.comments.map(comment => (
@@ -206,6 +209,7 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: 16,
     paddingTop: 16,
+    paddingBottom: 120,
   },
   pageTitle: {
     fontSize: 28,
@@ -307,6 +311,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     lineHeight: 24,
+  },
+  subscribeButton: {
+    marginTop: 20,
+    backgroundColor: '#A78BFA',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  subscribeButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   commentsTitle: {
     fontSize: 20,

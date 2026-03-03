@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type PerfilVisibilidade = "Público" | "Privado";
 type ListaOpcao = "Todos" | "Seguidores" | "Seguindo";
@@ -168,6 +168,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "700",
     color: "#FFFFFF",
+    marginTop: 8,
+    marginBottom: 32,
   },
   row: {
     flexDirection: "row",
@@ -206,6 +208,7 @@ const styles = StyleSheet.create({
   dropdownText: {
     color: "#FFFFFF",
     fontSize: 13,
+    paddingHorizontal: 10,
   },
   chevron: {
     color: "#FFFFFF",

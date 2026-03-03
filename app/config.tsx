@@ -1,6 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Animated,
   SafeAreaView,
@@ -126,12 +126,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#000",
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 24,
-  },
   container: {
     flex: 1,
   },
@@ -166,6 +160,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "700",
     color: "#FFFFFF",
+    marginTop: 8,
+    marginBottom: 32,
   },
   itemRow: {
     flexDirection: "row",

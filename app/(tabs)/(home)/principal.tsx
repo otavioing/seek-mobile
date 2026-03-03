@@ -1,65 +1,31 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated, Dimensions, Image,
-  ImageSourcePropType,
+  ImageStyle,
   Modal,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StatusBar,
   StyleProp,
   StyleSheet, Text, TouchableOpacity, View,
-  ViewStyle
 } from "react-native";
 import Icon from 'react-native-vector-icons/Ionicons';
+import { Post, usePosts } from '../../../src/context/PostsContext';
 
-interface Comment {
-  id: string;
-  user: string;
-  text: string;
-}
-interface PostData {
-  id: string;
-  author: string;
-  followers: string;
-  imageUrl: ImageSourcePropType;
-  likes: number;
-  comments: Comment[];
-}
-
-const posts: PostData[] = [
-  {
-    id: '1',
-    author: 'Nome autor',
-    followers: '10000 seguindo',
-    imageUrl: require('@/assets/images/tabsHome/imgT5.jpg'),
-    likes: 152,
-    comments: [
-      { id: 'c1', user: 'Ana', text: 'Que foto incrível!' },
-      { id: 'c2', user: 'Marcos', text: 'Adorei as cores.' },
-    ],
-  },
-  {
-    id: '2',
-    author: 'Outro Artista',
-    followers: '2345 seguindo',
-    imageUrl: require('@/assets/images/tabsHome/imgT1.jpg'),
-    likes: 98,
-    comments: [
-      { id: 'c3', user: 'Julia', text: 'Onde é isso?' },
-    ],
-  },
-  {
-    id: '3',
-    author: 'Paisagens Urbanas',
-    followers: '7890 seguindo',
-    imageUrl: require('@/assets/images/tabsHome/imgT7.jpg'),
-    likes: 230,
-    comments: [],
-  },
-];
+const formatRelativeTime = (timestamp: number) => {
+  const diff = Date.now() - timestamp;
+  const minutes = Math.floor(diff / (1000 * 60));
+  if (minutes < 1) return 'agora';
+  if (minutes < 60) return `${minutes}min atrás`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h atrás`;
+  const days = Math.floor(hours / 24);
+  return `${days}d atrás`;
+};
 
 interface AuthorAvatarProps {
-  style?: StyleProp<ViewStyle>;
+  style?: StyleProp<ImageStyle>;
 }
 
 const denjiAvatar = require('@/assets/images/perfil/denji.jpg');
@@ -78,7 +44,7 @@ const ModalHeader = ({ onClose }: { onClose: () => void }) => (
 interface PostDetailModalProps {
   visible: boolean;
   onClose: () => void;
-  post: PostData | null;
+  post: Post | null;
 }
 
 const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
@@ -97,11 +63,19 @@ const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
             <AuthorAvatar style={styles.modalUserAvatar} />
             <Text style={styles.modalUserName}>{post.author}</Text>
           </View>
-          <Image source={post.imageUrl} style={styles.modalImage} />
+          {post.images.map((img, idx) => (
+            <Image key={idx} source={img} style={styles.modalImage} />
+          ))}
           <View style={styles.modalContent}>
+            {post.description ? (
+              <Text style={styles.modalDescription}>{post.description}</Text>
+            ) : null}
             <View style={styles.likesContainer}>
-              <Icon name="thumbs-up-outline" size={22} color="#fff" />
-              <Text style={styles.likesText}>{post.likes} curtidas</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Icon name="thumbs-up-outline" size={22} color="#fff" />
+                <Text style={styles.likesText}>{post.likes} curtidas</Text>
+              </View>
+              <Text style={styles.timeText}>{formatRelativeTime(post.postedAt)}</Text>
             </View>
             <Text style={styles.commentsTitle}>Comentários</Text>
             {post.comments.length > 0 ? (
@@ -128,7 +102,9 @@ export default function HomeScreen() {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedPost, setSelectedPost] = useState<PostData | null>(null);
+  const { posts } = usePosts();
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const userMenuOverlayOpacity = useRef(new Animated.Value(0)).current;
   const userMenuPosition = useRef(new Animated.Value(Dimensions.get('window').height)).current;
@@ -173,7 +149,7 @@ export default function HomeScreen() {
   const handleCloseUserMenu = () => {/* ... */};
   const toggleSwitch = () => setIsDarkMode(previousState => !previousState);
 
-  const openImageModal = (post: PostData) => {
+  const openImageModal = (post: Post) => {
     setSelectedPost(post);
     setIsModalVisible(true);
   };
@@ -182,11 +158,28 @@ export default function HomeScreen() {
     setSelectedPost(null);
   };
 
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 800);
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      <ScrollView style={styles.gallery}>
+      <ScrollView
+        style={styles.gallery}
+        contentContainerStyle={styles.galleryContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#000"
+            colors={["#000"]}
+            progressBackgroundColor="#fff"
+          />
+        }
+      >
         {/* <View style={styles.divCategorias}>
           <ScrollView
             horizontal
@@ -201,12 +194,14 @@ export default function HomeScreen() {
             <Text style={styles.categorias}>Retratos</Text>
           </ScrollView>
         </View> */}
-        {posts.map((post) => (
+        {posts.map((post) => {
+          const cover = post.images[0];
+          return (
           <View key={post.id} style={styles.cardContainer}>
             <TouchableOpacity onPress={() => openImageModal(post)}>
               <Image
                 style={styles.galleryImage}
-                source={post.imageUrl}
+                source={cover}
               />
             </TouchableOpacity>
             <View style={styles.cardInfo}>
@@ -214,10 +209,15 @@ export default function HomeScreen() {
                 <Text style={styles.cardAuthor}>{post.author}</Text>
                 <Text style={styles.cardFollowers}>{post.followers}</Text>
               </View>
+              <Text style={styles.timeText}>{formatRelativeTime(post.postedAt)}</Text>
               <AuthorAvatar />
             </View>
+            {post.description ? (
+              <Text style={styles.cardDescription} numberOfLines={2}>{post.description}</Text>
+            ) : null}
           </View>
-        ))}
+          );
+        })}
       </ScrollView>
 
       <PostDetailModal
@@ -251,8 +251,11 @@ const styles = StyleSheet.create({
   gallery: {
     flex: 1,
     paddingTop: 16,
-    paddingBottom:50,
+    paddingBottom: 130,
     paddingHorizontal: 16,
+  },
+  galleryContent: {
+    paddingBottom: 160,
   },
   galleryImage: {
     width: "100%",
@@ -291,6 +294,11 @@ const styles = StyleSheet.create({
   cardFollowers: {
     color: '#888',
     fontSize: 12,
+  },
+  cardDescription: {
+    color: '#ddd',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
   modalContainer: {
     flex: 1,
@@ -338,10 +346,21 @@ const styles = StyleSheet.create({
   likesContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingBottom: 16,
     marginBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#333',
+  },
+  timeText: {
+    color: '#aaa',
+    fontSize: 12,
+    marginLeft: 12,
+  },
+  modalDescription: {
+    color: '#eee',
+    marginBottom: 12,
+    lineHeight: 20,
   },
   likesText: {
     color: '#fff',

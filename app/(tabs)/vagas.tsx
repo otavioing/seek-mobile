@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 import {
-    FlatList,
-    Image,
-    ImageSourcePropType // Para as imagens locais
-    ,
+  FlatList,
+  Image,
+  ImageSourcePropType // Para as imagens locais
+  ,
 
 
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+
+
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 // Importe o ícone para o botão "Voltar"
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -81,7 +83,7 @@ const JobCard: React.FC<JobCardProps> = ({ item, onPressInfo }) => (
       <View style={styles.row}>
         <Text style={styles.title}>{item.title}</Text>
         <TouchableOpacity style={styles.propostaButton}>
-          <Text style={styles.propostaButtonText}>Enviar proposta</Text>
+          <Text style={styles.propostaButtonText}>Candidatar-se</Text>
         </TouchableOpacity>
       </View>
 
@@ -178,6 +180,7 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: 16,
     paddingTop: 16,
+    paddingBottom: 120,
   },
   pageTitle: {
     fontSize: 28,
