@@ -9,12 +9,41 @@ import {
   View,
 } from "react-native";
 import { Svg, Path } from "react-native-svg";
+import { api } from '@/src/services/api';
+import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 export default function menuUser() {
 
   const color = "white";
   const size = 60;
   const router = useRouter();
+
+  const [nome, setNome] = useState("Carregando...");
+  const [foto, setFoto] = useState<string | null>(null);
+
+  useEffect(() => {
+    const carregarUsuario = async () => {
+      try {
+        const userId = await AsyncStorage.getItem("userId");
+
+        if (!userId) return;
+
+        const response = await api.get(`/usuarios/foto-perfil/${userId}`);
+
+        const data = response.data;
+
+        setNome(data.nome);
+        setFoto(data.foto);
+
+      } catch (error) {
+        console.log("Erro ao carregar usuário:", error);
+      }
+    };
+
+    carregarUsuario();
+  }, []);
   return (
     <View style={styles.container}>
 
@@ -28,16 +57,24 @@ export default function menuUser() {
       <View style={styles.header}>
         <Link href="/(tabs)/perfil" asChild>
           <TouchableOpacity style={styles.header}>
-            <Svg width={70} height={70} viewBox="0 0 80 80" fill="none">
-              <Path
-                d="M19.7735 55.6483C22.5691 53.5105 25.6935 51.825 29.1469 50.5916C32.6002 49.3583 36.218 48.7416 40.0002 48.7416C43.7824 48.7416 47.4002 49.3583 50.8535 50.5916C54.3069 51.825 57.4313 53.5105 60.2269 55.6483C62.1454 53.4009 63.6391 50.852 64.708 48.0016C65.7769 45.1513 66.3113 42.109 66.3113 38.875C66.3113 31.5846 63.7487 25.3768 58.6235 20.2516C53.4984 15.1265 47.2906 12.5639 40.0002 12.5639C32.7098 12.5639 26.5021 15.1265 21.3769 20.2516C16.2517 25.3768 13.6891 31.5846 13.6891 38.875C13.6891 42.109 14.2235 45.1513 15.2924 48.0016C16.3613 50.852 17.855 53.4009 19.7735 55.6483ZM40.0002 42.1639C36.7661 42.1639 34.0391 41.0539 31.8191 38.8339C29.5991 36.6139 28.4891 33.8868 28.4891 30.6527C28.4891 27.4187 29.5991 24.6916 31.8191 22.4716C34.0391 20.2516 36.7661 19.1416 40.0002 19.1416C43.2343 19.1416 45.9613 20.2516 48.1813 22.4716C50.4013 24.6916 51.5113 27.4187 51.5113 30.6527C51.5113 33.8868 50.4013 36.6139 48.1813 38.8339C45.9613 41.0539 43.2343 42.1639 40.0002 42.1639ZM40.0002 71.7638C35.4506 71.7638 31.175 70.9005 27.1735 69.1738C23.1721 67.4472 19.6913 65.1038 16.7313 62.1438C13.7713 59.1838 11.428 55.7031 9.70133 51.7016C7.97466 47.7001 7.11133 43.4246 7.11133 38.875C7.11133 34.3253 7.97466 30.0498 9.70133 26.0483C11.428 22.0468 13.7713 18.5661 16.7313 15.6061C19.6913 12.6461 23.1721 10.3027 27.1735 8.57608C31.175 6.84942 35.4506 5.98608 40.0002 5.98608C44.5498 5.98608 48.8254 6.84942 52.8269 8.57608C56.8284 10.3027 60.3091 12.6461 63.2691 15.6061C66.2291 18.5661 68.5724 22.0468 70.2991 26.0483C72.0258 30.0498 72.8891 34.3253 72.8891 38.875C72.8891 43.4246 72.0258 47.7001 70.2991 51.7016C68.5724 55.7031 66.2291 59.1838 63.2691 62.1438C60.3091 65.1038 56.8284 67.4472 52.8269 69.1738C48.8254 70.9005 44.5498 71.7638 40.0002 71.7638ZM40.0002 65.1861C42.9054 65.1861 45.6461 64.7613 48.2224 63.9116C50.7987 63.062 53.1558 61.8424 55.2935 60.2527C53.1558 58.6631 50.7987 57.4435 48.2224 56.5938C45.6461 55.7442 42.9054 55.3194 40.0002 55.3194C37.095 55.3194 34.3543 55.7442 31.778 56.5938C29.2017 57.4435 26.8447 58.6631 24.7069 60.2527C26.8447 61.8424 29.2017 63.062 31.778 63.9116C34.3543 64.7613 37.095 65.1861 40.0002 65.1861ZM40.0002 35.5861C41.4254 35.5861 42.6039 35.1201 43.5358 34.1883C44.4676 33.2564 44.9335 32.0779 44.9335 30.6527C44.9335 29.2276 44.4676 28.049 43.5358 27.1172C42.6039 26.1853 41.4254 25.7194 40.0002 25.7194C38.575 25.7194 37.3965 26.1853 36.4647 27.1172C35.5328 28.049 35.0669 29.2276 35.0669 30.6527C35.0669 32.0779 35.5328 33.2564 36.4647 34.1883C37.3965 35.1201 38.575 35.5861 40.0002 35.5861Z"
-                fill={color}
+            {foto ? (
+              <Image
+                source={{ uri: foto }}
+                style={{
+                  width: 70,
+                  height: 70,
+                  borderRadius: 35,
+                }}
               />
-            </Svg>
+            ) : (
+              <Svg width={70} height={70} viewBox="0 0 80 80">
+                {/* fallback caso não tenha foto */}
+              </Svg>
+            )}
 
             <View style={{ justifyContent: "flex-start" }}>
               <Text style={{ color: "#FFFFFF", fontSize: 21, fontWeight: "700" }}>
-                Nome de usuário
+                {nome}
               </Text>
               <Text style={{ color: "#FFFFFF", fontSize: 11 }}>ver perfil</Text>
             </View>
@@ -60,14 +97,14 @@ export default function menuUser() {
       </View>
 
 
-<View
-  style={{
-    width: "100%",
-    borderBottomWidth: 2,
-    borderBottomColor: "#FFFFFF",
-    marginTop: 25,
-  }}
-/>
+      <View
+        style={{
+          width: "100%",
+          borderBottomWidth: 2,
+          borderBottomColor: "#FFFFFF",
+          marginTop: 25,
+        }}
+      />
 
       <TouchableOpacity style={styles.fbtContainer}>
         <Svg width={size} height={size} viewBox="0 0 60 60" fill="none">
@@ -89,17 +126,17 @@ export default function menuUser() {
       </TouchableOpacity>
       <TouchableOpacity style={styles.fbtContainer}>
         <Svg
-        width={size}
-        height={size}
-        viewBox="0 0 60 60"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <Path
-          d="M35 55V47.3125L48.8125 33.5625C49.1875 33.1875 49.6042 32.9167 50.0625 32.75C50.5208 32.5833 50.9792 32.5 51.4375 32.5C51.9375 32.5 52.4167 32.5938 52.875 32.7812C53.3333 32.9688 53.75 33.25 54.125 33.625L56.4375 35.9375C56.7708 36.3125 57.0312 36.7292 57.2188 37.1875C57.4062 37.6458 57.5 38.1042 57.5 38.5625C57.5 39.0208 57.4167 39.4896 57.25 39.9688C57.0833 40.4479 56.8125 40.875 56.4375 41.25L42.6875 55H35ZM38.75 51.25H41.125L48.6875 43.625L47.5625 42.4375L46.375 41.3125L38.75 48.875V51.25ZM15 55C13.625 55 12.4479 54.5104 11.4688 53.5312C10.4896 52.5521 10 51.375 10 50V10C10 8.625 10.4896 7.44792 11.4688 6.46875C12.4479 5.48958 13.625 5 15 5H35L50 20V27.5H45V22.5H32.5V10H15V50H30V55H15ZM47.5625 42.4375L46.375 41.3125L48.6875 43.625L47.5625 42.4375Z"
-          fill={color}
-        />
-      </Svg>
+          width={size}
+          height={size}
+          viewBox="0 0 60 60"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <Path
+            d="M35 55V47.3125L48.8125 33.5625C49.1875 33.1875 49.6042 32.9167 50.0625 32.75C50.5208 32.5833 50.9792 32.5 51.4375 32.5C51.9375 32.5 52.4167 32.5938 52.875 32.7812C53.3333 32.9688 53.75 33.25 54.125 33.625L56.4375 35.9375C56.7708 36.3125 57.0312 36.7292 57.2188 37.1875C57.4062 37.6458 57.5 38.1042 57.5 38.5625C57.5 39.0208 57.4167 39.4896 57.25 39.9688C57.0833 40.4479 56.8125 40.875 56.4375 41.25L42.6875 55H35ZM38.75 51.25H41.125L48.6875 43.625L47.5625 42.4375L46.375 41.3125L38.75 48.875V51.25ZM15 55C13.625 55 12.4479 54.5104 11.4688 53.5312C10.4896 52.5521 10 51.375 10 50V10C10 8.625 10.4896 7.44792 11.4688 6.46875C12.4479 5.48958 13.625 5 15 5H35L50 20V27.5H45V22.5H32.5V10H15V50H30V55H15ZM47.5625 42.4375L46.375 41.3125L48.6875 43.625L47.5625 42.4375Z"
+            fill={color}
+          />
+        </Svg>
         <Text style={styles.textoFiltro}>Modificar Projetos</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.fbtContainer}>
@@ -176,16 +213,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
-    gap:25,
-    paddingHorizontal:10,
-    paddingTop:20,
+    gap: 25,
+    paddingHorizontal: 10,
+    paddingTop: 20,
   },
   fbtContainer: {
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "flex-start",
     marginTop: 25,
-    paddingHorizontal:20,
+    paddingHorizontal: 20,
     width: "100%",
   },
   textoFiltro: {

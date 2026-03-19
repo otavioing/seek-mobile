@@ -10,9 +10,12 @@ export default function Login() {
 
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const handleLogin = async () => {
         try {
+            setLoading(true); // ativa loading
+
             const response = await api.post('/usuarios/login', {
                 email,
                 senha
@@ -20,7 +23,6 @@ export default function Login() {
 
             const { usuario, token } = response.data;
 
-            // salva no storage
             await AsyncStorage.setItem('token', token);
             await AsyncStorage.setItem('userId', usuario.id.toString());
 
@@ -33,6 +35,8 @@ export default function Login() {
                 Alert.alert("Erro", "Erro ao conectar com servidor");
                 console.log(error);
             }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -64,8 +68,14 @@ export default function Login() {
                     onChangeText={setSenha}
                 />
 
-                <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                    <Text style={styles.buttonText}>Confirmar</Text>
+                <TouchableOpacity
+                    style={[styles.button, loading && { opacity: 0.6 }]}
+                    onPress={handleLogin}
+                    disabled={loading}
+                >
+                    <Text style={styles.buttonText}>
+                        {loading ? "Carregando..." : "Confirmar"}
+                    </Text>
                 </TouchableOpacity>
 
                 <View style={{ width: '80%', borderBottomWidth: 1, borderBottomColor: '#b5b5b5', marginTop: 25 }} />
