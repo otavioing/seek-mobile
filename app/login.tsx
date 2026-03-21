@@ -13,11 +13,6 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
 
     const handleLogin = async () => {
-
-        if (!email.trim() || !senha.trim()) {
-            Alert.alert("Erro", "Preencha email e senha");
-            return;
-        }
         try {
             setLoading(true); // ativa loading
 

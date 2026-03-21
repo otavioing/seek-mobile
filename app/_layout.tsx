@@ -11,12 +11,15 @@ import { PostsProvider } from '../src/context/PostsContext';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  const [checkingAuth, setCheckingAuth] = useState(true); // ✅ agora tá certo
+  if (!loaded) {
+    return null;
+  }
+
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
     const checkLogin = async () => {
@@ -38,10 +41,6 @@ export default function RootLayout() {
 
     checkLogin();
   }, []);
-
-  if (!loaded || checkingAuth) {
-    return null;
-  }
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
