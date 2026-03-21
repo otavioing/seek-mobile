@@ -1,6 +1,6 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack, router } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
@@ -11,61 +11,46 @@ import { PostsProvider } from '../src/context/PostsContext';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
+  const segments = useSegments();
+
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
-
-  if (!loaded) {
-    return null;
-  }
 
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
     const checkLogin = async () => {
-      try {
-        const token = await AsyncStorage.getItem('token');
+      const token = await AsyncStorage.getItem('token');
 
-        if (token) {
-          router.replace('/principal');
-        } else {
-          router.replace('/login');
-        }
-      } catch (error) {
-        console.log('Erro ao verificar login:', error);
+      const inAuthGroup = segments[0] === 'login' || segments[0] === 'cadastro';
+
+      if (!token && !inAuthGroup) {
         router.replace('/login');
-      } finally {
-        setCheckingAuth(false);
+      } else if (token && inAuthGroup) {
+        router.replace('/principal');
       }
+
+      setCheckingAuth(false);
     };
 
     checkLogin();
-  }, []);
+  }, [segments]);
+
+  if (!loaded || checkingAuth) {
+    return null;
+  }
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <PostsProvider>
         <SafeAreaProvider>
           <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
-            <Stack>
-              <Stack.Screen name="login" options={{ headerShown: false }} />
-              <Stack.Screen name="index" options={{ headerShown: false }} />
-              <Stack.Screen name="menuUser" options={{ headerShown: false }} />
-              <Stack.Screen name="config" options={{ headerShown: false }} />
-              <Stack.Screen name="privacidade" options={{ headerShown: false }} />
-              <Stack.Screen name="filtrarV" options={{ headerShown: false }} />
-              <Stack.Screen name="filtrarC" options={{ headerShown: false }} />
-              <Stack.Screen name="filtrarP" options={{ headerShown: false }} />
-              <Stack.Screen name="cadastro" options={{ headerShown: false }} />
-              <Stack.Screen name="upload" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="explore" options={{ headerShown: false }} />
-              <Stack.Screen name="cursos" options={{ headerShown: false }} />
-              <Stack.Screen name="vagas" options={{ headerShown: false }} />
-              <Stack.Screen name="+not-found" />
-            </Stack>
+            <Stack screenOptions={{ headerShown: false }} />
           </SafeAreaView>
-          <StatusBar style="light" backgroundColor="#000" translucent={false} />
+
+          <StatusBar style="light" />
         </SafeAreaProvider>
       </PostsProvider>
     </ThemeProvider>
