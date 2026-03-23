@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
-import { ImageSourcePropType } from 'react-native';
+import React, { createContext, useContext, useMemo, useState, useEffect } from 'react';
+import axios from 'axios';
+import { api } from '@/src/services/api'; // ajusta o caminho se precisar
 
 export type Comment = {
   id: string;
@@ -11,7 +12,8 @@ export type Post = {
   id: string;
   author: string;
   followers: string;
-  images: ImageSourcePropType[];
+  images: any[];
+  avatar: any;
   likes: number;
   comments: Comment[];
   description?: string;
@@ -19,57 +21,47 @@ export type Post = {
 };
 
 type NewPostInput = {
-  images: ImageSourcePropType[];
+  images: any[];
   description?: string;
 };
 
 type PostsContextValue = {
   posts: Post[];
   addPost: (input: NewPostInput) => void;
+  refreshPosts: () => void; // 🔥 pra atualizar depois
 };
 
 const PostsContext = createContext<PostsContextValue | undefined>(undefined);
 
-const initialPosts: Post[] = [
-  {
-    id: 'p1',
-    author: 'Nome autor',
-    followers: '10000 seguindo',
-    images: [require('@/assets/images/tabsHome/imgT5.jpg')],
-    likes: 152,
-    comments: [
-      { id: 'c1', user: 'Ana', text: 'Que foto incrível!' },
-      { id: 'c2', user: 'Marcos', text: 'Adorei as cores.' },
-    ],
-    description: 'Explorando novas paletas e texturas.',
-    postedAt: Date.now() - 1000 * 60 * 60 * 2, // 2h atrás
-  },
-  {
-    id: 'p2',
-    author: 'Outro Artista',
-    followers: '2345 seguindo',
-    images: [require('@/assets/images/tabsHome/imgT1.jpg')],
-    likes: 98,
-    comments: [
-      { id: 'c3', user: 'Julia', text: 'Onde é isso?' },
-    ],
-    description: 'City vibes.',
-    postedAt: Date.now() - 1000 * 60 * 60 * 26, // 1d 2h atrás
-  },
-  {
-    id: 'p3',
-    author: 'Paisagens Urbanas',
-    followers: '7890 seguindo',
-    images: [require('@/assets/images/tabsHome/imgT7.jpg')],
-    likes: 230,
-    comments: [],
-    description: 'Geometrias e luz.',
-    postedAt: Date.now() - 1000 * 60 * 15, // 15min atrás
-  },
-];
-
 export const PostsProvider = ({ children }: { children: React.ReactNode }) => {
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
+  const [posts, setPosts] = useState<Post[]>([]);
+
+  useEffect(() => {
+    buscarPosts();
+  }, []);
+
+  const buscarPosts = async () => {
+    try {
+      const response = await api.get('/posts');
+      
+      const dadosTratados = response.data.map((post: any) => ({
+        id: String(post.id),
+        author: post.nome,
+        followers: `${post.total_seguidores} seguidores`,
+        description: post.legenda,
+        postedAt: new Date(post.criado_em).getTime(),
+        likes: 0,
+        images: [{ uri: post.imagem }],
+        avatar: { uri: post.foto_perfil },
+        comments: []
+      }));
+
+      setPosts(dadosTratados);
+
+    } catch (error) {
+      console.log('Erro ao buscar posts:', error);
+    }
+  };
 
   const addPost = (input: NewPostInput) => {
     const newPost: Post = {
@@ -77,17 +69,31 @@ export const PostsProvider = ({ children }: { children: React.ReactNode }) => {
       author: 'Você',
       followers: 'seguindo',
       images: input.images,
+      avatar: { uri: '' },
       likes: 0,
       comments: [],
       description: input.description,
-    postedAt: Date.now(),
+      postedAt: Date.now(),
     };
+
     setPosts((prev) => [newPost, ...prev]);
   };
 
-  const value = useMemo(() => ({ posts, addPost }), [posts]);
+  const refreshPosts = () => {
+    buscarPosts();
+  };
 
-  return <PostsContext.Provider value={value}>{children}</PostsContext.Provider>;
+  const value = useMemo(() => ({
+    posts,
+    addPost,
+    refreshPosts
+  }), [posts]);
+
+  return (
+    <PostsContext.Provider value={value}>
+      {children}
+    </PostsContext.Provider>
+  );
 };
 
 export const usePosts = () => {

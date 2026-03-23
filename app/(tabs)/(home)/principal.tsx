@@ -14,6 +14,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { Post, usePosts } from '../../../src/context/PostsContext';
 
 const formatRelativeTime = (timestamp: number) => {
+
   const diff = Date.now() - timestamp;
   const minutes = Math.floor(diff / (1000 * 60));
   if (minutes < 1) return 'agora';
@@ -126,7 +127,7 @@ export default function HomeScreen() {
         }),
       ]).start();
     }
-    
+
     if (isMainMenuVisible) {
       Animated.parallel([
         Animated.timing(mainMenuOverlayOpacity, {
@@ -143,10 +144,10 @@ export default function HomeScreen() {
     }
   }, [isUserMenuVisible, isMainMenuVisible]);
 
-  const handleMainMenuPress = () => {/* ... */};
-  const handleCloseMainMenu = () => {/* ... */};
-  const handleUserMenuPress = () => {/* ... */};
-  const handleCloseUserMenu = () => {/* ... */};
+  const handleMainMenuPress = () => {/* ... */ };
+  const handleCloseMainMenu = () => {/* ... */ };
+  const handleUserMenuPress = () => {/* ... */ };
+  const handleCloseUserMenu = () => {/* ... */ };
   const toggleSwitch = () => setIsDarkMode(previousState => !previousState);
 
   const openImageModal = (post: Post) => {
@@ -197,25 +198,25 @@ export default function HomeScreen() {
         {posts.map((post) => {
           const cover = post.images[0];
           return (
-          <View key={post.id} style={styles.cardContainer}>
-            <TouchableOpacity onPress={() => openImageModal(post)}>
-              <Image
-                style={styles.galleryImage}
-                source={cover}
-              />
-            </TouchableOpacity>
-            <View style={styles.cardInfo}>
-              <View style={styles.cardTextContainer}>
-                <Text style={styles.cardAuthor}>{post.author}</Text>
-                <Text style={styles.cardFollowers}>{post.followers}</Text>
+            <View key={post.id} style={styles.cardContainer}>
+              <TouchableOpacity onPress={() => openImageModal(post)}>
+                <Image
+                  style={styles.galleryImage}
+                  source={cover}
+                />
+              </TouchableOpacity>
+              <View style={styles.cardInfo}>
+                <View style={styles.cardTextContainer}>
+                  <Text style={styles.cardAuthor}>{post.author}</Text>
+                  <Text style={styles.cardFollowers}>{post.followers}</Text>
+                </View>
+                <Text style={styles.timeText}>{formatRelativeTime(post.postedAt)}</Text>
+                <AuthorAvatar />
               </View>
-              <Text style={styles.timeText}>{formatRelativeTime(post.postedAt)}</Text>
-              <AuthorAvatar />
+              {post.description ? (
+                <Text style={styles.cardDescription} numberOfLines={2}>{post.description}</Text>
+              ) : null}
             </View>
-            {post.description ? (
-              <Text style={styles.cardDescription} numberOfLines={2}>{post.description}</Text>
-            ) : null}
-          </View>
           );
         })}
       </ScrollView>
@@ -323,7 +324,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   modalUserAvatar: {
-    width: 40, 
+    width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: '#555',
