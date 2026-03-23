@@ -14,7 +14,6 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { Post, usePosts } from '../../../src/context/PostsContext';
 
 const formatRelativeTime = (timestamp: number) => {
-
   const diff = Date.now() - timestamp;
   const minutes = Math.floor(diff / (1000 * 60));
   if (minutes < 1) return 'agora';
@@ -26,13 +25,13 @@ const formatRelativeTime = (timestamp: number) => {
 };
 
 interface AuthorAvatarProps {
+  source: any;
   style?: StyleProp<ImageStyle>;
 }
 
-const denjiAvatar = require('@/assets/images/perfil/denji.jpg');
-
-const AuthorAvatar: React.FC<AuthorAvatarProps> = ({ style }) => (
-  <Image source={denjiAvatar} style={[styles.avatar, style]} />
+// 🔥 AGORA USA A IMAGEM DA API
+const AuthorAvatar: React.FC<AuthorAvatarProps> = ({ source, style }) => (
+  <Image source={source} style={[styles.avatar, style]} />
 );
 
 const ModalHeader = ({ onClose }: { onClose: () => void }) => (
@@ -52,25 +51,25 @@ const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
   if (!post) return null;
 
   return (
-    <Modal
-      animationType="slide"
-      visible={visible}
-      onRequestClose={onClose}
-    >
+    <Modal animationType="slide" visible={visible} onRequestClose={onClose}>
       <SafeAreaView style={styles.modalContainer}>
         <ScrollView>
           <ModalHeader onClose={onClose} />
+
           <View style={styles.modalHeader}>
-            <AuthorAvatar style={styles.modalUserAvatar} />
+            <AuthorAvatar source={post.avatar} style={styles.modalUserAvatar} />
             <Text style={styles.modalUserName}>{post.author}</Text>
           </View>
+
           {post.images.map((img, idx) => (
             <Image key={idx} source={img} style={styles.modalImage} />
           ))}
+
           <View style={styles.modalContent}>
-            {post.description ? (
+            {post.description && (
               <Text style={styles.modalDescription}>{post.description}</Text>
-            ) : null}
+            )}
+
             <View style={styles.likesContainer}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Icon name="thumbs-up-outline" size={22} color="#fff" />
@@ -78,7 +77,9 @@ const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
               </View>
               <Text style={styles.timeText}>{formatRelativeTime(post.postedAt)}</Text>
             </View>
+
             <Text style={styles.commentsTitle}>Comentários</Text>
+
             {post.comments.length > 0 ? (
               post.comments.map(comment => (
                 <View key={comment.id} style={styles.commentContainer}>
@@ -96,72 +97,28 @@ const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
   );
 };
 
-
 export default function HomeScreen() {
-  const [isMainMenuVisible, setIsMainMenuVisible] = useState(false);
-  const [isUserMenuVisible, setIsUserMenuVisible] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { posts, refreshPosts } = usePosts();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const { posts } = usePosts();
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-
-  const userMenuOverlayOpacity = useRef(new Animated.Value(0)).current;
-  const userMenuPosition = useRef(new Animated.Value(Dimensions.get('window').height)).current;
-  const mainMenuOverlayOpacity = useRef(new Animated.Value(0)).current;
-  const mainMenuPosition = useRef(new Animated.Value(Dimensions.get('window').height)).current;
-
-  useEffect(() => {
-    if (isUserMenuVisible) {
-      Animated.parallel([
-        Animated.timing(userMenuOverlayOpacity, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(userMenuPosition, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-
-    if (isMainMenuVisible) {
-      Animated.parallel([
-        Animated.timing(mainMenuOverlayOpacity, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(mainMenuPosition, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [isUserMenuVisible, isMainMenuVisible]);
-
-  const handleMainMenuPress = () => {/* ... */ };
-  const handleCloseMainMenu = () => {/* ... */ };
-  const handleUserMenuPress = () => {/* ... */ };
-  const handleCloseUserMenu = () => {/* ... */ };
-  const toggleSwitch = () => setIsDarkMode(previousState => !previousState);
 
   const openImageModal = (post: Post) => {
     setSelectedPost(post);
     setIsModalVisible(true);
   };
+
   const closeImageModal = () => {
     setIsModalVisible(false);
     setSelectedPost(null);
   };
 
-  const onRefresh = () => {
+  // 🔥 AGORA ATUALIZA DE VERDADE
+  const onRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 800);
+    await refreshPosts();
+    setRefreshing(false);
   };
 
   return (
@@ -175,47 +132,37 @@ export default function HomeScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#000"
-            colors={["#000"]}
-            progressBackgroundColor="#fff"
           />
         }
       >
-        {/* <View style={styles.divCategorias}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.carouselContainer}>
-            <Text style={styles.categorias}>Para você</Text>
-            <Text style={styles.categorias}>Ruas</Text>
-            <Text style={styles.categorias}>Arte digital</Text>
-            <Text style={styles.categorias}>Modernismo</Text>
-            <Text style={styles.categorias}>Paisagem</Text>
-            <Text style={styles.categorias}>Abstrato</Text>
-            <Text style={styles.categorias}>Retratos</Text>
-          </ScrollView>
-        </View> */}
         {posts.map((post) => {
           const cover = post.images[0];
+
           return (
             <View key={post.id} style={styles.cardContainer}>
               <TouchableOpacity onPress={() => openImageModal(post)}>
-                <Image
-                  style={styles.galleryImage}
-                  source={cover}
-                />
+                <Image style={styles.galleryImage} source={cover} />
               </TouchableOpacity>
+
               <View style={styles.cardInfo}>
                 <View style={styles.cardTextContainer}>
                   <Text style={styles.cardAuthor}>{post.author}</Text>
                   <Text style={styles.cardFollowers}>{post.followers}</Text>
                 </View>
-                <Text style={styles.timeText}>{formatRelativeTime(post.postedAt)}</Text>
-                <AuthorAvatar />
+
+                <Text style={styles.timeText}>
+                  {formatRelativeTime(post.postedAt)}
+                </Text>
+
+                {/* 🔥 AQUI ESTÁ A CORREÇÃO */}
+                <AuthorAvatar source={post.avatar} />
               </View>
-              {post.description ? (
-                <Text style={styles.cardDescription} numberOfLines={2}>{post.description}</Text>
-              ) : null}
+
+              {post.description && (
+                <Text style={styles.cardDescription} numberOfLines={2}>
+                  {post.description}
+                </Text>
+              )}
             </View>
           );
         })}

@@ -43,7 +43,7 @@ export const PostsProvider = ({ children }: { children: React.ReactNode }) => {
   const buscarPosts = async () => {
     try {
       const response = await api.get('/posts');
-      
+
       const dadosTratados = response.data.map((post: any) => ({
         id: String(post.id),
         author: post.nome,
