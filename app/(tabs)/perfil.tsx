@@ -1,17 +1,20 @@
-import React, { useMemo, useState } from 'react';
+import { api } from '@/src/services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-    Dimensions,
-    Image,
-    ImageBackground,
-    ImageSourcePropType,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Image,
+  ImageBackground,
+  ImageSourcePropType,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Post, usePosts } from '../../src/context/PostsContext';
@@ -43,12 +46,15 @@ interface PostDetailModalProps {
   visible: boolean;
   onClose: () => void;
   post: Post | null;
-  userLogo: ImageSourcePropType;
-  userName: string;
+  currentUserId?: string | null;
+  currentUserName?: string;
+  onOptions: (post: Post) => void;
 }
 
-const PostDetailModal = ({ visible, onClose, post, userLogo, userName }: PostDetailModalProps) => {
+const PostDetailModal = ({ visible, onClose, post, currentUserId, currentUserName, onOptions }: PostDetailModalProps) => {
   if (!post) return null;
+
+  const isOwner = (currentUserId && post.userId === currentUserId) || (!!currentUserName && post.author === currentUserName);
 
   return (
     <Modal
@@ -61,8 +67,13 @@ const PostDetailModal = ({ visible, onClose, post, userLogo, userName }: PostDet
           <ModalHeader onClose={onClose} />
 
           <View style={styles.modalHeader}>
-            <Image source={userLogo} style={styles.modalUserAvatar} />
-            <Text style={styles.modalUserName}>{userName}</Text>
+            <Image source={post.avatar} style={styles.modalUserAvatar} />
+            <Text style={styles.modalUserName}>{post.author}</Text>
+            {isOwner && (
+              <TouchableOpacity style={styles.moreButton} onPress={() => onOptions(post)}>
+                <Icon name="ellipsis-vertical" size={22} color="#fff" />
+              </TouchableOpacity>
+            )}
           </View>
           {post.images.map((img, idx) => (
             <Image key={idx} source={img} style={styles.modalImage} />
@@ -129,7 +140,7 @@ const SimpleImageModal = ({ visible, onClose, image }: SimpleImageModalProps) =>
 
 
 const ProfileScreen = () => {
-  const { posts } = usePosts();
+  const { posts, removePost, refreshPosts } = usePosts();
   const [activeTab, setActiveTab] = useState<TabName>('Postagens');
 
   const [isPostModalVisible, setIsPostModalVisible] = useState(false);
@@ -139,16 +150,80 @@ const ProfileScreen = () => {
   const [selectedProfileImage, setSelectedProfileImage] = useState<ImageSourcePropType | null>(null);
 
   const headerImageUrl = require('../../assets/images/perfil/bannerDenji.jpg');
-  const profileImageUrl = require('../../assets/images/perfil/denji.jpg');
-  const userName = "Seek";
+  const profileFallback = require('../../assets/images/perfil/denji.jpg');
 
-  const userPosts = useMemo(() => posts.filter((p) => p.author === 'Você'), [posts]);
-  const galleryPosts = useMemo(() => {
-    if (!posts.length) return [];
-    if (!userPosts.length) return posts;
-    const others = posts.filter((p) => p.author !== 'Você');
-    return [...userPosts, ...others];
-  }, [posts, userPosts]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>('');
+  const [userAvatar, setUserAvatar] = useState<ImageSourcePropType>(profileFallback);
+
+  const [optionsPost, setOptionsPost] = useState<Post | null>(null);
+  const [showInlineMenu, setShowInlineMenu] = useState(false);
+  const [remoteUserPosts, setRemoteUserPosts] = useState<Post[]>([]);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const uid = await AsyncStorage.getItem('userId');
+        setCurrentUserId(uid);
+        console.log('userId salvo no AsyncStorage:', uid);
+        if (!uid) return;
+
+        const response = await api.get(`/usuarios/foto-perfil/${uid}`);
+        const data = response.data;
+        setUserName(data?.nome || '');
+        if (data?.foto) {
+          setUserAvatar({ uri: data.foto });
+        }
+      } catch (error) {
+        console.log('Erro ao carregar usuário no perfil:', error);
+      }
+    };
+
+    loadUser();
+    refreshPosts();
+  }, []);
+
+  useEffect(() => {
+    const fetchUserPosts = async () => {
+      if (!currentUserId) return;
+      try {
+        const { data } = await api.get(`/posts/usuario/${currentUserId}`);
+        const mapped: Post[] = (data || []).map((post: any) => ({
+          id: String(post.id),
+          author: post.nome,
+          userId: post.user_id ? String(post.user_id) : currentUserId,
+          followers: `${post.total_seguidores ?? 0} seguidores`,
+          description: post.legenda,
+          postedAt: post.criado_em ? new Date(post.criado_em).getTime() : Date.now(),
+          likes: 0,
+          images: post.imagem ? [{ uri: post.imagem }] : [],
+          avatar: post.foto_perfil ? { uri: post.foto_perfil } : userAvatar,
+          comments: [],
+        }));
+        setRemoteUserPosts(mapped);
+      } catch (error) {
+        console.log('Erro ao buscar posts do usuário:', error);
+      }
+    };
+
+    fetchUserPosts();
+  }, [currentUserId, userAvatar]);
+
+  const userPosts = useMemo(() => {
+    // 1) Primeiro tenta pelo userId
+    const mineById = currentUserId ? posts.filter((p) => p.userId === currentUserId) : [];
+    if (mineById.length) return mineById;
+
+    // 2) Fallback por nome do usuário carregado da API
+    const mineByName = userName ? posts.filter((p) => p.author === userName) : [];
+    if (mineByName.length) return mineByName;
+
+    // 3) Último fallback: posts marcados como "Você" (caso ainda não tenha info do usuário)
+    return posts.filter((p) => p.author === 'Você');
+  }, [posts, currentUserId, userName]);
+
+  const galleryPosts = useMemo(() => userPosts, [userPosts]);
+  const displayPosts = remoteUserPosts.length ? remoteUserPosts : galleryPosts;
 
   const handleOpenPostModal = (post: Post) => {
     setSelectedPost(post);
@@ -157,6 +232,8 @@ const ProfileScreen = () => {
   const handleClosePostModal = () => {
     setIsPostModalVisible(false);
     setSelectedPost(null);
+    setShowInlineMenu(false);
+    setOptionsPost(null);
   };
 
   const handleOpenProfileModal = (image: ImageSourcePropType) => {
@@ -179,12 +256,12 @@ const ProfileScreen = () => {
 
   const renderTabContent = () => {
     if (activeTab === 'Postagens') {
-      if (!galleryPosts.length) {
+      if (!displayPosts.length) {
         return <Text style={styles.placeholderText}>Você ainda não publicou nada.</Text>;
       }
       return (
         <View style={styles.photoGrid}>
-          {galleryPosts.map((post) => {
+          {displayPosts.map((post) => {
             const cover = post.images[0];
             if (!cover) return null;
             return (
@@ -216,18 +293,21 @@ const ProfileScreen = () => {
               style={styles.headerBackground}
             />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleOpenProfileModal(profileImageUrl)}>
+          <TouchableOpacity onPress={() => handleOpenProfileModal(userAvatar)}>
             <Image
-              source={profileImageUrl}
+              source={userAvatar}
               style={styles.profileImage}
             />
           </TouchableOpacity>
         </View>
 
         <View style={styles.userInfoContainer}>
-          <Text style={styles.userName}>{userName}</Text>
+          <Text style={styles.userName}>{userName || 'Meu perfil'}</Text>
           <Text style={styles.userRole}>Empresa</Text>
           <Text style={styles.userHandle}>@seeking</Text>
+          <Text style={styles.userIdDebug}>
+            {currentUserId ? `userId: ${currentUserId}` : 'userId não encontrado no dispositivo'}
+          </Text>
         </View>
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={[styles.button, styles.followButton]}>
@@ -250,14 +330,61 @@ const ProfileScreen = () => {
         visible={isPostModalVisible}
         onClose={handleClosePostModal}
         post={selectedPost}
-        userName={userName}
-        userLogo={profileImageUrl}
+        currentUserId={currentUserId}
+        currentUserName={userName}
+        onOptions={(post) => {
+          setOptionsPost(post);
+          setShowInlineMenu(true);
+        }}
       />
       <SimpleImageModal
         visible={isProfileModalVisible}
         onClose={handleCloseProfileModal}
         image={selectedProfileImage}
       />
+
+      <Modal
+        transparent
+        animationType="fade"
+        visible={!!optionsPost && showInlineMenu}
+        onRequestClose={() => { setShowInlineMenu(false); setOptionsPost(null); }}
+      >
+        <View style={styles.inlineOverlay} pointerEvents="box-none">
+          <TouchableOpacity
+            style={styles.inlineBackdrop}
+            onPress={() => { setShowInlineMenu(false); setOptionsPost(null); }}
+          />
+          <View style={styles.inlineBox}>
+            <TouchableOpacity
+              style={styles.inlineItem}
+              onPress={() => {
+                if (!optionsPost) return;
+                router.push({ pathname: '/editarPost', params: { id: optionsPost.id } as any });
+                setShowInlineMenu(false);
+                setOptionsPost(null);
+              }}
+            >
+              <Text style={styles.optionText}>Editar post</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.inlineItem, styles.optionDelete]}
+              onPress={async () => {
+                if (!optionsPost) return;
+                await removePost(optionsPost.id);
+                setRemoteUserPosts((prev) => prev.filter((p) => p.id !== optionsPost.id));
+                await refreshPosts();
+                setShowInlineMenu(false);
+                setOptionsPost(null);
+              }}
+            >
+              <Text style={[styles.optionText, styles.optionDeleteText]}>Excluir post</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.inlineItem} onPress={() => { setShowInlineMenu(false); setOptionsPost(null); }}>
+              <Text style={styles.optionText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -273,6 +400,7 @@ const styles = StyleSheet.create({
   userName: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
   userRole: { fontSize: 16, color: '#ccc', marginTop: 4 },
   userHandle: { fontSize: 14, color: '#888', marginTop: 4 },
+  userIdDebug: { fontSize: 12, color: '#666', marginTop: 2 },
   buttonContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20, paddingHorizontal: 20 },
   button: { flex: 1, paddingVertical: 12, borderRadius: 25, marginHorizontal: 8, alignItems: 'center' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
@@ -309,6 +437,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingTop: 8, 
+  },
+  moreButton: {
+    marginLeft: 'auto',
+    padding: 4,
   },
   modalUserAvatar: {
     width: 50,
@@ -375,6 +507,64 @@ const styles = StyleSheet.create({
   commentText: {
     fontSize: 14,
     color: '#ddd',
+  },
+
+  optionsOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  optionsCard: {
+    backgroundColor: '#111',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  optionItem: {
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#222',
+  },
+  optionText: {
+    color: '#fff',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  optionDelete: {
+    borderBottomColor: '#222',
+  },
+  optionDeleteText: {
+    color: '#ff5c5c',
+    fontWeight: 'bold',
+  },
+  inlineOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 30,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+  },
+  inlineBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  inlineBox: {
+    marginTop: 80,
+    marginRight: 12,
+    backgroundColor: '#111',
+    borderRadius: 12,
+    paddingVertical: 6,
+    width: 200,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 10,
+  },
+  inlineItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#222',
   },
 
   simpleImageContainer: {

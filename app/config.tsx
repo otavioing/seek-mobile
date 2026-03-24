@@ -54,19 +54,23 @@ export default function Config() {
         <Link href="/privacidade" asChild>
           <TouchableOpacity style={styles.itemRow}>
             <Text style={styles.itemText}>Privacidade</Text>
+            <Text style={styles.arrowText}>➔</Text>
           </TouchableOpacity>
         </Link>
 
         <TouchableOpacity style={styles.itemRow}>
           <Text style={styles.itemText}>Notificações</Text>
+          <Text style={styles.arrowText}>➔</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.itemRow}>
           <Text style={styles.itemText}>Informações do Usuário</Text>
+          <Text style={styles.arrowText}>➔</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.itemRow}>
           <Text style={styles.itemText}>Email e Senha</Text>
+          <Text style={styles.arrowText}>➔</Text>
         </TouchableOpacity>
 
         {/* Acessibilidade + switch de modo escuro/claro */}
@@ -110,11 +114,13 @@ export default function Config() {
         {/* Sair */}
         <TouchableOpacity onPress={handleLogout} style={styles.itemRow}>
           <Text style={styles.logoutText}>Sair</Text>
+          <Text style={styles.arrowText}>➔</Text>
         </TouchableOpacity>
 
         {/* Excluir conta */}
         <TouchableOpacity style={styles.itemRow}>
           <Text style={styles.deleteText}>Excluir conta</Text>
+          <Text style={styles.arrowText}>➔</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -161,18 +167,23 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#FFFFFF",
     marginTop: 8,
-    marginBottom: 32,
+    marginBottom: 20,
   },
   itemRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 20,
+    marginBottom: 10,
   },
   itemText: {
     color: "white",
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "500",
+  },
+  arrowText: {
+    color: "#7A7A7A",
+    fontSize: 16,
+    marginLeft: "auto",
   },
   accessibilityRow: {
     marginTop: 10,
@@ -182,27 +193,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   switch: {
-    width: 48,
-    height: 24,
-    borderRadius: 12,
+    width: 44,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: "#fff",
     justifyContent: "center",
     paddingHorizontal: 2,
     marginHorizontal: 10,
   },
   circle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
   },
   logoutText: {
     color: "#FFFFFF",
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "500",
   },
   deleteText: {
     color: "#FF4B4B",
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "500",
   },
 });

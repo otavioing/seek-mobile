@@ -53,7 +53,7 @@ export default function UploadScreen() {
     if (!drafts.length) return;
     try {
       setPublishing(true);
-      addPost({
+      await addPost({
         images: drafts.map((d) => ({ uri: d.uri })),
         description: drafts.map((d) => d.description).filter(Boolean).join(' \n'),
       });

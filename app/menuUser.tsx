@@ -1,23 +1,21 @@
-import { Link, useRouter } from "expo-router";
-import {
-  Image,
-  StyleSheet,
-  Text,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { Svg, Path } from "react-native-svg";
 import { api } from '@/src/services/api';
-import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Link, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import {
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from "react-native";
+import { Path, Svg } from "react-native-svg";
 
 
 export default function menuUser() {
 
   const color = "white";
-  const size = 60;
+  const size = 48;
   const router = useRouter();
 
   const [nome, setNome] = useState("Carregando...");
@@ -56,34 +54,35 @@ export default function menuUser() {
 
       <View style={styles.header}>
         <Link href="/(tabs)/perfil" asChild>
-          <TouchableOpacity style={styles.header}>
+          <TouchableOpacity style={styles.headerRow}>
             {foto ? (
               <Image
                 source={{ uri: foto }}
                 style={{
-                  width: 70,
-                  height: 70,
-                  borderRadius: 35,
+                  width: 64,
+                  height: 64,
+                  borderRadius: 32,
                 }}
               />
             ) : (
-              <Svg width={70} height={70} viewBox="0 0 80 80">
+              <Svg width={64} height={64} viewBox="0 0 80 80">
                 {/* fallback caso não tenha foto */}
               </Svg>
             )}
 
             <View style={{ justifyContent: "flex-start" }}>
-              <Text style={{ color: "#FFFFFF", fontSize: 21, fontWeight: "700" }}>
+              <Text style={{ color: "#FFFFFF", fontSize: 20, fontWeight: "700" }}>
                 {nome}
               </Text>
               <Text style={{ color: "#FFFFFF", fontSize: 11 }}>ver perfil</Text>
             </View>
 
             <Svg
-              width={"19.88px"}
-              height={"39.75px"}
+              width={18}
+              height={36}
               viewBox="0 0 26 45"
               fill="none"
+              style={styles.arrowRight}
             >
               <Path
                 d="M2.25 2.25L22.125 22.125L2.25 42"
@@ -115,7 +114,7 @@ export default function menuUser() {
         </Svg>
         <Text style={styles.textoFiltro}>Notificação</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.fbtContainer}>
+  <TouchableOpacity style={styles.fbtContainer}>
         <Svg width={size} height={size} viewBox="0 0 60 60" fill="none">
           <Path
             d="M30 52.5C26.875 52.5 23.9479 51.9062 21.2188 50.7188C18.4896 49.5312 16.1146 47.9271 14.0938 45.9062C12.0729 43.8854 10.4688 41.5104 9.28125 38.7812C8.09375 36.0521 7.5 33.125 7.5 30C7.5 26.875 8.09375 23.9479 9.28125 21.2188C10.4688 18.4896 12.0729 16.1146 14.0938 14.0938C16.1146 12.0729 18.4896 10.4688 21.2188 9.28125C23.9479 8.09375 26.875 7.5 30 7.5C33.4167 7.5 36.6562 8.22917 39.7188 9.6875C42.7812 11.1458 45.375 13.2083 47.5 15.875V10H52.5V25H37.5V20H44.375C42.6667 17.6667 40.5625 15.8333 38.0625 14.5C35.5625 13.1667 32.875 12.5 30 12.5C25.125 12.5 20.9896 14.1979 17.5938 17.5938C14.1979 20.9896 12.5 25.125 12.5 30C12.5 34.875 14.1979 39.0104 17.5938 42.4062C20.9896 45.8021 25.125 47.5 30 47.5C34.375 47.5 38.1979 46.0833 41.4688 43.25C44.7396 40.4167 46.6667 36.8333 47.25 32.5H52.375C51.75 38.2083 49.3021 42.9688 45.0312 46.7812C40.7604 50.5938 35.75 52.5 30 52.5ZM37 40.5L27.5 31V17.5H32.5V29L40.5 37L37 40.5Z"
@@ -124,13 +123,12 @@ export default function menuUser() {
         </Svg>
         <Text style={styles.textoFiltro}>Atualizações</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.fbtContainer}>
+  <TouchableOpacity style={styles.fbtContainer}>
         <Svg
           width={size}
           height={size}
           viewBox="0 0 60 60"
           fill="none"
-          xmlns="http://www.w3.org/2000/svg"
         >
           <Path
             d="M35 55V47.3125L48.8125 33.5625C49.1875 33.1875 49.6042 32.9167 50.0625 32.75C50.5208 32.5833 50.9792 32.5 51.4375 32.5C51.9375 32.5 52.4167 32.5938 52.875 32.7812C53.3333 32.9688 53.75 33.25 54.125 33.625L56.4375 35.9375C56.7708 36.3125 57.0312 36.7292 57.2188 37.1875C57.4062 37.6458 57.5 38.1042 57.5 38.5625C57.5 39.0208 57.4167 39.4896 57.25 39.9688C57.0833 40.4479 56.8125 40.875 56.4375 41.25L42.6875 55H35ZM38.75 51.25H41.125L48.6875 43.625L47.5625 42.4375L46.375 41.3125L38.75 48.875V51.25ZM15 55C13.625 55 12.4479 54.5104 11.4688 53.5312C10.4896 52.5521 10 51.375 10 50V10C10 8.625 10.4896 7.44792 11.4688 6.46875C12.4479 5.48958 13.625 5 15 5H35L50 20V27.5H45V22.5H32.5V10H15V50H30V55H15ZM47.5625 42.4375L46.375 41.3125L48.6875 43.625L47.5625 42.4375Z"
@@ -139,7 +137,7 @@ export default function menuUser() {
         </Svg>
         <Text style={styles.textoFiltro}>Modificar Projetos</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.fbtContainer}>
+  <TouchableOpacity style={styles.fbtContainer}>
         <Svg width={size} height={size} viewBox="0 0 60 60" fill="none">
           <Path
             d="M15 53V48L17.5 45.5H10C8.625 45.5 7.44792 45.0104 6.46875 44.0312C5.48958 43.0521 5 41.875 5 40.5V13C5 11.625 5.48958 10.4479 6.46875 9.46875C7.44792 8.48958 8.625 8 10 8H30V13H10V40.5H50V33H55V40.5C55 41.875 54.5104 43.0521 53.5312 44.0312C52.5521 45.0104 51.375 45.5 50 45.5H42.5L45 48V53H15ZM37.5 38L25 25.5L28.5 22L35 28.4375V8H40V28.4375L46.5 22L50 25.5L37.5 38Z"
@@ -149,7 +147,7 @@ export default function menuUser() {
         <Text style={styles.textoFiltro}>Modificar Cursos</Text>
       </TouchableOpacity>
       <Link href="/config" asChild>
-        <TouchableOpacity style={styles.fbtContainer}>
+  <TouchableOpacity style={styles.fbtContainer}>
           <Svg
             width={size}
             height={size}
@@ -164,7 +162,7 @@ export default function menuUser() {
           <Text style={styles.textoFiltro}>Configurações</Text>
         </TouchableOpacity>
       </Link>
-      <TouchableOpacity style={styles.fbtContainer}>
+  <TouchableOpacity style={styles.fbtContainer}>
         <Svg width={size} height={size} viewBox="0 0 60 60" fill="none">
           <Path
             d="M17.2083 41.7917H22.125V29.5H17.2083V41.7917ZM36.875 41.7917H41.7917V17.2083H36.875V41.7917ZM27.0417 41.7917H31.9583V34.4167H27.0417V41.7917ZM27.0417 29.5H31.9583V24.5833H27.0417V29.5ZM12.2917 51.625C10.9396 51.625 9.78212 51.1436 8.81927 50.1807C7.85642 49.2179 7.375 48.0604 7.375 46.7083V12.2917C7.375 10.9396 7.85642 9.78212 8.81927 8.81927C9.78212 7.85642 10.9396 7.375 12.2917 7.375H46.7083C48.0604 7.375 49.2179 7.85642 50.1807 8.81927C51.1436 9.78212 51.625 10.9396 51.625 12.2917V46.7083C51.625 48.0604 51.1436 49.2179 50.1807 50.1807C49.2179 51.1436 48.0604 51.625 46.7083 51.625H12.2917ZM12.2917 46.7083H46.7083V12.2917H12.2917V46.7083Z"
@@ -173,7 +171,7 @@ export default function menuUser() {
         </Svg>
         <Text style={styles.textoFiltro}>Analytics</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.fbtContainer}>
+  <TouchableOpacity style={styles.fbtContainer}>
         <Svg width={size} height={size} viewBox="0 0 60 60" fill="none">
           <Path
             d="M12 52C10.625 52 9.44792 51.5104 8.46875 50.5312C7.48958 49.5521 7 48.375 7 47V12C7 10.625 7.48958 9.44792 8.46875 8.46875C9.44792 7.48958 10.625 7 12 7H29.5V12H12V47H29.5V52H12ZM39.5 42L36.0625 38.375L42.4375 32H22V27H42.4375L36.0625 20.625L39.5 17L52 29.5L39.5 42Z"
@@ -213,21 +211,31 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
-    gap: 25,
-    paddingHorizontal: 10,
-    paddingTop: 20,
+    paddingHorizontal: 16,
+    paddingTop: 18,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    gap: 14,
+    width: "100%",
   },
   fbtContainer: {
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "flex-start",
-    marginTop: 25,
-    paddingHorizontal: 20,
+    marginTop: 18,
+    paddingHorizontal: 16,
     width: "100%",
   },
   textoFiltro: {
     color: "white",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "500",
+    marginLeft: 12,
+  },
+  arrowRight: {
+    marginLeft: "auto",
   },
 });
