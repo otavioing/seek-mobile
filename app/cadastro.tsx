@@ -1,6 +1,5 @@
 import { api } from '@/src/services/api';
 import { router } from 'expo-router';
-import { useState } from 'react';
 import { useState, useEffect } from 'react';
 import { Animated, Alert, colorScheme, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { MaterialIcons } from '@expo/vector-icons';
