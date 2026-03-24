@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   main: {
-    flex: 1,
+    flex: 6/10,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
