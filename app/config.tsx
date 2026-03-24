@@ -58,7 +58,10 @@ export default function Config() {
           </TouchableOpacity>
         </Link>
 
-        <TouchableOpacity style={styles.itemRow}>
+        <TouchableOpacity
+          style={styles.itemRow}
+          onPress={() => router.push('/notificacoe')}
+        >
           <Text style={styles.itemText}>Notificações</Text>
           <Text style={styles.arrowText}>➔</Text>
         </TouchableOpacity>
