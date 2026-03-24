@@ -259,7 +259,6 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
   },
-<<<<<<< Updated upstream
   main: {
     flex: 6/10,
     width: '100%',
@@ -290,8 +289,6 @@ const styles = StyleSheet.create({
     aspectRatio: 0.65,
     resizeMode: 'contain',
   },
-=======
->>>>>>> Stashed changes
   input: {
     backgroundColor: '#fff',
     borderRadius: 8,
