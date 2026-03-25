@@ -2,12 +2,7 @@ import React, { useState } from 'react';
 import {
   FlatList,
   Image,
-  ImageSourcePropType // Para as imagens locais
-  ,
-
-
-
-
+  ImageSourcePropType,
   Modal,
   SafeAreaView,
   ScrollView,

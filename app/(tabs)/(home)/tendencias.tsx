@@ -3,24 +3,25 @@ import { useIsFocused } from "@react-navigation/native";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Dimensions,
-    Image,
-    ImageSourcePropType,
-    Keyboard,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+  Dimensions,
+  Image,
+  ImageSourcePropType,
+  Keyboard,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
+import { api } from '@/src/services/api';
 
 /* ============================================================
-   DATA DAS IMAGENS / POSTS
+   TYPES
 ============================================================ */
 
 interface Comment {
@@ -36,77 +37,18 @@ interface Post {
   followers: string;
   likes: number;
   comments: Comment[];
+  userImage: ImageSourcePropType; // 👈 NOVO
 }
 
+/* ============================================================
+   VARIÁVEIS
+============================================================ */
+
 const denjiAvatar = require("../../../assets/images/perfil/denji.jpg");
-
-const foto1Post: Post = {
-  id: "f1",
-  imageUrl: require("../../../assets/images/tabsHome/imgT1.jpg"),
-  author: "Nome autor",
-  followers: "10000 seguindo",
-  likes: 138,
-  comments: [{ id: "c1", user: "Marcos", text: "Adorei as cores." }],
-};
-
-const foto2Post: Post = {
-  id: "f2",
-  imageUrl: require("../../../assets/images/tabsHome/imgT2.jpg"),
-  author: "Outro autor",
-  followers: "1500 seguindo",
-  likes: 204,
-  comments: [{ id: "c2", user: "Ana", text: "Que foto incrível!" }],
-};
-
-const modPost1: Post = {
-  id: "m1",
-  imageUrl: require("../../../assets/images/tabsHome/imgT3.jpg"),
-  author: "Artista Moderno 1",
-  followers: "5000 seguindo",
-  likes: 301,
-  comments: [{ id: "c3", user: "Julia", text: "Abstrato!" }],
-};
-
-const modPost2: Post = {
-  id: "m2",
-  imageUrl: require("../../../assets/images/tabsHome/imgT4.jpg"),
-  author: "Estúdio Criativo",
-  followers: "12k seguindo",
-  likes: 450,
-  comments: [],
-};
-
-const modPost3: Post = {
-  id: "m3",
-  imageUrl: require("../../../assets/images/tabsHome/imgT5.jpg"),
-  author: "Formas & Cores",
-  followers: "9800 seguindo",
-  likes: 210,
-  comments: [{ id: "c4", user: "Leo", text: "Incrível." }],
-};
-
-const iluPost1: Post = {
-  id: "i1",
-  imageUrl: require("../../../assets/images/tabsHome/imgT6.jpg"),
-  author: "Ilustrador Digital",
-  followers: "8200 seguindo",
-  likes: 720,
-  comments: [{ id: "c5", user: "Sara", text: "Amei o traço." }],
-};
-
-const iluPost2: Post = {
-  id: "i2",
-  imageUrl: require("../../../assets/images/tabsHome/imgT7.jpg"),
-  author: "Rascunhos S.A.",
-  followers: "3100 seguindo",
-  likes: 190,
-  comments: [],
-};
-
 const { width } = Dimensions.get("window");
 
 /* ============================================================
-   MODAL DETALHE DO POST
+   MODAL
 ============================================================ */
 
 const ModalHeader = ({ onClose }: { onClose: () => void }) => (
@@ -116,17 +58,7 @@ const ModalHeader = ({ onClose }: { onClose: () => void }) => (
   </TouchableOpacity>
 );
 
-interface PostDetailModalProps {
-  visible: boolean;
-  onClose: () => void;
-  post: Post | null;
-}
-
-const PostDetailModal = ({
-  visible,
-  onClose,
-  post,
-}: PostDetailModalProps) => {
+const PostDetailModal = ({ visible, onClose, post }: any) => {
   if (!post) return null;
 
   return (
@@ -136,7 +68,7 @@ const PostDetailModal = ({
           <ModalHeader onClose={onClose} />
 
           <View style={styles.modalHeader}>
-            <Image source={denjiAvatar} style={styles.authorLogo} />
+            <Image source={post.userImage} style={styles.authorLogo} />
             <Text style={styles.modalUserName}>{post.author}</Text>
           </View>
 
@@ -151,7 +83,7 @@ const PostDetailModal = ({
             <Text style={styles.commentsTitle}>Comentários</Text>
 
             {post.comments.length > 0 ? (
-              post.comments.map((c) => (
+              post.comments.map((c: any) => (
                 <View key={c.id} style={styles.commentContainer}>
                   <Text style={styles.commentUser}>{c.user}</Text>
                   <Text style={styles.commentText}>{c.text}</Text>
@@ -171,65 +103,92 @@ const PostDetailModal = ({
    COMPONENTES
 ============================================================ */
 
-const AuthorInfo = ({ author, followers }: { author: string; followers: string }) => (
+const AuthorInfo = ({
+  author,
+  userImage,
+}: {
+  author: string;
+  userImage: ImageSourcePropType;
+}) => (
   <View style={styles.authorInfo}>
-    <View>
-      <Text style={styles.authorName}>{author}</Text>
-      <Text style={styles.authorFollowers}>{followers}</Text>
-    </View>
-    <Image source={denjiAvatar} style={styles.authorLogo} />
+    <Text style={styles.authorName}>{author}</Text>
+    <Image source={userImage} style={styles.authorLogo} />
   </View>
 );
 
-const PostCard = ({
-  post,
-  onPress,
-  style,
-}: {
-  post: Post;
-  onPress: (post: Post) => void;
-  style?: any;
-}) => (
+const PostCard = ({ post, onPress, style }: any) => (
   <TouchableOpacity onPress={() => onPress(post)}>
     <View style={[styles.card, style]}>
       <Image source={post.imageUrl} style={styles.cardImage} />
-      <AuthorInfo author={post.author} followers={post.followers} />
+      <AuthorInfo author={post.author} userImage={post.userImage} />
     </View>
   </TouchableOpacity>
 );
 
-const SectionCarousel = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) => (
+const SectionCarousel = ({ title, children }: any) => (
   <View style={styles.section}>
     <Text style={styles.sectionTitle}>{title}</Text>
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.carouselContainer}
-    >
+
+    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
       {children}
     </ScrollView>
   </View>
 );
 
 /* ============================================================
-   TELA PRINCIPAL - TENDÊNCIAS
+   TELA PRINCIPAL
 ============================================================ */
 
 const TendenciasScreen = () => {
+  const [categorias, setCategorias] = useState<any[]>([]);
+  const [postsPorCategoria, setPostsPorCategoria] = useState<any>({});
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [selectedPost, setSelectedPost] = useState<any>(null);
 
   const inputRef = useRef<TextInput>(null);
   const params = useLocalSearchParams();
   const isFocused = useIsFocused();
 
-  const handleOpenModal = (post: Post) => {
+  useEffect(() => {
+    fetchTendencias();
+  }, []);
+
+  const fetchTendencias = async () => {
+    try {
+      const resCategorias = await api.get("/tendencias");
+      setCategorias(resCategorias.data);
+
+      const promises = resCategorias.data.map((cat: any) =>
+        api.get(`/tendencias/${cat.id_categoria}`)
+      );
+
+      const responses = await Promise.all(promises);
+
+      const postsTemp: any = {};
+
+      responses.forEach((res, index) => {
+        const categoria = resCategorias.data[index];
+
+        postsTemp[categoria.nome_categoria] = res.data.map((item: any) => ({
+          id: item.id.toString(),
+          imageUrl: { uri: item.imagem },
+          author: item.nome_usuario,
+          followers: "",
+          likes: item.total_likes,
+          comments: [],
+          userImage: item.foto_perfil
+            ? { uri: item.foto_perfil }
+            : require("../../../assets/images/perfil/denji.jpg"), // fallback
+        }));
+      });
+
+      setPostsPorCategoria(postsTemp);
+    } catch (error) {
+      console.error("Erro ao buscar tendências:", error);
+    }
+  };
+
+  const handleOpenModal = (post: any) => {
     setSelectedPost(post);
     setIsModalVisible(true);
   };
@@ -242,6 +201,7 @@ const TendenciasScreen = () => {
   useEffect(() => {
     const shouldFocus = params?.focusSearch;
     const focusFlag = Array.isArray(shouldFocus) ? shouldFocus[0] : shouldFocus;
+
     if (isFocused && focusFlag) {
       const timer = setTimeout(() => inputRef.current?.focus(), 150);
       return () => clearTimeout(timer);
@@ -253,7 +213,7 @@ const TendenciasScreen = () => {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.screen}>
 
-          {/* 🔍 BARRA DE PESQUISA SEMPRE VISÍVEL */}
+          {/* 🔍 SEARCH */}
           <View style={styles.searchContainer}>
             <View style={styles.searchBox}>
               <TextInput
@@ -270,24 +230,23 @@ const TendenciasScreen = () => {
           </View>
 
           <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent}>
-
-            <SectionCarousel title="Fotografia">
-              <PostCard post={foto1Post} onPress={handleOpenModal} style={styles.largeCard} />
-              <PostCard post={foto2Post} onPress={handleOpenModal} style={styles.largeCard} />
-            </SectionCarousel>
-
-            <SectionCarousel title="Modernismo">
-              <PostCard post={modPost1} onPress={handleOpenModal} style={styles.smallCard} />
-              <PostCard post={modPost2} onPress={handleOpenModal} style={styles.smallCard} />
-              <PostCard post={modPost3} onPress={handleOpenModal} style={styles.smallCard} />
-            </SectionCarousel>
-
-            <SectionCarousel title="Ilustração">
-              <PostCard post={iluPost1} onPress={handleOpenModal} style={styles.largeCard} />
-              <PostCard post={iluPost2} onPress={handleOpenModal} style={styles.largeCard} />
-            </SectionCarousel>
-
+            {categorias.map((categoria) => (
+              <SectionCarousel
+                key={categoria.id_categoria}
+                title={categoria.nome_categoria}
+              >
+                {postsPorCategoria[categoria.nome_categoria]?.map((post: any) => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    onPress={handleOpenModal}
+                    style={styles.largeCard}
+                  />
+                ))}
+              </SectionCarousel>
+            ))}
           </ScrollView>
+
         </View>
       </TouchableWithoutFeedback>
 
@@ -299,6 +258,7 @@ const TendenciasScreen = () => {
     </SafeAreaView>
   );
 };
+
 
 /* ============================================================
    ESTILOS

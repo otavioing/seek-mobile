@@ -149,7 +149,8 @@ const ProfileScreen = () => {
   const [isProfileModalVisible, setIsProfileModalVisible] = useState(false);
   const [selectedProfileImage, setSelectedProfileImage] = useState<ImageSourcePropType | null>(null);
 
-  const headerImageUrl = require('../../assets/images/perfil/bannerDenji.jpg');
+  const headerFallback = require('../../assets/images/perfil/denji.jpg');
+  const [headerImageUrl, setHeaderImageUrl] = useState<any>(headerFallback);
   const profileFallback = require('../../assets/images/perfil/denji.jpg');
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -168,12 +169,24 @@ const ProfileScreen = () => {
         console.log('userId salvo no AsyncStorage:', uid);
         if (!uid) return;
 
+        // 🔹 FOTO DE PERFIL
         const response = await api.get(`/usuarios/foto-perfil/${uid}`);
         const data = response.data;
+
         setUserName(data?.nome || '');
+
         if (data?.foto) {
           setUserAvatar({ uri: data.foto });
         }
+
+        // 🔥 BANNER (NOVO)
+        const bannerResponse = await api.get(`/usuarios/foto-banner/${uid}`);
+        const bannerData = bannerResponse.data;
+
+        if (bannerData?.banner) {
+          setHeaderImageUrl({ uri: bannerData.banner });
+        }
+
       } catch (error) {
         console.log('Erro ao carregar usuário no perfil:', error);
       }
@@ -195,7 +208,7 @@ const ProfileScreen = () => {
           followers: `${post.total_seguidores ?? 0} seguidores`,
           description: post.legenda,
           postedAt: post.criado_em ? new Date(post.criado_em).getTime() : Date.now(),
-          likes: 0,
+          likes: post.total_likes ?? 0,
           images: post.imagem ? [{ uri: post.imagem }] : [],
           avatar: post.foto_perfil ? { uri: post.foto_perfil } : userAvatar,
           comments: [],
@@ -308,6 +321,7 @@ const ProfileScreen = () => {
           <Text style={styles.userIdDebug}>
             {currentUserId ? `userId: ${currentUserId}` : 'userId não encontrado no dispositivo'}
           </Text>
+        
         </View>
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={[styles.button, styles.followButton]}>
@@ -436,7 +450,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 8, 
+    paddingTop: 8,
   },
   moreButton: {
     marginLeft: 'auto',
@@ -568,7 +582,7 @@ const styles = StyleSheet.create({
   },
 
   simpleImageContainer: {
-    flex: 1, 
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },

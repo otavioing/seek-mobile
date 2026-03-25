@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   FlatList,
   Image,
@@ -6,12 +6,13 @@ import {
   Modal,
   SafeAreaView,
   ScrollView,
-  StyleSheet,
   Text,
+  StyleSheet,
   TouchableOpacity,
   View
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { api } from '@/src/services/api';
 
 interface Comment {
   id: string;
@@ -30,61 +31,6 @@ interface Course {
   comments: Comment[];
 }
 
-const MOCK_DATA: Course[] = [
-  {
-    id: '1',
-    title: 'Design Gráfico: Fundamentos',
-    author: 'José Antonio',
-    price: 'R$23,00/mês',
-    duration: '48horas',
-    imageUrl: require('../../assets/images/imgC1.png'),
-    description: 'Aprenda os fundamentos do design gráfico, desde a teoria das cores até a tipografia avançada. Este curso cobre Photoshop, Illustrator e Figma.',
-    comments: [
-      { id: 'c1', user: 'Ana P.', text: 'Curso excelente, aprendi muito sobre tipografia!' },
-      { id: 'c2', user: 'Bruno S.', text: 'O professor explica muito bem, recomendo.' },
-    ],
-  },
-  {
-    id: '2',
-    title: 'Fotografia Urbana Noturna',
-    author: 'Maria Clara',
-    price: 'R$19,90/mês',
-    duration: '32horas',
-    imageUrl: require('../../assets/images/imgC2.png'),
-    description: 'Explore a cidade com sua câmera. Este curso foca em composição, longa exposição e como capturar a essência da vida urbana após o pôr do sol.',
-    comments: [
-      { id: 'c3', user: 'Carla D.', text: 'As dicas de ISO foram salvadoras.' },
-      { id: 'c4', user: 'Marcos', text: 'Ótimo para iniciantes.' },
-    ],
-  },
-  {
-    id: '3',
-    title: 'Ilustração Digital com Procreate',
-    author: 'Carlos Eduardo',
-    price: 'R$25,00/mês',
-    duration: '50horas',
-    imageUrl: require('../../assets/images/imgC3.png'),
-    description: 'Domine o Procreate no iPad. Aprenda a criar ilustrações digitais complexas, desde o esboço inicial até a arte-final profissional.',
-    comments: [
-      { id: 'c5', user: 'Julia M.', text: 'Melhor curso de Procreate que já fiz.' },
-    ],
-  },
-  {
-    id: '4G',
-    title: 'Curso de UI/UX Design',
-    author: 'Ana Beatriz',
-    price: 'R$29,90/mês',
-    duration: '60horas',
-    imageUrl: require('../../assets/images/imgC4.png'),
-    description: 'Foco em design de interfaces e experiência do usuário. Crie protótipos interativos e aprenda a pensar como um designer de produto.',
-    comments: [
-      { id: 'c6', user: 'Pedro H.', text: 'Conteúdo muito atualizado.' },
-      { id: 'c7', user: 'Lucas', text: 'A parte de prototipagem é incrível.' },
-      { id: 'c8', user: 'Fernanda', text: 'Vale cada centavo.' },
-    ],
-  },
-];
-
 interface CourseCardProps {
   item: Course;
   onPressInfo: (item: Course) => void;
@@ -98,16 +44,20 @@ const CourseCard = ({ item, onPressInfo }: CourseCardProps) => (
         <Text style={styles.durationText}>{item.duration}</Text>
       </View>
     </View>
+
     <View style={styles.contentContainer}>
       <View style={styles.row}>
         <Text style={styles.title}>{item.title}</Text>
         <Text style={styles.price}>{item.price}</Text>
       </View>
+
       <Text style={styles.author}>{item.author}</Text>
+
       <View style={[styles.row, { marginTop: 16 }]}>
         <TouchableOpacity onPress={() => onPressInfo(item)}>
           <Text style={styles.link}>mais informações</Text>
         </TouchableOpacity>
+
         <TouchableOpacity>
           <Icon name="heart-outline" size={24} color="#A78BFA" />
         </TouchableOpacity>
@@ -133,11 +83,7 @@ const CourseDetailModal = ({ visible, onClose, course }: CourseDetailModalProps)
   if (!course) return null;
 
   return (
-    <Modal
-      animationType="slide"
-      visible={visible}
-      onRequestClose={onClose}
-    >
+    <Modal animationType="slide" visible={visible} onRequestClose={onClose}>
       <SafeAreaView style={styles.modalContainer}>
         <ScrollView>
           <ModalHeader onClose={onClose} />
@@ -148,17 +94,23 @@ const CourseDetailModal = ({ visible, onClose, course }: CourseDetailModalProps)
             <Text style={styles.modalTitle}>{course.title}</Text>
             <Text style={styles.modalAuthor}>Por: {course.author}</Text>
             <Text style={styles.modalDescription}>{course.description}</Text>
+
             <TouchableOpacity style={styles.subscribeButton}>
               <Text style={styles.subscribeButtonText}>Assinar</Text>
             </TouchableOpacity>
 
             <Text style={styles.commentsTitle}>Comentários</Text>
-            {course.comments.map(comment => (
-              <View key={comment.id} style={styles.commentContainer}>
-                <Text style={styles.commentUser}>{comment.user}</Text>
-                <Text style={styles.commentText}>{comment.text}</Text>
-              </View>
-            ))}
+
+            {course.comments.length === 0 ? (
+              <Text style={{ color: '#999' }}>Sem comentários ainda</Text>
+            ) : (
+              course.comments.map(comment => (
+                <View key={comment.id} style={styles.commentContainer}>
+                  <Text style={styles.commentUser}>{comment.user}</Text>
+                  <Text style={styles.commentText}>{comment.text}</Text>
+                </View>
+              ))
+            )}
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -167,8 +119,34 @@ const CourseDetailModal = ({ visible, onClose, course }: CourseDetailModalProps)
 };
 
 const CursosScreen = () => {
+  const [courses, setCourses] = useState<Course[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const fetchCourses = async () => {
+    try {
+      const response = await api.get('/postscursos');
+
+      const data = response.data.map((item: any) => ({
+        id: item.id.toString(),
+        title: item.nome_curso,
+        author: item.nome_usuario,
+        price: item.valor_curso,
+        duration: "Sem duração",
+        imageUrl: { uri: item.imagem_curso }, // 🔥 imagem da API
+        description: item.descricao_curso,
+        comments: [], // futuramente pode vir da API
+      }));
+
+      setCourses(data);
+    } catch (error) {
+      console.error('Erro ao buscar cursos:', error);
+    }
+  };
 
   const handleOpenModal = (course: Course) => {
     setSelectedCourse(course);
@@ -183,13 +161,13 @@ const CursosScreen = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <FlatList
-        data={MOCK_DATA}
-        renderItem={({ item }) => <CourseCard item={item} onPressInfo={handleOpenModal} />}
+        data={courses}
+        renderItem={({ item }) => (
+          <CourseCard item={item} onPressInfo={handleOpenModal} />
+        )}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContainer}
-        ListHeaderComponent={
-          <Text style={styles.pageTitle}>Cursos</Text>
-        }
+        ListHeaderComponent={<Text style={styles.pageTitle}>Cursos</Text>}
       />
 
       <CourseDetailModal
