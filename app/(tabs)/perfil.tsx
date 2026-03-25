@@ -19,6 +19,7 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Post, usePosts } from '../../src/context/PostsContext';
 
+
 const formatRelativeTime = (timestamp: number) => {
   const diff = Date.now() - timestamp;
   const minutes = Math.floor(diff / (1000 * 60));
@@ -140,6 +141,15 @@ const SimpleImageModal = ({ visible, onClose, image }: SimpleImageModalProps) =>
 
 
 const ProfileScreen = () => {
+  const [userStats, setUserStats] = useState({
+    seguidores: 0,
+    posts: 0,
+    likes: 0,
+  });
+
+  const [followers, setFollowers] = useState<any[]>([]);
+  const [followersModalVisible, setFollowersModalVisible] = useState(false);
+
   const { posts, removePost, refreshPosts } = usePosts();
   const [activeTab, setActiveTab] = useState<TabName>('Postagens');
 
@@ -187,14 +197,39 @@ const ProfileScreen = () => {
           setHeaderImageUrl({ uri: bannerData.banner });
         }
 
+        // 🔥 STATS (seguidores, posts, likes)
+        const statsResponse = await api.get(`/usuarios/numero-posts-seguidores-likes/${uid}`);
+        const statsData = statsResponse.data;
+
+        setUserStats({
+          seguidores: statsData.total_seguidores ?? 0,
+          posts: statsData.total_posts ?? 0,
+          likes: statsData.total_likes ?? 0,
+        });
+
       } catch (error) {
         console.log('Erro ao carregar usuário no perfil:', error);
       }
     };
 
+
+
+
     loadUser();
     refreshPosts();
   }, []);
+
+  const fetchFollowers = async () => {
+    if (!currentUserId) return;
+
+    try {
+      const { data } = await api.get(`/usuarios/lista-seguidores/${currentUserId}`);
+      setFollowers(data);
+      setFollowersModalVisible(true);
+    } catch (error) {
+      console.log('Erro ao buscar seguidores:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchUserPosts = async () => {
@@ -318,10 +353,45 @@ const ProfileScreen = () => {
           <Text style={styles.userName}>{userName || 'Meu perfil'}</Text>
           <Text style={styles.userRole}>Empresa</Text>
           <Text style={styles.userHandle}>@seeking</Text>
-          <Text style={styles.userIdDebug}>
-            {currentUserId ? `userId: ${currentUserId}` : 'userId não encontrado no dispositivo'}
-          </Text>
-        
+          <View style={styles.statsContainer}>
+            <View style={styles.statItem}>
+              <TouchableOpacity onPress={fetchFollowers}>
+                <View style={styles.statRow}>
+                  <Text style={styles.statNumber}>{userStats.seguidores}</Text>
+                  <Image
+                    source={require('@/assets/images/seguindo.png')}
+                    style={styles.statIcon}
+                  />
+                </View>
+                <Text style={styles.statLabel}>Seguidores</Text>
+              </TouchableOpacity>
+
+            </View>
+
+            <View style={styles.statItem}>
+              <View style={styles.statRow}>
+                <Text style={styles.statNumber}>{userStats.posts}</Text>
+                <Image
+                  source={require('@/assets/images/papel_dobrado.png')}
+                  style={styles.statIcon}
+                />
+              </View>
+              <Text style={styles.statLabel}>Posts</Text>
+            </View>
+
+            <View style={styles.statItem}>
+              <View style={styles.statRow}>
+                <Text style={styles.statNumber}>{userStats.likes}</Text>
+                <Image
+                  source={require('@/assets/images/likes.png')}
+                  style={styles.statIcon}
+                />
+              </View>
+              <Text style={styles.statLabel}>Curtidas</Text>
+
+            </View>
+          </View>
+
         </View>
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={[styles.button, styles.followButton]}>
@@ -356,6 +426,37 @@ const ProfileScreen = () => {
         onClose={handleCloseProfileModal}
         image={selectedProfileImage}
       />
+
+      <Modal
+        visible={followersModalVisible}
+        animationType="slide"
+        onRequestClose={() => setFollowersModalVisible(false)}
+      >
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
+
+          {/* HEADER */}
+          <View style={styles.modalHeaderFollowers}>
+            <Text style={styles.modalTitle}>Seguidores</Text>
+            <TouchableOpacity onPress={() => setFollowersModalVisible(false)}>
+              <Text style={{ color: '#fff' }}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* LISTA */}
+          <ScrollView>
+            {followers.map((follower) => (
+              <View key={follower.id} style={styles.followerItem}>
+                <Image
+                  source={{ uri: follower.foto }}
+                  style={styles.followerAvatar}
+                />
+                <Text style={styles.followerName}>{follower.nome}</Text>
+              </View>
+            ))}
+          </ScrollView>
+
+        </SafeAreaView>
+      </Modal>
 
       <Modal
         transparent
@@ -589,6 +690,78 @@ const styles = StyleSheet.create({
   simpleImage: {
     width: '100%',
     height: '80%',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginTop: 15,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+  },
+
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+
+  statNumber: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+
+  statLabel: {
+    color: '#aaa',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  statRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  statIcon: {
+    width: 18,
+    height: 18,
+    marginLeft: 6,
+  },
+  modalHeaderFollowers: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#222',
+  },
+
+  modalTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+
+  followerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#111',
+  },
+
+  followerAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+
+  followerName: {
+    color: '#fff',
+    fontSize: 14,
   },
 });
 
