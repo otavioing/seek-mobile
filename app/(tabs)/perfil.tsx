@@ -3,18 +3,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Dimensions,
-  Image,
-  ImageBackground,
-  ImageSourcePropType,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    Dimensions,
+    Image,
+    ImageBackground,
+    ImageSourcePropType,
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Post, usePosts } from '../../src/context/PostsContext';
@@ -76,6 +76,9 @@ const PostDetailModal = ({ visible, onClose, post, currentUserId, currentUserNam
               </TouchableOpacity>
             )}
           </View>
+          {post.title ? (
+            <Text style={styles.modalTitle}>{post.title}</Text>
+          ) : null}
           {post.images.map((img, idx) => (
             <Image key={idx} source={img} style={styles.modalImage} />
           ))}
@@ -241,6 +244,7 @@ const ProfileScreen = () => {
           author: post.nome,
           userId: post.user_id ? String(post.user_id) : currentUserId,
           followers: `${post.total_seguidores ?? 0} seguidores`,
+          title: post.titulo || '',
           description: post.legenda,
           postedAt: post.criado_em ? new Date(post.criado_em).getTime() : Date.now(),
           likes: post.total_likes ?? 0,

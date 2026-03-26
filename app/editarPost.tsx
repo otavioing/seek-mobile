@@ -1,13 +1,20 @@
 import { Post, usePosts } from '@/src/context/PostsContext';
+import { api } from '@/src/services/api';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
+type Category = { id: string; name: string };
+
 export default function EditarPost() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { posts, refreshPosts, removePost } = usePosts();
   const [description, setDescription] = useState('');
+  const [title, setTitle] = useState('');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [loadingCategories, setLoadingCategories] = useState(false);
   const [post, setPost] = useState<Post | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -16,19 +23,86 @@ export default function EditarPost() {
   useEffect(() => {
     if (found) {
       setPost(found);
+      setTitle(found.title || '');
       setDescription(found.description || '');
+      if (found.categoryId || found.categoryName) {
+        setSelectedCategory({
+          id: found.categoryId || 'selected',
+          name: found.categoryName || '',
+        });
+      }
     }
   }, [found]);
 
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        const { data } = await api.get('/tendencias');
+        const mapped: Category[] = (data || [])
+          .map((item: any) => ({
+            id: String(item.id_categoria ?? item.id ?? item.value ?? ''),
+            name: item.nome_categoria || item.nome || item.categoria || '',
+          }))
+          .filter((c) => c.id && c.name);
+        setCategories(mapped);
+
+        // se o post já tem categoria, tenta casar pelo nome para manter o chip ativo
+        if (!selectedCategory && mapped.length && post?.categoryName) {
+          const match = mapped.find((c) => c.name.toLowerCase() === post.categoryName?.toLowerCase());
+          if (match) setSelectedCategory(match);
+        }
+      } catch (error) {
+        console.log('Erro ao carregar categorias', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    loadCategories();
+  }, [post?.categoryName, selectedCategory]);
+
+  const ensureTagInDescription = (desc: string, tag: string) => {
+    const normalized = desc.toLowerCase();
+    const needle = `#${tag.toLowerCase()}`;
+    if (normalized.includes(needle)) return desc;
+    return `${desc.trim()} ${needle}`.trim();
+  };
+
+  const removeTagFromDescription = (desc: string, tag: string) => {
+    const regex = new RegExp(`(^|\s)#${tag}(?=\s|$)`, 'gi');
+    return desc.replace(regex, '').replace(/\s+/g, ' ').trim();
+  };
+
+  const handleToggleCategory = (category: Category) => {
+    setSelectedCategory((prev) => {
+      if (prev && prev.id === category.id) {
+        setDescription((prevDesc) => removeTagFromDescription(prevDesc, category.name));
+        return null;
+      }
+
+      setDescription((prevDesc) => ensureTagInDescription(prevDesc, category.name));
+      return category;
+    });
+  };
+
   const handleSave = async () => {
     if (!post) return;
+    if (!title.trim()) {
+      Alert.alert('Título obrigatório', 'Adicione um título para o post.');
+      return;
+    }
     try {
       setSaving(true);
       // Atualiza apenas a legenda. Se o backend tiver endpoint específico, ajuste aqui.
       await fetch(`${process.env.EXPO_PUBLIC_API_URL || ''}/posts/${post.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ legenda: description }),
+        body: JSON.stringify({
+          legenda: description,
+          titulo: title,
+          id_categoria: selectedCategory?.id || '',
+        }),
       });
       await refreshPosts();
       Alert.alert('Pronto', 'Post atualizado');
@@ -82,6 +156,36 @@ export default function EditarPost() {
       {post.images[0] && (
         <Image source={post.images[0]} style={styles.preview} />
       )}
+
+      <Text style={styles.label}>Título</Text>
+      <TextInput
+        value={title}
+        onChangeText={setTitle}
+        placeholder="Qual é o título do post?"
+        placeholderTextColor="#888"
+        style={styles.input}
+      />
+
+      <Text style={styles.label}>Categoria</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.chipsRow}
+      >
+        {loadingCategories && <Text style={styles.text}>Carregando categorias...</Text>}
+        {!loadingCategories && categories.map((cat) => {
+          const active = selectedCategory?.id === cat.id;
+          return (
+            <TouchableOpacity
+              key={cat.id}
+              style={[styles.chip, active && styles.chipActive]}
+              onPress={() => handleToggleCategory(cat)}
+            >
+              <Text style={[styles.chipText, active && styles.chipTextActive]}>#{cat.name}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
 
       <Text style={styles.label}>Legenda</Text>
       <TextInput
@@ -144,4 +248,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  chipsRow: { maxHeight: 44, marginBottom: 12 },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#333',
+    marginRight: 8,
+    backgroundColor: '#0b0b0b',
+  },
+  chipActive: {
+    borderColor: '#4F46E5',
+    backgroundColor: '#1f1a2e',
+  },
+  chipText: { color: '#ccc', fontWeight: '700' },
+  chipTextActive: { color: '#fff' },
 });

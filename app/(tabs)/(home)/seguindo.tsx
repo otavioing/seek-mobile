@@ -1,21 +1,20 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { api } from '@/src/services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useState } from 'react';
 import {
-  Animated,
-  Dimensions,
-  Image,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleProp,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
+    Dimensions,
+    Image,
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StyleProp,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+    ViewStyle
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { api } from '@/src/services/api';
 
 // ---------------- TYPES ----------------
 
@@ -29,6 +28,7 @@ interface PostData {
   id: string;
   author: string;
   followers: string;
+  title?: string;
   imageUrl: any;
   avatar: any;
   likes: number;
@@ -69,6 +69,7 @@ const PostDetailModal = ({ visible, onClose, post }: any) => {
             <Text style={styles.modalUserName}>{post.author}</Text>
           </View>
 
+          {post.title ? <Text style={styles.modalTitle}>{post.title}</Text> : null}
           <Image source={post.imageUrl} style={styles.modalImage} />
 
           <View style={styles.modalContent}>
@@ -115,6 +116,7 @@ const AuthorAvatar: React.FC<AuthorAvatarProps> = ({ source, style, isStory }) =
 
 const PostCard = ({ post }: { post: PostData }) => (
   <View style={styles.cardContainer}>
+    {post.title ? <Text style={styles.cardTitle}>{post.title}</Text> : null}
     <Image source={post.imageUrl} style={styles.galleryImage} />
 
     <View style={styles.cardInfo}>
@@ -146,6 +148,7 @@ const SeguindoScreen = () => {
         id: String(post.id),
         author: post.nome,
         followers: 'seguindo',
+        title: post.titulo || '',
         imageUrl: { uri: post.imagem },
         avatar: { uri: post.foto },
         likes: 0,
@@ -227,6 +230,15 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
 
+  cardTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '800',
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    marginBottom: 8,
+  },
+
   galleryImage: { width: '100%', height: 350 },
 
   cardInfo: {
@@ -262,6 +274,15 @@ const styles = StyleSheet.create({
   },
 
   modalUserName: { color: '#fff', fontWeight: 'bold' },
+
+  modalTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '800',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    marginBottom: 10,
+  },
 
   modalImage: { width: '100%', height: width },
 

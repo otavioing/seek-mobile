@@ -1,24 +1,24 @@
+import { api } from '@/src/services/api';
 import { MaterialIcons } from "@expo/vector-icons";
 import { useIsFocused } from "@react-navigation/native";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Dimensions,
-  Image,
-  ImageSourcePropType,
-  Keyboard,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
+    Dimensions,
+    Image,
+    ImageSourcePropType,
+    Keyboard,
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
-import { api } from '@/src/services/api';
 
 /* ============================================================
    TYPES
@@ -38,6 +38,7 @@ interface Post {
   likes: number;
   comments: Comment[];
   userImage: ImageSourcePropType; // 👈 NOVO
+  title?: string;
 }
 
 /* ============================================================
@@ -72,6 +73,7 @@ const PostDetailModal = ({ visible, onClose, post }: any) => {
             <Text style={styles.modalUserName}>{post.author}</Text>
           </View>
 
+          {post.title ? <Text style={styles.modalTitle}>{post.title}</Text> : null}
           <Image source={post.imageUrl} style={styles.modalImage} />
 
           <View style={styles.modalContent}>
@@ -119,6 +121,7 @@ const AuthorInfo = ({
 const PostCard = ({ post, onPress, style }: any) => (
   <TouchableOpacity onPress={() => onPress(post)}>
     <View style={[styles.card, style]}>
+      {post.title ? <Text style={styles.cardTitle}>{post.title}</Text> : null}
       <Image source={post.imageUrl} style={styles.cardImage} />
       <AuthorInfo author={post.author} userImage={post.userImage} />
     </View>
@@ -176,6 +179,7 @@ const TendenciasScreen = () => {
           followers: "",
           likes: item.total_likes,
           comments: [],
+          title: item.titulo || '',
           userImage: item.foto_perfil
             ? { uri: item.foto_perfil }
             : require("../../../assets/images/perfil/denji.jpg"), // fallback
@@ -326,6 +330,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#1a1a1a",
   },
 
+  cardTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "800",
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    marginBottom: 8,
+  },
+
   largeCard: {
     width: width * 0.7,
   },
@@ -397,6 +410,15 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#fff",
     marginLeft: 12,
+  },
+
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#fff",
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    marginBottom: 10,
   },
 
   modalImage: {

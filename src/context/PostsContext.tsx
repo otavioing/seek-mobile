@@ -17,12 +17,18 @@ export type Post = {
   avatar: any;
   likes: number;
   comments: Comment[];
+  title?: string;
+  categoryId?: string;
+  categoryName?: string;
   description?: string;
   postedAt: number;
 };
 
 type NewPostInput = {
   images: any[];
+  title?: string;
+  categoryId?: string;
+  categoryName?: string;
   description?: string;
 };
 
@@ -46,18 +52,29 @@ export const PostsProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const response = await api.get('/posts');
 
-      const dadosTratados = response.data.map((post: any) => ({
-        id: String(post.id),
-        author: post.nome,
-        userId: post.user_id ? String(post.user_id) : undefined,
-        followers: `${post.total_seguidores ?? 0} seguidores`,
-        description: post.legenda,
-        postedAt: post.criado_em ? new Date(post.criado_em).getTime() : Date.now(),
-        likes: 0,
-        images: post.imagem ? [{ uri: post.imagem }] : [],
-        avatar: post.foto_perfil ? { uri: post.foto_perfil } : { uri: '' },
-        comments: []
-      }));
+      const dadosTratados = response.data.map((post: any) => {
+        const imagensApi = Array.isArray(post.imagens)
+          ? post.imagens.map((img: any) => ({ uri: img }))
+          : post.imagem
+            ? [{ uri: post.imagem }]
+            : [];
+
+        return {
+          id: String(post.id),
+          author: post.nome,
+          userId: post.user_id ? String(post.user_id) : undefined,
+          followers: `${post.total_seguidores ?? 0} seguidores`,
+          title: post.titulo || '',
+          categoryId: post.id_categoria ? String(post.id_categoria) : undefined,
+          categoryName: post.nome_categoria || post.categoria || undefined,
+          description: post.legenda,
+          postedAt: post.criado_em ? new Date(post.criado_em).getTime() : Date.now(),
+          likes: 0,
+          images: imagensApi,
+          avatar: post.foto_perfil ? { uri: post.foto_perfil } : { uri: '' },
+          comments: []
+        } as Post;
+      });
 
       // preserva posts locais (criados offline ou não retornados pelo backend)
       setPosts((prev) => {
@@ -91,30 +108,36 @@ export const PostsProvider = ({ children }: { children: React.ReactNode }) => {
 
       // envia para o backend usando FormData (rota espera upload.single("arquivo"))
       let createdId = `user-${Date.now()}`;
-      let returnedImage = input.images[0];
+      let returnedImages = input.images;
 
       if (userId && input.images.length) {
-        const first = input.images[0];
+        const firstTwo = input.images.slice(0, 2);
         const form = new FormData();
         form.append('user_id', userId);
         form.append('legenda', input.description || '');
-        form.append('titulo', '');
-        form.append('id_categoria', '');
-        const filePayload = {
-          uri: first.uri || first,
-          name: 'post.jpg',
-          type: 'image/jpeg',
-        } as any;
-        // Alguns backends esperam "arquivo", outros "imagem"; mandamos ambos para garantir
-        form.append('arquivo', filePayload);
-        form.append('imagem', filePayload);
+        form.append('titulo', input.title || '');
+        form.append('id_categoria', input.categoryId || '');
+        firstTwo.forEach((file, idx) => {
+          const payload = {
+            uri: file.uri || file,
+            name: `post-${idx + 1}.jpg`,
+            type: 'image/jpeg',
+          } as any;
+          // Alguns backends esperam "arquivo", outros "imagem"; mandamos ambos para garantir
+          form.append('arquivo', payload);
+          form.append('imagem', payload);
+        });
 
         try {
           const resp = await api.post('/posts', form, {
             headers: { 'Content-Type': 'multipart/form-data' },
           });
           createdId = String(resp.data?.id ?? createdId);
-          if (resp.data?.imagem) returnedImage = { uri: resp.data.imagem };
+          if (resp.data?.imagens && Array.isArray(resp.data.imagens)) {
+            returnedImages = resp.data.imagens.map((img: any) => ({ uri: img }));
+          } else if (resp.data?.imagem) {
+            returnedImages = [{ uri: resp.data.imagem }];
+          }
           if (resp.data?.foto_perfil) avatar = { uri: resp.data.foto_perfil };
           if (resp.data?.nome) author = resp.data.nome;
           // Após criar, recarrega lista oficial do backend para garantir path completo
@@ -130,10 +153,13 @@ export const PostsProvider = ({ children }: { children: React.ReactNode }) => {
         author,
         userId: userId || 'me',
         followers: 'seguindo',
-        images: [returnedImage],
+        images: returnedImages,
         avatar,
         likes: 0,
         comments: [],
+        title: input.title,
+        categoryId: input.categoryId,
+        categoryName: input.categoryName,
         description: input.description,
         postedAt: Date.now(),
       };

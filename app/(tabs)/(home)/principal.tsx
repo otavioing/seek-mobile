@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Animated, Dimensions, Image,
-  ImageStyle,
-  Modal,
-  RefreshControl,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleProp,
-  StyleSheet, Text, TouchableOpacity, View,
+    Dimensions, Image,
+    ImageStyle,
+    Modal,
+    RefreshControl,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleProp,
+    StyleSheet, Text, TouchableOpacity, View
 } from "react-native";
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Post, usePosts } from '../../../src/context/PostsContext';
@@ -48,7 +48,17 @@ interface PostDetailModalProps {
 }
 
 const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const pagerRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    setActiveIndex(0);
+    if (pagerRef.current) pagerRef.current.scrollTo({ y: 0, animated: false });
+  }, [post]);
+
   if (!post) return null;
+
+  const imageSize = Dimensions.get('window').width;
 
   return (
     <Modal animationType="slide" visible={visible} onRequestClose={onClose}>
@@ -61,9 +71,23 @@ const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
             <Text style={styles.modalUserName}>{post.author}</Text>
           </View>
 
-          {post.images.map((img, idx) => (
-            <Image key={idx} source={img} style={styles.modalImage} />
-          ))}
+          {post.title ? (
+            <Text style={styles.modalTitle}>{post.title}</Text>
+          ) : null}
+
+          <ScrollView
+            ref={pagerRef}
+            pagingEnabled
+            showsVerticalScrollIndicator={false}
+            onMomentumScrollEnd={(e) => {
+              const idx = Math.round(e.nativeEvent.contentOffset.y / imageSize);
+              setActiveIndex(idx);
+            }}
+          >
+            {post.images.map((img, idx) => (
+              <Image key={idx} source={img} style={[styles.modalImage, { height: imageSize }]} />
+            ))}
+          </ScrollView>
 
           <View style={styles.modalContent}>
             {post.description && (
@@ -140,6 +164,7 @@ export default function HomeScreen() {
 
           return (
             <View key={post.id} style={styles.cardContainer}>
+              {post.title ? <Text style={styles.cardTitle}>{post.title}</Text> : null}
               <TouchableOpacity onPress={() => openImageModal(post)}>
                 <Image style={styles.galleryImage} source={cover} />
               </TouchableOpacity>
@@ -218,6 +243,14 @@ const styles = StyleSheet.create({
     elevation: 8,
     shadowColor: '#000',
   },
+  cardTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '800',
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    marginBottom: 8,
+  },
   cardInfo: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -269,6 +302,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingTop: 8,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#fff',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    marginBottom: 10,
   },
   modalUserAvatar: {
     width: 40,
