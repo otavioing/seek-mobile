@@ -61,17 +61,17 @@ export const PostsProvider = ({ children }: { children: React.ReactNode }) => {
 
         return {
           id: String(post.id),
-          author: post.nome,
-          userId: post.user_id ? String(post.user_id) : undefined,
+          author: post.user?.nome || 'Usuário',
+          userId: post.user?.id ? String(post.user.id) : undefined,
           followers: `${post.total_seguidores ?? 0} seguidores`,
           title: post.titulo || '',
           categoryId: post.id_categoria ? String(post.id_categoria) : undefined,
           categoryName: post.nome_categoria || post.categoria || undefined,
           description: post.legenda,
           postedAt: post.criado_em ? new Date(post.criado_em).getTime() : Date.now(),
-          likes: 0,
+          likes: post.total_likes ?? 0,
           images: imagensApi,
-          avatar: post.foto_perfil ? { uri: post.foto_perfil } : { uri: '' },
+          avatar: post.user?.foto ? { uri: post.user.foto } : null,
           comments: []
         } as Post;
       });

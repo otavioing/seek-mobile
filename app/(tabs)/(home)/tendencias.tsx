@@ -4,19 +4,19 @@ import { useIsFocused } from "@react-navigation/native";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Dimensions,
-    Image,
-    ImageSourcePropType,
-    Keyboard,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+  Dimensions,
+  Image,
+  ImageSourcePropType,
+  Keyboard,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 
@@ -174,15 +174,24 @@ const TendenciasScreen = () => {
 
         postsTemp[categoria.nome_categoria] = res.data.map((item: any) => ({
           id: item.id.toString(),
-          imageUrl: { uri: item.imagem },
-          author: item.nome_usuario,
+
+          imageUrl: {
+            uri: item.imagens?.[0] || 'https://via.placeholder.com/300'
+          },
+
+          author: item.user?.nome || 'Usuário',
+
           followers: "",
-          likes: item.total_likes,
+
+          likes: item.total_likes || 0,
+
           comments: [],
+
           title: item.titulo || '',
-          userImage: item.foto_perfil
-            ? { uri: item.foto_perfil }
-            : require("../../../assets/images/perfil/denji.jpg"), // fallback
+
+          userImage: item.user?.foto
+            ? { uri: item.user.foto }
+            : require("../../../assets/images/perfil/denji.jpg"),
         }));
       });
 

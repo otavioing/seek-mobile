@@ -3,18 +3,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-    Dimensions,
-    Image,
-    ImageBackground,
-    ImageSourcePropType,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Dimensions,
+  Image,
+  ImageBackground,
+  ImageSourcePropType,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Post, usePosts } from '../../src/context/PostsContext';
@@ -241,15 +241,31 @@ const ProfileScreen = () => {
         const { data } = await api.get(`/posts/usuario/${currentUserId}`);
         const mapped: Post[] = (data || []).map((post: any) => ({
           id: String(post.id),
-          author: post.nome,
-          userId: post.user_id ? String(post.user_id) : currentUserId,
+
+          author: post.user?.nome || 'Usuário',
+
+          userId: currentUserId || undefined, // sua API não manda mais user_id
+
           followers: `${post.total_seguidores ?? 0} seguidores`,
+
           title: post.titulo || '',
+
           description: post.legenda,
-          postedAt: post.criado_em ? new Date(post.criado_em).getTime() : Date.now(),
+
+          postedAt: post.criado_em
+            ? new Date(post.criado_em).getTime()
+            : Date.now(),
+
           likes: post.total_likes ?? 0,
-          images: post.imagem ? [{ uri: post.imagem }] : [],
-          avatar: post.foto_perfil ? { uri: post.foto_perfil } : userAvatar,
+
+          images: post.imagens?.map((img: string) => ({
+            uri: img
+          })) || [],
+
+          avatar: post.user?.foto
+            ? { uri: post.user.foto }
+            : userAvatar,
+
           comments: [],
         }));
         setRemoteUserPosts(mapped);

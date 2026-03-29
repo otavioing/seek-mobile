@@ -2,17 +2,17 @@ import { api } from '@/src/services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
 import {
-    Dimensions,
-    Image,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleProp,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-    ViewStyle
+  Dimensions,
+  Image,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleProp,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -146,13 +146,24 @@ const SeguindoScreen = () => {
 
       const dadosTratados = response.data.map((post: any) => ({
         id: String(post.id),
-        author: post.nome,
-        followers: 'seguindo',
+
+        author: post.user?.nome || 'Usuário',
+
+        followers: `${post.total_seguidores || 0} seguidores`,
+
         title: post.titulo || '',
-        imageUrl: { uri: post.imagem },
-        avatar: { uri: post.foto },
-        likes: 0,
-        comments: [],
+
+        imageUrl: {
+          uri: post.imagens?.[0] || 'https://via.placeholder.com/300'
+        },
+
+        avatar: {
+          uri: post.user?.foto || 'https://via.placeholder.com/100'
+        },
+
+        likes: post.total_likes || 0,
+
+        comments: [], // depois você pode integrar de verdade
       }));
 
       setPosts(dadosTratados);
@@ -178,7 +189,7 @@ const SeguindoScreen = () => {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
+
         {/* STORIES */}
         <View style={styles.storiesContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
