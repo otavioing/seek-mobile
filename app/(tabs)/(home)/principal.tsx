@@ -1,4 +1,5 @@
 import { useComments } from '@/src/context/CommentsContext';
+import { api } from '@/src/services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -57,8 +58,27 @@ const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const pagerRef = useRef<ScrollView>(null);
   const [commentText, setCommentText] = useState('');
+  const [liked, setLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
 
   const { commentsByPost, fetchComments, addComment } = useComments();
+
+  const carregarLikes = async () => {
+    if (!post?.id) return;
+
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) return;
+
+      const resLike = await api.get(`/posts/verifica-like/${userId}/${post.id}`);
+      setLiked(resLike.data === true);
+
+      const resCount = await api.get(`/posts/likes/${post.id}`);
+      setLikesCount(resCount.data[0]?.total_likes || 0);
+    } catch (err) {
+      console.log("Erro ao carregar likes:", err);
+    }
+  };
 
   useEffect(() => {
     setActiveIndex(0);
@@ -66,6 +86,7 @@ const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
 
     if (post?.id) {
       fetchComments(post.id);
+      carregarLikes();
     }
 
     setCommentText('');
@@ -75,6 +96,26 @@ const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
 
   const imageSize = Dimensions.get('window').width;
   const comments = commentsByPost[post.id] || [];
+
+  const handleToggleLike = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) return;
+
+      const response = await api.post('/posts/like', {
+        userId: Number(userId),
+        postId: post.id
+      });
+
+      const { liked } = response.data;
+
+      setLiked(liked);
+      setLikesCount((prev) => liked ? prev + 1 : Math.max(0, prev - 1));
+
+    } catch (err) {
+      console.log("Erro ao dar like:", err);
+    }
+  };
 
   const handleAddComment = async () => {
     const trimmed = commentText.trim();
@@ -115,9 +156,17 @@ const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
               setActiveIndex(idx);
             }}
           >
-            {post.images.map((img, idx) => (
-              <Image key={idx} source={img} style={[styles.modalImage, { height: imageSize }]} />
-            ))}
+            {post.images.map((img, idx) => {
+              const source = typeof img === 'string' ? { uri: img } : img;
+
+              return (
+                <Image
+                  key={idx}
+                  source={source}
+                  style={[styles.modalImage, { height: imageSize }]}
+                />
+              );
+            })}
           </ScrollView>
 
           <View style={styles.modalContent}>
@@ -126,11 +175,24 @@ const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
             )}
 
             <View style={styles.likesContainer}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Icon name="thumbs-up-outline" size={22} color="#fff" />
-                <Text style={styles.likesText}>{post.likes} curtidas</Text>
-              </View>
-              <Text style={styles.timeText}>{formatRelativeTime(post.postedAt)}</Text>
+              <TouchableOpacity
+                style={styles.likesButton}
+                onPress={handleToggleLike}
+                activeOpacity={0.7}
+              >
+                <Icon
+                  name={liked ? 'thumbs-up' : 'thumbs-up-outline'}
+                  size={22}
+                  color={liked ? '#2563EB' : '#fff'}
+                />
+                <Text style={[styles.likesText, liked && { color: '#2563EB' }]}>
+                  {likesCount} curtidas
+                </Text>
+              </TouchableOpacity>
+
+              <Text style={styles.timeText}>
+                {formatRelativeTime(post.postedAt)}
+              </Text>
             </View>
 
             <Text style={styles.commentsTitle}>Comentários</Text>
@@ -210,7 +272,9 @@ export default function HomeScreen() {
         }
       >
         {posts.map((post) => {
-          const cover = post.images[0];
+          const cover = typeof post.images[0] === 'string'
+            ? { uri: post.images[0] }
+            : post.images[0];
 
           return (
             <View key={post.id} style={styles.cardContainer}>
@@ -390,6 +454,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#333',
+  },
+  likesButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   timeText: {
     color: '#aaa',
