@@ -1,8 +1,8 @@
-import { Link, router } from 'expo-router';
-import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from "react-native";
-import { useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '@/src/services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Link, router } from 'expo-router';
+import { useState } from 'react';
+import { Alert, Image, Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 const logoapp = require('@/assets/images/logo_seek.png');
 
@@ -11,6 +11,11 @@ export default function Login() {
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
     const [loading, setLoading] = useState(false);
+    const [forgotVisible, setForgotVisible] = useState(false);
+    const [forgotStep, setForgotStep] = useState<'email' | 'code'>('email');
+    const [forgotEmail, setForgotEmail] = useState('');
+    const [forgotCode, setForgotCode] = useState('');
+    const [forgotNewPassword, setForgotNewPassword] = useState('');
 
     const handleLogin = async () => {
         try {
@@ -38,6 +43,73 @@ export default function Login() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const startForgotFlow = () => {
+        setForgotStep('email');
+        setForgotEmail(email);
+        setForgotCode('');
+        setForgotNewPassword('');
+        setForgotVisible(true);
+    };
+
+    const confirmForgotStep = async () => {
+        try {
+
+            if (!forgotEmail) {
+                Alert.alert('Erro', 'Digite um email');
+                return;
+            }
+
+            if (forgotStep === 'email') {
+                const response = await api.post('/usuarios/criar-codigo-verificacao', {
+                    email: forgotEmail
+                });
+
+                Alert.alert('Sucesso', response.data.message);
+                setForgotStep('code');
+                return;
+            }
+
+            if (forgotStep === 'code') {
+                if (forgotCode.length < 6) {
+                    Alert.alert('Erro', 'Digite o código completo');
+                    return;
+                }
+
+                if (!forgotNewPassword) {
+                    Alert.alert('Erro', 'Digite a nova senha');
+                    return;
+                }
+
+                const response = await api.post('/usuarios/atualizar-senha', {
+                    email: forgotEmail,
+                    codigo: forgotCode,
+                    novaSenha: forgotNewPassword
+                });
+
+                Alert.alert('Sucesso', response.data.message);
+                setForgotVisible(false);
+            }
+
+        } catch (error: any) {
+            const msg = error.response?.data?.message || 'Erro ao conectar com servidor';
+            Alert.alert('Erro', msg);
+            console.log(error);
+        }
+    };
+
+    const closeForgotFlow = () => {
+        setForgotVisible(false);
+    };
+
+    const goBackForgotStep = () => {
+        if (forgotStep === 'code') {
+            setForgotStep('email');
+            return;
+        }
+
+        setForgotVisible(false);
     };
 
     return (
@@ -78,6 +150,10 @@ export default function Login() {
                     </Text>
                 </TouchableOpacity>
 
+                <TouchableOpacity onPress={startForgotFlow} style={styles.linkLikeButton}>
+                    <Text style={styles.linkLikeText}>Esqueci minha senha</Text>
+                </TouchableOpacity>
+
                 <View style={{ width: '80%', borderBottomWidth: 1, borderBottomColor: '#b5b5b5', marginTop: 25 }} />
 
                 <View style={styles.footer}>
@@ -88,6 +164,76 @@ export default function Login() {
                 </View>
 
             </View>
+
+            <Modal
+                visible={forgotVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={closeForgotFlow}
+            >
+                <Pressable style={styles.modalOverlay} onPress={closeForgotFlow}>
+                    <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
+                        <Text style={styles.modalTitle}>
+                            {forgotStep === 'email' && 'Recuperar senha'}
+                            {forgotStep === 'code' && 'Código e nova senha'}
+                        </Text>
+
+                        {forgotStep === 'email' && (
+                            <>
+                                <Text style={styles.modalMessage}>
+                                    Insira o email associado à sua conta para receber um código de verificação e redefinir sua senha.
+                                </Text>
+                                <TextInput
+                                    style={styles.modalInput}
+                                    placeholder="Informe seu email"
+                                    placeholderTextColor="#6b7280"
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                    value={forgotEmail}
+                                    onChangeText={setForgotEmail}
+                                />
+                            </>
+                        )}
+
+                        {forgotStep === 'code' && (
+                            <TextInput
+                                style={styles.modalInput}
+                                placeholder="Código de 6 dígitos"
+                                placeholderTextColor="#6b7280"
+                                keyboardType="number-pad"
+                                maxLength={6}
+                                value={forgotCode}
+                                onChangeText={setForgotCode}
+                            />
+                        )}
+
+                        {forgotStep === 'code' && (
+                            <TextInput
+                                style={styles.modalInput}
+                                placeholder="Nova senha"
+                                placeholderTextColor="#6b7280"
+                                secureTextEntry
+                                value={forgotNewPassword}
+                                onChangeText={setForgotNewPassword}
+                            />
+                        )}
+
+                        <View style={styles.modalActions}>
+                            {forgotStep !== 'email' && (
+                                <TouchableOpacity style={styles.modalBack} onPress={goBackForgotStep}>
+                                    <Text style={styles.modalActionText}>Voltar</Text>
+                                </TouchableOpacity>
+                            )}
+                            <TouchableOpacity style={styles.modalCancel} onPress={closeForgotFlow}>
+                                <Text style={styles.modalActionText}>Cancelar</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.modalActionButton} onPress={confirmForgotStep}>
+                                <Text style={styles.modalActionText}>Confirmar</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Pressable>
+            </Modal>
         </View>
     );
 }
@@ -147,6 +293,13 @@ const styles = StyleSheet.create({
     buttonText: {
         color: '#FFFFFF',
     },
+    linkLikeButton: {
+        marginTop: 12,
+    },
+    linkLikeText: {
+        color: '#2563EB',
+        fontWeight: 'bold',
+    },
     // logobotaogoogle: {
     //     width: 35,
     //     height: 40,
@@ -187,6 +340,69 @@ const styles = StyleSheet.create({
     },
     footerLink: {
         color: '#2563EB',
+        fontWeight: 'bold',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    modalContent: {
+        width: '100%',
+        backgroundColor: '#0F0F0F',
+        borderRadius: 12,
+        padding: 20,
+        gap: 12,
+        borderWidth: 1,
+        borderColor: '#1f2937',
+    },
+    modalTitle: {
+        color: '#FFFFFF',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    modalMessage: {
+        color: '#E5E7EB',
+        fontSize: 14,
+        marginBottom: 8,
+    },
+    modalInput: {
+        backgroundColor: '#ffffff',
+        borderWidth: 1,
+        borderColor: '#000000',
+        borderRadius: 8,
+        padding: 12,
+        color: '#111827',
+    },
+    modalActions: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        gap: 12,
+    },
+    modalBack: {
+        backgroundColor: '#1f2937',
+        borderWidth: 1,
+        borderColor: '#6b7280',
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+    },
+    modalActionButton: {
+        backgroundColor: '#322BF0',
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+    },
+    modalCancel: {
+        backgroundColor: '#374151',
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+    },
+    modalActionText: {
+        color: '#FFFFFF',
         fontWeight: 'bold',
     },
 });

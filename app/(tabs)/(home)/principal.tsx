@@ -1,14 +1,21 @@
+import { useComments } from '@/src/context/CommentsContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Dimensions, Image,
-    ImageStyle,
-    Modal,
-    RefreshControl,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleProp,
-    StyleSheet, Text, TouchableOpacity, View
+  Dimensions,
+  Image,
+  ImageStyle,
+  Modal,
+  RefreshControl,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleProp,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Post, usePosts } from '../../../src/context/PostsContext';
@@ -29,7 +36,6 @@ interface AuthorAvatarProps {
   style?: StyleProp<ImageStyle>;
 }
 
-// 🔥 AGORA USA A IMAGEM DA API
 const AuthorAvatar: React.FC<AuthorAvatarProps> = ({ source, style }) => (
   <Image source={source} style={[styles.avatar, style]} />
 );
@@ -50,15 +56,40 @@ interface PostDetailModalProps {
 const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const pagerRef = useRef<ScrollView>(null);
+  const [commentText, setCommentText] = useState('');
+
+  const { commentsByPost, fetchComments, addComment } = useComments();
 
   useEffect(() => {
     setActiveIndex(0);
     if (pagerRef.current) pagerRef.current.scrollTo({ y: 0, animated: false });
+
+    if (post?.id) {
+      fetchComments(post.id);
+    }
+
+    setCommentText('');
   }, [post]);
 
   if (!post) return null;
 
   const imageSize = Dimensions.get('window').width;
+  const comments = commentsByPost[post.id] || [];
+
+  const handleAddComment = async () => {
+    const trimmed = commentText.trim();
+    if (!trimmed || !post?.id) return;
+
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) return;
+
+      await addComment(post.id, userId, trimmed);
+      setCommentText('');
+    } catch (err) {
+      console.log('Erro ao comentar:', err);
+    }
+  };
 
   return (
     <Modal animationType="slide" visible={visible} onRequestClose={onClose}>
@@ -71,9 +102,9 @@ const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
             <Text style={styles.modalUserName}>{post.author}</Text>
           </View>
 
-          {post.title ? (
+          {post.title && (
             <Text style={styles.modalTitle}>{post.title}</Text>
-          ) : null}
+          )}
 
           <ScrollView
             ref={pagerRef}
@@ -104,15 +135,38 @@ const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
 
             <Text style={styles.commentsTitle}>Comentários</Text>
 
-            {post.comments.length > 0 ? (
-              post.comments.map(comment => (
+            <View style={styles.commentInputRow}>
+              <TextInput
+                style={styles.commentInput}
+                placeholder="Escreva um comentário"
+                placeholderTextColor="#999"
+                value={commentText}
+                onChangeText={setCommentText}
+              />
+              <TouchableOpacity style={styles.commentSendButton} onPress={handleAddComment}>
+                <Text style={styles.commentSendText}>Enviar</Text>
+              </TouchableOpacity>
+            </View>
+
+            {comments.length > 0 ? (
+              comments.map(comment => (
                 <View key={comment.id} style={styles.commentContainer}>
-                  <Text style={styles.commentUser}>{comment.user}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    {comment.avatar && (
+                      <Image
+                        source={comment.avatar}
+                        style={{ width: 30, height: 30, borderRadius: 15, marginRight: 8 }}
+                      />
+                    )}
+                    <Text style={styles.commentUser}>{comment.user}</Text>
+                  </View>
                   <Text style={styles.commentText}>{comment.text}</Text>
                 </View>
               ))
             ) : (
-              <Text style={styles.commentText}>Nenhum comentário ainda.</Text>
+              <Text style={[styles.commentText, styles.commentEmpty]}>
+                Nenhum comentário ainda.
+              </Text>
             )}
           </View>
         </ScrollView>
@@ -138,7 +192,6 @@ export default function HomeScreen() {
     setSelectedPost(null);
   };
 
-  // 🔥 AGORA ATUALIZA DE VERDADE
   const onRefresh = async () => {
     setRefreshing(true);
     await refreshPosts();
@@ -153,10 +206,7 @@ export default function HomeScreen() {
         style={styles.gallery}
         contentContainerStyle={styles.galleryContent}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
         {posts.map((post) => {
@@ -164,7 +214,8 @@ export default function HomeScreen() {
 
           return (
             <View key={post.id} style={styles.cardContainer}>
-              {post.title ? <Text style={styles.cardTitle}>{post.title}</Text> : null}
+              {post.title && <Text style={styles.cardTitle}>{post.title}</Text>}
+
               <TouchableOpacity onPress={() => openImageModal(post)}>
                 <Image style={styles.galleryImage} source={cover} />
               </TouchableOpacity>
@@ -179,7 +230,6 @@ export default function HomeScreen() {
                   {formatRelativeTime(post.postedAt)}
                 </Text>
 
-                {/* 🔥 AQUI ESTÁ A CORREÇÃO */}
                 <AuthorAvatar source={post.avatar} />
               </View>
 
@@ -360,7 +410,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   commentContainer: {
     backgroundColor: '#1a1a1a',
@@ -377,6 +427,36 @@ const styles = StyleSheet.create({
   commentText: {
     fontSize: 14,
     color: '#ddd',
+  },
+  commentEmpty: {
+    marginTop: 12,
+  },
+  commentInputRow: {
+    marginTop: 4,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  commentInput: {
+    flex: 1,
+    backgroundColor: '#0f0f0f',
+    borderWidth: 1,
+    borderColor: '#333',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: '#fff',
+  },
+  commentSendButton: {
+    backgroundColor: '#2563EB',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+  },
+  commentSendText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
   menuOverlay: {
     flex: 1,

@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { PostsProvider } from '../src/context/PostsContext';
+import { CommentsProvider } from '../src/context/CommentsContext'; // 👈 IMPORTANTE
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -45,13 +46,15 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <PostsProvider>
-        <SafeAreaProvider>
-          <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
-            <Stack screenOptions={{ headerShown: false }} />
-          </SafeAreaView>
+        <CommentsProvider> {/* 👈 AQUI RESOLVE SEU ERRO */}
+          <SafeAreaProvider>
+            <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
+              <Stack screenOptions={{ headerShown: false }} />
+            </SafeAreaView>
 
-          <StatusBar style="light" />
-        </SafeAreaProvider>
+            <StatusBar style="light" />
+          </SafeAreaProvider>
+        </CommentsProvider>
       </PostsProvider>
     </ThemeProvider>
   );
