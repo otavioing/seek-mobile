@@ -10,13 +10,13 @@ const logoapp = require('@/assets/images/logo_seek.png');
    COMPONENTES (FORA)
 ========================= */
 
-function FormEtapa2({ 
+function FormEtapa2({
   handleCadastro,
   nome, setNome,
   email, setEmail,
   senha, setSenha,
   confirmarSenha, setConfirmarSenha,
-  
+
 }: any) {
   return (
     <>
@@ -32,7 +32,7 @@ function FormEtapa2({
   );
 }
 
-function FormEtapa1({ tipoConta, setTipoConta, setStep}: any) {
+function FormEtapa1({ tipoConta, setTipoConta, setStep }: any) {
   return (
     <>
       <Text style={{ color: '#fff', marginBottom: 20 }}>
@@ -79,7 +79,7 @@ function FormEtapa1({ tipoConta, setTipoConta, setStep}: any) {
 
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={() => setStep(1)}>
+      <TouchableOpacity style={styles.button} onPress={() => setStep(2)}>
         <Text style={styles.buttonText}>Avançar</Text>
       </TouchableOpacity>
     </>
@@ -97,7 +97,7 @@ export default function Cadastro() {
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [tipoConta, setTipoConta] = useState<'artista' | 'empresa' | null>(null);
-  const [step, setStep] = useState(2);
+  const [step, setStep] = useState(1);
 
   const dot1 = useState(new Animated.Value(1))[0];
   const dot2 = useState(new Animated.Value(0))[0];
@@ -169,14 +169,14 @@ export default function Cadastro() {
           <Text style={styles.title}>Cadastro</Text>
 
           <TouchableOpacity
-            onPress={() => step === 1 && setStep(2)}
-            disabled={step === 2}
+            onPress={() => step === 2 && setStep(1)}
+            disabled={step === 1}
           >
             <MaterialIcons
               name="arrow-back"
               size={20}
               color="#fff"
-              style={{ opacity: step === 2 ? 0.3 : 2 }}
+              style={{ opacity: step === 1 ? 0.3 : 1 }}
             />
           </TouchableOpacity>
 
@@ -184,24 +184,22 @@ export default function Cadastro() {
 
         {/* CONTEÚDO */}
         <View style={styles.content}>
-          {step === 2 && (
+          {/* ETAPA 1: Seleção de Empresa/Artista */}
+          {step === 1 && (
             <FormEtapa1
-              nome={nome}
-              setNome={setNome}
-              email={email}
-              setEmail={setEmail}
-              senha={senha}
-              setSenha={setSenha}
-              confirmarSenha={confirmarSenha}
-              setConfirmarSenha={setConfirmarSenha}
+              tipoConta={tipoConta}
+              setTipoConta={setTipoConta}
               setStep={setStep}
             />
           )}
 
-          {step === 1 && (
+          {/* ETAPA 2: Dados cadastrais */}
+          {step === 2 && (
             <FormEtapa2
-              tipoConta={tipoConta}
-              setTipoConta={setTipoConta}
+              nome={nome} setNome={setNome}
+              email={email} setEmail={setEmail}
+              senha={senha} setSenha={setSenha}
+              confirmarSenha={confirmarSenha} setConfirmarSenha={setConfirmarSenha}
               handleCadastro={handleCadastro}
             />
           )}
@@ -219,7 +217,7 @@ export default function Cadastro() {
         </View>
 
       </View>
-    </View>
+    </View >
   );
 }
 
@@ -260,7 +258,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   main: {
-    flex: 6/10,
+    flex: 6 / 10,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
