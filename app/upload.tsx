@@ -2,6 +2,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { usePosts } from '../src/context/PostsContext';
 import { api } from '../src/services/api';
 
@@ -32,7 +33,7 @@ export default function UploadScreen() {
             id: String(item.id_categoria ?? item.id ?? item.value ?? ''),
             name: item.nome_categoria || item.nome || item.categoria || '',
           }))
-          .filter((c) => c.id && c.name);
+          .filter((c: Category) => c.id && c.name);
         setCategories(mapped);
       } catch (error) {
         console.log('Erro ao carregar categorias', error);
@@ -139,6 +140,13 @@ export default function UploadScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.topBar}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Icon name="arrow-back-outline" size={24} color="#fff" />
+          <Text style={styles.backText}>Voltar</Text>
+        </TouchableOpacity>
+      </View>
+
       <Text style={styles.title}>Nova publicação</Text>
       <Text style={styles.subtitle}>Adicione imagens e descreva seu projeto.</Text>
 
@@ -216,6 +224,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#0B0B0B',
     paddingHorizontal: 16,
     paddingTop: 24,
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
+  backText: {
+    color: '#fff',
+    fontSize: 16,
+    marginLeft: 6,
+    fontWeight: '700',
   },
   title: {
     color: '#fff',

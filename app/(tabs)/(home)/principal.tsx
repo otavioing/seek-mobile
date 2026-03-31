@@ -1,6 +1,7 @@
 import { useComments } from '@/src/context/CommentsContext';
 import { api } from '@/src/services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from "react";
 import {
   Dimensions,
@@ -52,9 +53,10 @@ interface PostDetailModalProps {
   visible: boolean;
   onClose: () => void;
   post: Post | null;
+  onPressAuthor?: (post: Post) => void;
 }
 
-const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
+const PostDetailModal = ({ visible, onClose, post, onPressAuthor }: PostDetailModalProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const pagerRef = useRef<ScrollView>(null);
   const [commentText, setCommentText] = useState('');
@@ -137,11 +139,14 @@ const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
       <SafeAreaView style={styles.modalContainer}>
         <ScrollView>
           <ModalHeader onClose={onClose} />
-
-          <View style={styles.modalHeader}>
+          <TouchableOpacity
+            style={styles.modalHeader}
+            disabled={!onPressAuthor || !post.userId}
+            onPress={() => onPressAuthor?.(post)}
+          >
             <AuthorAvatar source={post.avatar} style={styles.modalUserAvatar} />
             <Text style={styles.modalUserName}>{post.author}</Text>
-          </View>
+          </TouchableOpacity>
 
           {post.title && (
             <Text style={styles.modalTitle}>{post.title}</Text>
@@ -237,8 +242,10 @@ const PostDetailModal = ({ visible, onClose, post }: PostDetailModalProps) => {
   );
 };
 
+    const router = useRouter();
 export default function HomeScreen() {
   const { posts, refreshPosts } = usePosts();
+  const router = useRouter();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
@@ -247,6 +254,12 @@ export default function HomeScreen() {
   const openImageModal = (post: Post) => {
     setSelectedPost(post);
     setIsModalVisible(true);
+  };
+
+  const handleOpenAuthorProfile = (post: Post) => {
+    if (!post.userId) return;
+    setIsModalVisible(false);
+    router.push(`/usuario/${post.userId}` as any);
   };
 
   const closeImageModal = () => {
@@ -311,6 +324,7 @@ export default function HomeScreen() {
         visible={isModalVisible}
         onClose={closeImageModal}
         post={selectedPost}
+        onPressAuthor={handleOpenAuthorProfile}
       />
     </View>
   );

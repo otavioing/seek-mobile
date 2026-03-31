@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import {
-  FlatList,
-  Image,
-  ImageSourcePropType,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    Alert,
+    FlatList,
+    Image,
+    ImageSourcePropType,
+    Linking,
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 // Importe o ícone para o botão "Voltar"
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -77,7 +79,22 @@ const JobCard: React.FC<JobCardProps> = ({ item, onPressInfo }) => (
       {/* Linha 1: Título e Botão */}
       <View style={styles.row}>
         <Text style={styles.title}>{item.title}</Text>
-        <TouchableOpacity style={styles.propostaButton}>
+        <TouchableOpacity
+          style={styles.propostaButton}
+          onPress={async () => {
+            const url = 'https://www.linkedin.com/';
+            try {
+              const supported = await Linking.canOpenURL(url);
+              if (supported) {
+                await Linking.openURL(url);
+              } else {
+                Alert.alert('Não foi possível abrir o link', url);
+              }
+            } catch (e) {
+              Alert.alert('Erro ao abrir o link', 'Tente novamente.');
+            }
+          }}
+        >
           <Text style={styles.propostaButtonText}>Candidatar-se</Text>
         </TouchableOpacity>
       </View>
