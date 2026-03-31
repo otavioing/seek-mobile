@@ -10,22 +10,59 @@ const logoapp = require('@/assets/images/logo_seek.png');
    COMPONENTES (FORA)
 ========================= */
 
-function FormEtapa2({
-  handleCadastro,
-  nome, setNome,
-  email, setEmail,
-  senha, setSenha,
-  confirmarSenha, setConfirmarSenha,
+function FormEtapa2({ handleCadastro, nome, setNome, email, setEmail, senha, setSenha, confirmarSenha, setConfirmarSenha }: any) {
+  const [verSenha1, setVerSenha1] = useState(false);
+  const [verSenha2, setVerSenha2] = useState(false);
 
-}: any) {
+  // Função que decide se mostra o texto real ou bolinhas
+  const mask = (text: string, visivel: boolean) => visivel ? text : text.replace(/./g, '●');
+
   return (
     <>
       <TextInput style={styles.input} placeholder="Nome" value={nome} onChangeText={setNome} />
       <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} />
-      <TextInput style={styles.input} placeholder="Senha" secureTextEntry value={senha} onChangeText={setSenha} />
-      <TextInput style={styles.input} placeholder="Confirmar senha" secureTextEntry value={confirmarSenha} onChangeText={setConfirmarSenha} />
 
-      <TouchableOpacity style={styles.button} onPress={handleCadastro} >
+      {/* CAMPO SENHA 1 */}
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.inputFlex}
+          placeholder="Senha"
+          value={mask(senha, verSenha1)} // Aqui a mágica acontece
+          onChangeText={(val) => {
+            // Se o usuário apagar ou digitar, atualizamos o estado real
+            if (verSenha1) setSenha(val);
+            else {
+               // Logica simplificada: para esse metodo funcionar 100% sem o secureTextEntry nativo, 
+               // o ideal é manter o botão manual.
+               setSenha(val);
+            }
+          }}
+          secureTextEntry={!verSenha1} 
+          autoCorrect={false}
+          autoCapitalize="none"
+        />
+        <TouchableOpacity style={styles.eyeIcon} onPress={() => setVerSenha1(!verSenha1)}>
+          <MaterialIcons name={verSenha1 ? "visibility" : "visibility-off"} size={22} color="#999" />
+        </TouchableOpacity>
+      </View>
+
+      {/* CAMPO SENHA 2 */}
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.inputFlex}
+          placeholder="Confirmar senha"
+          value={confirmarSenha}
+          onChangeText={setConfirmarSenha}
+          secureTextEntry={!verSenha2}
+          autoCorrect={false}
+          autoCapitalize="none"
+        />
+        <TouchableOpacity style={styles.eyeIcon} onPress={() => setVerSenha2(!verSenha2)}>
+          <MaterialIcons name={verSenha2 ? "visibility" : "visibility-off"} size={22} color="#999" />
+        </TouchableOpacity>
+      </View>
+
+      <TouchableOpacity style={styles.button} onPress={handleCadastro}>
         <Text style={styles.buttonText}>Confirmar</Text>
       </TouchableOpacity>
     </>
@@ -326,6 +363,21 @@ const styles = StyleSheet.create({
   footerLink: {
     color: '#2563EB',
     fontWeight: 'bold',
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    marginBottom: 12,
+    width: '100%',
+  },
+  inputFlex: {
+    flex: 1, // Faz o texto ocupar todo o espaço e empurrar o ícone pro canto
+    padding: 15,
+  },
+  eyeIcon: {
+    paddingHorizontal: 15, // Área de clique do ícone
   },
   logo: {
     width: 160,
