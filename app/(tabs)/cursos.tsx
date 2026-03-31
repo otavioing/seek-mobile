@@ -1,18 +1,20 @@
+import { api } from '@/src/services/api';
 import React, { useEffect, useState } from 'react';
 import {
+  Alert,
   FlatList,
   Image,
   ImageSourcePropType,
+  Linking,
   Modal,
   SafeAreaView,
   ScrollView,
-  Text,
   StyleSheet,
+  Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { api } from '@/src/services/api';
 
 interface Comment {
   id: string;
@@ -82,6 +84,20 @@ interface CourseDetailModalProps {
 const CourseDetailModal = ({ visible, onClose, course }: CourseDetailModalProps) => {
   if (!course) return null;
 
+  const handleSubscribe = async () => {
+    const url = 'https://www.alura.com.br/';
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Não foi possível abrir o link', url);
+      }
+    } catch (e) {
+      Alert.alert('Erro ao abrir o link', 'Tente novamente.');
+    }
+  };
+
   return (
     <Modal animationType="slide" visible={visible} onRequestClose={onClose}>
       <SafeAreaView style={styles.modalContainer}>
@@ -95,7 +111,7 @@ const CourseDetailModal = ({ visible, onClose, course }: CourseDetailModalProps)
             <Text style={styles.modalAuthor}>Por: {course.author}</Text>
             <Text style={styles.modalDescription}>{course.description}</Text>
 
-            <TouchableOpacity style={styles.subscribeButton}>
+            <TouchableOpacity style={styles.subscribeButton} onPress={handleSubscribe}>
               <Text style={styles.subscribeButtonText}>Assinar</Text>
             </TouchableOpacity>
 

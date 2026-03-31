@@ -1,20 +1,20 @@
 import { api } from '@/src/services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
+import { router, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Dimensions,
-  Image,
-  ImageBackground,
-  ImageSourcePropType,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    Dimensions,
+    Image,
+    ImageBackground,
+    ImageSourcePropType,
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Post, usePosts } from '../../src/context/PostsContext';
@@ -50,9 +50,10 @@ interface PostDetailModalProps {
   currentUserId?: string | null;
   currentUserName?: string;
   onOptions: (post: Post) => void;
+  onPressAuthor?: (post: Post) => void;
 }
 
-const PostDetailModal = ({ visible, onClose, post, currentUserId, currentUserName, onOptions }: PostDetailModalProps) => {
+const PostDetailModal = ({ visible, onClose, post, currentUserId, currentUserName, onOptions, onPressAuthor }: PostDetailModalProps) => {
   if (!post) return null;
 
   const isOwner = (currentUserId && post.userId === currentUserId) || (!!currentUserName && post.author === currentUserName);
@@ -67,7 +68,11 @@ const PostDetailModal = ({ visible, onClose, post, currentUserId, currentUserNam
         <ScrollView>
           <ModalHeader onClose={onClose} />
 
-          <View style={styles.modalHeader}>
+          <TouchableOpacity
+            style={styles.modalHeader}
+            disabled={!onPressAuthor || !post.userId}
+            onPress={() => onPressAuthor?.(post)}
+          >
             <Image source={post.avatar} style={styles.modalUserAvatar} />
             <Text style={styles.modalUserName}>{post.author}</Text>
             {isOwner && (
@@ -75,7 +80,7 @@ const PostDetailModal = ({ visible, onClose, post, currentUserId, currentUserNam
                 <Icon name="ellipsis-vertical" size={22} color="#fff" />
               </TouchableOpacity>
             )}
-          </View>
+          </TouchableOpacity>
           {post.title ? (
             <Text style={styles.modalTitle}>{post.title}</Text>
           ) : null}
@@ -154,6 +159,7 @@ const ProfileScreen = () => {
   const [followersModalVisible, setFollowersModalVisible] = useState(false);
 
   const { posts, removePost, refreshPosts } = usePosts();
+  const routerHook = useRouter();
   const [activeTab, setActiveTab] = useState<TabName>('Postagens');
 
   const [isPostModalVisible, setIsPostModalVisible] = useState(false);
@@ -296,6 +302,12 @@ const ProfileScreen = () => {
   const handleOpenPostModal = (post: Post) => {
     setSelectedPost(post);
     setIsPostModalVisible(true);
+  };
+
+  const handleOpenAuthorProfile = (post: Post) => {
+    if (!post.userId) return;
+    setIsPostModalVisible(false);
+    routerHook.push(`/usuario/${post.userId}` as any);
   };
   const handleClosePostModal = () => {
     setIsPostModalVisible(false);
@@ -440,6 +452,7 @@ const ProfileScreen = () => {
           setOptionsPost(post);
           setShowInlineMenu(true);
         }}
+        onPressAuthor={handleOpenAuthorProfile}
       />
       <SimpleImageModal
         visible={isProfileModalVisible}
