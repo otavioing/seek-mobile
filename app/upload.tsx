@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { usePosts } from '../src/context/PostsContext';
 import { api } from '../src/services/api';
 
@@ -24,25 +25,15 @@ export default function UploadScreen() {
   const [loadingCategories, setLoadingCategories] = useState(false);
 
   useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        setLoadingCategories(true);
-        const { data } = await api.get('/tendencias');
-        const mapped: Category[] = (data || [])
-          .map((item: any) => ({
-            id: String(item.id_categoria ?? item.id ?? item.value ?? ''),
-            name: item.nome_categoria || item.nome || item.categoria || '',
-          }))
-          .filter((c: Category) => c.id && c.name);
-        setCategories(mapped);
-      } catch (error) {
-        console.log('Erro ao carregar categorias', error);
-      } finally {
-        setLoadingCategories(false);
-      }
-    };
-
-    loadCategories();
+    // categorias fixas (igual você mandou)
+    setCategories([
+      { id: '1', name: 'Ilustração' },
+      { id: '2', name: 'Design' },
+      { id: '3', name: 'Foto' },
+      { id: '4', name: 'Futurista' },
+      { id: '5', name: 'Abstrato' },
+      { id: '6', name: 'Identidade Visual' },
+    ]);
   }, []);
 
   const requestPermission = async () => {
@@ -62,7 +53,7 @@ export default function UploadScreen() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
       quality: 0.9,
-      selectionLimit: 2,
+      selectionLimit: 5, // 🔥 agora até 5
     });
 
     if (result.canceled) return;
@@ -70,7 +61,7 @@ export default function UploadScreen() {
     const chosen = result.assets?.map((asset: ImagePicker.ImagePickerAsset) => ({ uri: asset.uri })) ?? [];
     setDrafts((prev) => {
       const merged = [...prev, ...chosen];
-      return merged.slice(0, 2); // garante no máximo 2 imagens
+      return merged.slice(0, 5); // 🔥 garante máximo 5
     });
   };
 
@@ -86,7 +77,7 @@ export default function UploadScreen() {
   };
 
   const removeTagFromDescription = (desc: string, tag: string) => {
-    const regex = new RegExp(`(^|\s)#${tag}(?=\s|$)`, 'gi');
+    const regex = new RegExp(`(^|\\s)#${tag}(?=\\s|$)`, 'gi');
     return desc.replace(regex, '').replace(/\s+/g, ' ').trim();
   };
 
@@ -111,27 +102,52 @@ export default function UploadScreen() {
       Alert.alert('Título obrigatório', 'Adicione um título para o seu post.');
       return;
     }
+
     try {
       setPublishing(true);
+
+      const userId = await AsyncStorage.getItem('userId');
+
+      if (!userId) {
+        Alert.alert('Erro', 'Usuário não encontrado.');
+        return;
+      }
 
       const descWithTags = selectedCategories.reduce(
         (acc, cat) => ensureTagInDescription(acc, cat.name),
         postDescription,
       );
 
-      await addPost({
-        images: drafts.map((d) => ({ uri: d.uri })),
-        title: title.trim(),
-        categoryId: selectedCategories[0]?.id,
-        categoryName: selectedCategories[0]?.name,
-        description: descWithTags,
+      const formData = new FormData();
+
+      formData.append('user_id', userId);
+      formData.append('titulo', title.trim());
+      formData.append('legenda', descWithTags);
+      formData.append('id_categoria', selectedCategories[0]?.id || '');
+
+      drafts.forEach((img, index) => {
+        formData.append('imagens', {
+          uri: img.uri,
+          name: `foto_${index}.jpg`,
+          type: 'image/jpeg',
+        } as any);
       });
+
+      await api.post('/posts', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
       setDrafts([]);
       setTitle('');
       setPostDescription('');
       setSelectedCategories([]);
+
       router.replace('/(tabs)/perfil');
+
     } catch (err) {
+      console.log(err);
       Alert.alert('Erro ao publicar', 'Tente novamente.');
     } finally {
       setPublishing(false);
