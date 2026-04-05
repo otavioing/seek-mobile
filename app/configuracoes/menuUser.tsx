@@ -146,7 +146,7 @@ export default function menuUser() {
         </Svg>
         <Text style={styles.textoFiltro}>Modificar Cursos</Text>
       </TouchableOpacity>
-      <Link href="/config" asChild>
+      <Link href="/configuracoes/config" asChild>
   <TouchableOpacity style={styles.fbtContainer}>
           <Svg
             width={size}

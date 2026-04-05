@@ -1,4 +1,5 @@
 import { api } from '@/src/services/api';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
@@ -10,6 +11,7 @@ export default function Login() {
 
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [forgotVisible, setForgotVisible] = useState(false);
     const [forgotStep, setForgotStep] = useState<'email' | 'code'>('email');
@@ -131,14 +133,26 @@ export default function Login() {
                     onChangeText={setEmail}
                 />
 
-                <TextInput
-                    style={styles.input}
-                    placeholder="Senha"
-                    placeholderTextColor="#aaa"
-                    secureTextEntry
-                    value={senha}
-                    onChangeText={setSenha}
-                />
+                <View style={styles.passwordContainer}>
+                    <TextInput
+                        style={styles.passwordInput}
+                        placeholder="Senha"
+                        placeholderTextColor="#aaa"
+                        secureTextEntry={!showPassword}
+                        value={senha}
+                        onChangeText={setSenha}
+                    />
+                    <TouchableOpacity
+                        style={styles.eyeButton}
+                        onPress={() => setShowPassword(!showPassword)}
+                    >
+                        <Ionicons
+                            name={showPassword ? 'eye' : 'eye-off'}
+                            size={20}
+                            color="#666"
+                        />
+                    </TouchableOpacity>
+                </View>
 
                 <TouchableOpacity
                     style={[styles.button, loading && { opacity: 0.6 }]}
@@ -280,6 +294,26 @@ const styles = StyleSheet.create({
         padding: 15,
         marginBottom: 12,
         width: '100%',
+    },
+    passwordContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+        width: '100%',
+    },
+    passwordInput: {
+        backgroundColor: '#ffffff',
+        borderWidth: 1,
+        borderColor: '#000000',
+        borderRadius: 8,
+        padding: 15,
+        flex: 1,
+        paddingRight: 45,
+    },
+    eyeButton: {
+        position: 'absolute',
+        right: 15,
+        padding: 5,
     },
     button: {
         backgroundColor: '#322BF0',

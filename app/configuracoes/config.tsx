@@ -51,7 +51,7 @@ export default function Config() {
 
         <Text style={styles.title}>Configurações</Text>
 
-        <Link href="/privacidade" asChild>
+        <Link href="/configuracoes/privacidade" asChild>
           <TouchableOpacity style={styles.itemRow}>
             <Text style={styles.itemText}>Privacidade</Text>
             <Text style={styles.arrowText}>➔</Text>
@@ -60,18 +60,22 @@ export default function Config() {
 
         <TouchableOpacity
           style={styles.itemRow}
-          onPress={() => router.push('/notificacoe')}
+          onPress={() => router.push('/configuracoes/notificacoes')}
         >
           <Text style={styles.itemText}>Notificações</Text>
           <Text style={styles.arrowText}>➔</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.itemRow}>
+        <TouchableOpacity style={styles.itemRow}
+          onPress={() => router.push('/configuracoes/informacoesuser')}
+        >
           <Text style={styles.itemText}>Informações do Usuário</Text>
           <Text style={styles.arrowText}>➔</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.itemRow}>
+        <TouchableOpacity style={styles.itemRow}
+          onPress={() => router.push('/configuracoes/alteraremailsenha')}
+        >
           <Text style={styles.itemText}>Email e Senha</Text>
           <Text style={styles.arrowText}>➔</Text>
         </TouchableOpacity>

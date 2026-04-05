@@ -37,7 +37,7 @@ interface Post {
   followers: string;
   likes: number;
   comments: Comment[];
-  userImage: ImageSourcePropType; // 👈 NOVO
+  userImage: ImageSourcePropType;
   title?: string;
 }
 
@@ -45,7 +45,6 @@ interface Post {
    VARIÁVEIS
 ============================================================ */
 
-const denjiAvatar = require("../../../assets/images/perfil/denji.jpg");
 const { width } = Dimensions.get("window");
 
 /* ============================================================

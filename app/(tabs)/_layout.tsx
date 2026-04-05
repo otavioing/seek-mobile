@@ -63,11 +63,11 @@ function CustomTabBar() {
       </TouchableOpacity>
 
       {/* PERFIL / CONFIGURAÇÕES */}
-      <TouchableOpacity onPress={() => go("/menuUser")} style={styles.item}>
+      <TouchableOpacity onPress={() => go("/configuracoes/menuUser")} style={styles.item}>
         <MaterialIcons
-          name={isActive("/menuUser") ? "person" : "person-outline"}
+          name={isActive("/configuracoes/menuUser") ? "person" : "person-outline"}
           size={30}
-          color={isActive("/menuUser") ? "#fff" : "#777"}
+          color={isActive("/configuracoes/menuUser") ? "#fff" : "#777"}
         />
       </TouchableOpacity>
 
