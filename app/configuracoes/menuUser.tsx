@@ -1,25 +1,41 @@
 import { api } from '@/src/services/api';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
 import { Link, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { Path, Svg } from "react-native-svg";
 
 
 export default function menuUser() {
 
-  const color = "white";
   const size = 48;
   const router = useRouter();
 
   const [nome, setNome] = useState("Carregando...");
   const [foto, setFoto] = useState<string | null>(null);
+  const [darkMode, setDarkMode] = useState(true);
+
+  const carregarTema = useCallback(async () => {
+    try {
+      const temaSalvo = await AsyncStorage.getItem("tema");
+      const isDark = temaSalvo !== "claro";
+
+      setDarkMode(isDark);
+
+      if (!temaSalvo) {
+        await AsyncStorage.setItem("tema", "escuro");
+      }
+    } catch (error) {
+      console.log("Erro ao carregar tema:", error);
+    }
+  }, []);
 
   useEffect(() => {
     const carregarUsuario = async () => {
@@ -41,14 +57,40 @@ export default function menuUser() {
     };
 
     carregarUsuario();
-  }, []);
+    carregarTema();
+  }, [carregarTema]);
+
+  useFocusEffect(
+    useCallback(() => {
+      carregarTema();
+    }, [carregarTema])
+  );
+
+  const theme = darkMode
+    ? {
+        background: "#121212",
+        textPrimary: "#FFFFFF",
+        textSecondary: "#B0B0B0",
+        icon: "#FFFFFF",
+        divider: "#FFFFFF",
+      }
+    : {
+        background: "#F2F2F2",
+        textPrimary: "#111111",
+        textSecondary: "#5C5C5C",
+        icon: "#111111",
+        divider: "#BDBDBD",
+      };
+
+  const color = theme.icon;
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}> 
 
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backRow}>
-          <Text style={styles.backIcon}>←</Text>
-          <Text style={styles.backText}>Voltar</Text>
+          <Text style={[styles.backIcon, { color: theme.textPrimary }]}>←</Text>
+          <Text style={[styles.backText, { color: theme.textPrimary }]}>Voltar</Text>
         </TouchableOpacity>
       </View>
 
@@ -71,10 +113,10 @@ export default function menuUser() {
             )}
 
             <View style={{ justifyContent: "flex-start" }}>
-              <Text style={{ color: "#FFFFFF", fontSize: 20, fontWeight: "700" }}>
+              <Text style={{ color: theme.textPrimary, fontSize: 20, fontWeight: "700" }}>
                 {nome}
               </Text>
-              <Text style={{ color: "#FFFFFF", fontSize: 11 }}>ver perfil</Text>
+              <Text style={{ color: theme.textSecondary, fontSize: 11 }}>ver perfil</Text>
             </View>
 
             <Svg
@@ -100,7 +142,7 @@ export default function menuUser() {
         style={{
           width: "100%",
           borderBottomWidth: 2,
-          borderBottomColor: "#FFFFFF",
+          borderBottomColor: theme.divider,
           marginTop: 25,
         }}
       />
@@ -112,7 +154,7 @@ export default function menuUser() {
             fill={color}
           />
         </Svg>
-        <Text style={styles.textoFiltro}>Notificação</Text>
+        <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Notificação</Text>
       </TouchableOpacity>
   <TouchableOpacity style={styles.fbtContainer}>
         <Svg width={size} height={size} viewBox="0 0 60 60" fill="none">
@@ -121,7 +163,7 @@ export default function menuUser() {
             fill={color}
           />
         </Svg>
-        <Text style={styles.textoFiltro}>Atualizações</Text>
+        <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Atualizações</Text>
       </TouchableOpacity>
   <TouchableOpacity style={styles.fbtContainer}>
         <Svg
@@ -135,7 +177,7 @@ export default function menuUser() {
             fill={color}
           />
         </Svg>
-        <Text style={styles.textoFiltro}>Modificar Projetos</Text>
+        <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Modificar Projetos</Text>
       </TouchableOpacity>
   <TouchableOpacity style={styles.fbtContainer}>
         <Svg width={size} height={size} viewBox="0 0 60 60" fill="none">
@@ -144,7 +186,7 @@ export default function menuUser() {
             fill={color}
           />
         </Svg>
-        <Text style={styles.textoFiltro}>Modificar Cursos</Text>
+        <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Modificar Cursos</Text>
       </TouchableOpacity>
       <Link href="/configuracoes/config" asChild>
   <TouchableOpacity style={styles.fbtContainer}>
@@ -159,7 +201,7 @@ export default function menuUser() {
               fill={color}
             />
           </Svg>
-          <Text style={styles.textoFiltro}>Configurações</Text>
+          <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Configurações</Text>
         </TouchableOpacity>
       </Link>
   <TouchableOpacity style={styles.fbtContainer}>
@@ -169,7 +211,7 @@ export default function menuUser() {
             fill={color}
           />
         </Svg>
-        <Text style={styles.textoFiltro}>Analytics</Text>
+        <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Analytics</Text>
       </TouchableOpacity>
   <TouchableOpacity style={styles.fbtContainer}>
         <Svg width={size} height={size} viewBox="0 0 60 60" fill="none">
@@ -178,7 +220,7 @@ export default function menuUser() {
             fill={color}
           />
         </Svg>
-        <Text style={styles.textoFiltro}>Sair</Text>
+        <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Sair</Text>
       </TouchableOpacity>
     </View>
   );
@@ -187,7 +229,6 @@ export default function menuUser() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#121212",
   },
   topBar: {
     paddingTop: 16,
@@ -230,7 +271,6 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   textoFiltro: {
-    color: "white",
     fontSize: 16,
     fontWeight: "500",
     marginLeft: 12,

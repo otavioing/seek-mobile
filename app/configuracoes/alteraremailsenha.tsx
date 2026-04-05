@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function AlterarEmailSenha() {
@@ -10,42 +12,95 @@ export default function AlterarEmailSenha() {
 	const [novaSenha, setNovaSenha] = useState('');
 	const [showSenhaAtual, setShowSenhaAtual] = useState(false);
 	const [showNovaSenha, setShowNovaSenha] = useState(false);
+	const [darkMode, setDarkMode] = useState(true);
+
+	const carregarTema = useCallback(async () => {
+		try {
+			const temaSalvo = await AsyncStorage.getItem('tema');
+			const isDark = temaSalvo !== 'claro';
+			setDarkMode(isDark);
+
+			if (!temaSalvo) {
+				await AsyncStorage.setItem('tema', 'escuro');
+			}
+		} catch (error) {
+			console.log('Erro ao carregar tema:', error);
+		}
+	}, []);
+
+	useEffect(() => {
+		carregarTema();
+	}, [carregarTema]);
+
+	useFocusEffect(
+		useCallback(() => {
+			carregarTema();
+		}, [carregarTema])
+	);
+
+	const theme = darkMode
+		? {
+				background: '#000000',
+				textPrimary: '#f4f4f5',
+				inputBackground: '#393a3d',
+				inputText: '#f4f4f5',
+				placeholder: '#8d8d8d',
+				icon: '#999999',
+				buttonBackground: '#2563eb',
+				buttonText: '#f4f4f5',
+			}
+		: {
+				background: '#d9d9d9',
+				textPrimary: '#111111',
+				inputBackground: '#ffffff',
+				inputText: '#111111',
+				placeholder: '#6b6b6b',
+				icon: '#4f4f4f',
+				buttonBackground: '#111111',
+				buttonText: '#f4f4f5',
+			};
 
 	return (
-		<SafeAreaView style={styles.safeArea}>
-			<View style={styles.container}>
+		<SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+			<View style={[styles.container, { backgroundColor: theme.background }]}>
 				<View style={styles.headerRow}>
 					<TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-						<Text style={styles.backIcon}>←</Text>
-						<Text style={styles.backText}>Voltar</Text>
+						<Text style={[styles.backIcon, { color: theme.textPrimary }]}>←</Text>
+						<Text style={[styles.backText, { color: theme.textPrimary }]}>Voltar</Text>
 					</TouchableOpacity>
 				</View>
 
-				<Text style={styles.title}>Email e Senha</Text>
+				<Text style={[styles.title, { color: theme.textPrimary }]}>Email e Senha</Text>
 
 				<View style={styles.group}>
-					<Text style={styles.fieldLabel}>E-mail</Text>
+					<Text style={[styles.fieldLabel, { color: theme.textPrimary }]}>E-mail</Text>
 					<TextInput
 						value={email}
 						onChangeText={setEmail}
 						placeholder="nome@email.com"
-						placeholderTextColor="#8d8d8d"
+						placeholderTextColor={theme.placeholder}
 						keyboardType="email-address"
 						autoCapitalize="none"
-						style={styles.input}
+						style={[
+							styles.input,
+							{ backgroundColor: theme.inputBackground, color: theme.inputText },
+						]}
 					/>
 				</View>
 
 				<View style={styles.group}>
-					<Text style={styles.fieldLabel}>Senha atuala</Text>
+					<Text style={[styles.fieldLabel, { color: theme.textPrimary }]}>Senha atuala</Text>
 					<View style={styles.passwordContainer}>
 						<TextInput
 							value={senhaAtual}
 							onChangeText={setSenhaAtual}
 							placeholder="****"
-							placeholderTextColor="#8d8d8d"
+							placeholderTextColor={theme.placeholder}
 							secureTextEntry={!showSenhaAtual}
-							style={styles.passwordInput}
+							style={[
+								styles.passwordInput,
+								{ backgroundColor: theme.inputBackground, color: theme.inputText },
+							]}
 						/>
 						<TouchableOpacity
 							style={styles.eyeButton}
@@ -54,22 +109,25 @@ export default function AlterarEmailSenha() {
 							<Ionicons
 								name={showSenhaAtual ? 'eye' : 'eye-off'}
 								size={16}
-								color="#999"
+								color={theme.icon}
 							/>
 						</TouchableOpacity>
 					</View>
 				</View>
 
 				<View style={styles.group}>
-					<Text style={styles.fieldLabel}>Alterar senha</Text>
+					<Text style={[styles.fieldLabel, { color: theme.textPrimary }]}>Alterar senha</Text>
 					<View style={styles.passwordContainer}>
 						<TextInput
 							value={novaSenha}
 							onChangeText={setNovaSenha}
 							placeholder="****"
-							placeholderTextColor="#8d8d8d"
+							placeholderTextColor={theme.placeholder}
 							secureTextEntry={!showNovaSenha}
-							style={styles.passwordInput}
+							style={[
+								styles.passwordInput,
+								{ backgroundColor: theme.inputBackground, color: theme.inputText },
+							]}
 						/>
 						<TouchableOpacity
 							style={styles.eyeButton}
@@ -78,15 +136,18 @@ export default function AlterarEmailSenha() {
 							<Ionicons
 								name={showNovaSenha ? 'eye' : 'eye-off'}
 								size={16}
-								color="#999"
+								color={theme.icon}
 							/>
 						</TouchableOpacity>
 					</View>
 				</View>
 
 				<View style={styles.footer}>
-					<TouchableOpacity activeOpacity={0.85} style={styles.confirmButton}>
-						<Text style={styles.confirmButtonText}>Confirmar</Text>
+					<TouchableOpacity
+						activeOpacity={0.85}
+						style={[styles.confirmButton, { backgroundColor: theme.buttonBackground }]}
+					>
+						<Text style={[styles.confirmButtonText, { color: theme.buttonText }]}>Confirmar</Text>
 					</TouchableOpacity>
 				</View>
 			</View>
@@ -117,17 +178,14 @@ const styles = StyleSheet.create({
 		paddingRight: 8,
 	},
 	backIcon: {
-		color: '#f4f4f5',
 		fontSize: 20,
 		marginRight: 4,
 	},
 	backText: {
-		color: '#f4f4f5',
 		fontSize: 18,
 		fontWeight: '700',
 	},
 	title: {
-		color: '#f4f4f5',
 		fontSize: 32,
 		fontWeight: '700',
 		marginBottom: 14,
@@ -136,14 +194,11 @@ const styles = StyleSheet.create({
 		marginBottom: 12,
 	},
 	fieldLabel: {
-		color: '#f4f4f5',
 		fontSize: 15,
 		fontWeight: '700',
 		marginBottom: 6,
 	},
 	input: {
-		backgroundColor: '#393a3d',
-		color: '#f4f4f5',
 		fontSize: 14,
 		paddingHorizontal: 10,
 		paddingVertical: 8,
@@ -155,8 +210,6 @@ const styles = StyleSheet.create({
 		position: 'relative',
 	},
 	passwordInput: {
-		backgroundColor: '#393a3d',
-		color: '#f4f4f5',
 		fontSize: 14,
 		paddingHorizontal: 10,
 		paddingVertical: 8,
@@ -182,7 +235,6 @@ const styles = StyleSheet.create({
 		borderRadius: 999,
 	},
 	confirmButtonText: {
-		color: '#f4f4f5',
 		fontSize: 14,
 		fontWeight: '700',
 	},

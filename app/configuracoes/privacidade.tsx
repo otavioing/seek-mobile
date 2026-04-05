@@ -1,5 +1,7 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type PerfilVisibilidade = "Público" | "Privado";
@@ -7,6 +9,7 @@ type ListaOpcao = "Todos" | "Seguidores" | "Seguindo";
 
 export default function Privacidade() {
   const router = useRouter();
+  const [darkMode, setDarkMode] = useState(true);
   const [perfilVisibilidade, setPerfilVisibilidade] = useState<PerfilVisibilidade>("Público");
 
   const [quemVePosts, setQuemVePosts] = useState<ListaOpcao>("Todos");
@@ -18,43 +21,84 @@ export default function Privacidade() {
   const [usuariosBloqueadosAberto, setUsuariosBloqueadosAberto] = useState(false);
   const [palavrasBloqueadasAberto, setPalavrasBloqueadasAberto] = useState(false);
 
+  const carregarTema = useCallback(async () => {
+    try {
+      const temaSalvo = await AsyncStorage.getItem("tema");
+      const isDark = temaSalvo !== "claro";
+      setDarkMode(isDark);
+
+      if (!temaSalvo) {
+        await AsyncStorage.setItem("tema", "escuro");
+      }
+    } catch (error) {
+      console.log("Erro ao carregar tema:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    carregarTema();
+  }, [carregarTema]);
+
+  useFocusEffect(
+    useCallback(() => {
+      carregarTema();
+    }, [carregarTema])
+  );
+
+  const theme = darkMode
+    ? {
+        background: "#000000",
+        textPrimary: "#FFFFFF",
+        pillBackground: "#1F1F1F",
+        dropdownBackground: "#111111",
+      }
+    : {
+        background: "#D9D9D9",
+        textPrimary: "#111111",
+        pillBackground: "#FFFFFF",
+        dropdownBackground: "#EFEFEF",
+      };
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}> 
+      <ScrollView
+        style={[styles.container, { backgroundColor: theme.background }]}
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backIcon}>←</Text>
-            <Text style={styles.backText}>Voltar</Text>
+            <Text style={[styles.backIcon, { color: theme.textPrimary }]}>←</Text>
+            <Text style={[styles.backText, { color: theme.textPrimary }]}>Voltar</Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.title}>Privacidade</Text>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>Privacidade</Text>
 
         {/* Perfil */}
         <View style={styles.row}>
-          <Text style={styles.label}>Perfil</Text>
+          <Text style={[styles.label, { color: theme.textPrimary }]}>Perfil</Text>
           <TouchableOpacity
-            style={styles.pill}
+            style={[styles.pill, { backgroundColor: theme.pillBackground }]}
             onPress={() =>
               setPerfilVisibilidade((prev) => (prev === "Público" ? "Privado" : "Público"))
             }
           >
-            <Text style={styles.pillText}>{perfilVisibilidade}</Text>
+            <Text style={[styles.pillText, { color: theme.textPrimary }]}>{perfilVisibilidade}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Quem pode ver meus posts */}
         <View style={styles.row}>
-          <Text style={styles.label}>Quem pode ver meus posts?</Text>
+          <Text style={[styles.label, { color: theme.textPrimary }]}>Quem pode ver meus posts?</Text>
           <TouchableOpacity
-            style={styles.pill}
+            style={[styles.pill, { backgroundColor: theme.pillBackground }]}
             onPress={() => setQuemVePostsAberto((prev) => !prev)}
           >
-            <Text style={styles.pillText}>{quemVePosts}</Text>
+            <Text style={[styles.pillText, { color: theme.textPrimary }]}>{quemVePosts}</Text>
           </TouchableOpacity>
         </View>
         {quemVePostsAberto && (
-          <View style={styles.dropdown}>
+          <View style={[styles.dropdown, { backgroundColor: theme.dropdownBackground }]}>
             {["Todos", "Seguidores"].map((opcao) => (
               <TouchableOpacity
                 key={opcao}
@@ -64,7 +108,7 @@ export default function Privacidade() {
                   setQuemVePostsAberto(false);
                 }}
               >
-                <Text style={styles.dropdownText}>{opcao}</Text>
+                <Text style={[styles.dropdownText, { color: theme.textPrimary }]}>{opcao}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -72,16 +116,16 @@ export default function Privacidade() {
 
         {/* Quem pode comentar */}
         <View style={styles.row}>
-          <Text style={styles.label}>Quem pode comentar</Text>
+          <Text style={[styles.label, { color: theme.textPrimary }]}>Quem pode comentar</Text>
           <TouchableOpacity
-            style={styles.pill}
+            style={[styles.pill, { backgroundColor: theme.pillBackground }]}
             onPress={() => setQuemComentaAberto((prev) => !prev)}
           >
-            <Text style={styles.pillText}>{quemComenta}</Text>
+            <Text style={[styles.pillText, { color: theme.textPrimary }]}>{quemComenta}</Text>
           </TouchableOpacity>
         </View>
         {quemComentaAberto && (
-          <View style={styles.dropdown}>
+          <View style={[styles.dropdown, { backgroundColor: theme.dropdownBackground }]}>
             {["Todos", "Seguindo"].map((opcao) => (
               <TouchableOpacity
                 key={opcao}
@@ -91,7 +135,7 @@ export default function Privacidade() {
                   setQuemComentaAberto(false);
                 }}
               >
-                <Text style={styles.dropdownText}>{opcao}</Text>
+                <Text style={[styles.dropdownText, { color: theme.textPrimary }]}>{opcao}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -102,12 +146,12 @@ export default function Privacidade() {
           style={styles.row}
           onPress={() => setUsuariosBloqueadosAberto((prev) => !prev)}
         >
-          <Text style={[styles.label, styles.boldLabel]}>Usuários bloqueados</Text>
-          <Text style={styles.chevron}>{usuariosBloqueadosAberto ? "˄" : "˅"}</Text>
+          <Text style={[styles.label, styles.boldLabel, { color: theme.textPrimary }]}>Usuários bloqueados</Text>
+          <Text style={[styles.chevron, { color: theme.textPrimary }]}>{usuariosBloqueadosAberto ? "˄" : "˅"}</Text>
         </TouchableOpacity>
         {usuariosBloqueadosAberto && (
-          <View style={styles.dropdown}>
-            <Text style={styles.dropdownText}>Nenhum usuário bloqueado.</Text>
+          <View style={[styles.dropdown, { backgroundColor: theme.dropdownBackground }]}>
+            <Text style={[styles.dropdownText, { color: theme.textPrimary }]}>Nenhum usuário bloqueado.</Text>
           </View>
         )}
 
@@ -116,12 +160,12 @@ export default function Privacidade() {
           style={styles.row}
           onPress={() => setPalavrasBloqueadasAberto((prev) => !prev)}
         >
-          <Text style={[styles.label, styles.boldLabel]}>Palavras bloqueadas</Text>
-          <Text style={styles.chevron}>{palavrasBloqueadasAberto ? "˄" : "˅"}</Text>
+          <Text style={[styles.label, styles.boldLabel, { color: theme.textPrimary }]}>Palavras bloqueadas</Text>
+          <Text style={[styles.chevron, { color: theme.textPrimary }]}>{palavrasBloqueadasAberto ? "˄" : "˅"}</Text>
         </TouchableOpacity>
         {palavrasBloqueadasAberto && (
-          <View style={styles.dropdown}>
-            <Text style={styles.dropdownText}>Nenhuma palavra bloqueada.</Text>
+          <View style={[styles.dropdown, { backgroundColor: theme.dropdownBackground }]}>
+            <Text style={[styles.dropdownText, { color: theme.textPrimary }]}>Nenhuma palavra bloqueada.</Text>
           </View>
         )}
       </ScrollView>
@@ -155,19 +199,16 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   backIcon: {
-    color: "#FFFFFF",
     fontSize: 20,
     marginRight: 4,
   },
   backText: {
-    color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "bold",
   },
   title: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#FFFFFF",
     marginTop: 8,
     marginBottom: 32,
   },
@@ -178,7 +219,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: {
-    color: "#FFFFFF",
     fontSize: 15,
   },
   boldLabel: {
@@ -191,7 +231,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#1F1F1F",
   },
   pillText: {
-    color: "#FFFFFF",
     fontSize: 13,
   },
   dropdown: {
@@ -206,12 +245,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   dropdownText: {
-    color: "#FFFFFF",
     fontSize: 13,
     paddingHorizontal: 10,
   },
   chevron: {
-    color: "#FFFFFF",
     fontSize: 16,
   },
 });

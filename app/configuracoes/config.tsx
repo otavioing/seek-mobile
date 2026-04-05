@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link, useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Animated,
   SafeAreaView,
@@ -15,15 +15,69 @@ import { Path, Svg } from "react-native-svg";
 export default function Config() {
   const router = useRouter();
   const [darkMode, setDarkMode] = useState(true);
-  const translateX = new Animated.Value(darkMode ? 2 : 26);
+  const [isLoadingTheme, setIsLoadingTheme] = useState(true);
+  const translateX = useRef(new Animated.Value(2)).current;
 
-  const toggleSwitch = () => {
+  const theme = darkMode
+    ? {
+        background: "#000000",
+        textPrimary: "#FFFFFF",
+        textDanger: "#FF4B4B",
+        arrow: "#7A7A7A",
+        iconMuted: "#888888",
+        switchTrack: "#FFFFFF",
+        switchThumb: "#3B82F6",
+        loading: "#7A7A7A",
+      }
+    : {
+        background: "#D9D9D9",
+        textPrimary: "#111111",
+        textDanger: "#C62828",
+        arrow: "#4F4F4F",
+        iconMuted: "#3F3F3F",
+        switchTrack: "#BDBDBD",
+        switchThumb: "#111111",
+        loading: "#4F4F4F",
+      };
+
+  useEffect(() => {
+    const loadTheme = async () => {
+      try {
+        const savedTheme = await AsyncStorage.getItem('tema');
+        const isDark = savedTheme !== 'claro';
+
+        setDarkMode(isDark);
+        translateX.setValue(isDark ? 2 : 26);
+
+        if (!savedTheme) {
+          await AsyncStorage.setItem('tema', 'escuro');
+        }
+      } catch (error) {
+        console.log('Erro ao carregar tema:', error);
+      } finally {
+        setIsLoadingTheme(false);
+      }
+    };
+
+    loadTheme();
+  }, [translateX]);
+
+  const toggleSwitch = async () => {
+    const nextDarkMode = !darkMode;
+
     Animated.timing(translateX, {
       toValue: darkMode ? 26 : 2,
       duration: 200,
       useNativeDriver: true,
     }).start();
-    setDarkMode(!darkMode);
+
+    setDarkMode(nextDarkMode);
+
+    try {
+      await AsyncStorage.setItem('tema', nextDarkMode ? 'escuro' : 'claro');
+    } catch (error) {
+      console.log('Erro ao salvar tema:', error);
+    }
   };
 
   const handleLogout = async () => {
@@ -40,21 +94,21 @@ export default function Config() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backIcon}>←</Text>
-            <Text style={styles.backText}>Voltar</Text>
+            <Text style={[styles.backIcon, { color: theme.textPrimary }]}>←</Text>
+            <Text style={[styles.backText, { color: theme.textPrimary }]}>Voltar</Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.title}>Configurações</Text>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>Configurações</Text>
 
         <Link href="/configuracoes/privacidade" asChild>
           <TouchableOpacity style={styles.itemRow}>
-            <Text style={styles.itemText}>Privacidade</Text>
-            <Text style={styles.arrowText}>➔</Text>
+            <Text style={[styles.itemText, { color: theme.textPrimary }]}>Privacidade</Text>
+            <Text style={[styles.arrowText, { color: theme.arrow }]}>➔</Text>
           </TouchableOpacity>
         </Link>
 
@@ -62,43 +116,43 @@ export default function Config() {
           style={styles.itemRow}
           onPress={() => router.push('/configuracoes/notificacoes')}
         >
-          <Text style={styles.itemText}>Notificações</Text>
-          <Text style={styles.arrowText}>➔</Text>
+          <Text style={[styles.itemText, { color: theme.textPrimary }]}>Notificações</Text>
+          <Text style={[styles.arrowText, { color: theme.arrow }]}>➔</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.itemRow}
           onPress={() => router.push('/configuracoes/informacoesuser')}
         >
-          <Text style={styles.itemText}>Informações do Usuário</Text>
-          <Text style={styles.arrowText}>➔</Text>
+          <Text style={[styles.itemText, { color: theme.textPrimary }]}>Informações do Usuário</Text>
+          <Text style={[styles.arrowText, { color: theme.arrow }]}>➔</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.itemRow}
           onPress={() => router.push('/configuracoes/alteraremailsenha')}
         >
-          <Text style={styles.itemText}>Email e Senha</Text>
-          <Text style={styles.arrowText}>➔</Text>
+          <Text style={[styles.itemText, { color: theme.textPrimary }]}>Email e Senha</Text>
+          <Text style={[styles.arrowText, { color: theme.arrow }]}>➔</Text>
         </TouchableOpacity>
 
         {/* Acessibilidade + switch de modo escuro/claro */}
         <View style={[styles.itemRow, styles.accessibilityRow]}>
-          <Text style={styles.itemText}>Acessibilidade</Text>
+          <Text style={[styles.itemText, { color: theme.textPrimary }]}>Acessibilidade</Text>
 
           <View style={styles.switchContainer}>
             <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
               <Path
                 d="M21 12.79A9 9 0 0111.21 3 7 7 0 1012 21a9 9 0 009-8.21z"
-                fill={darkMode ? "#888" : "#444"}
+                fill={theme.iconMuted}
               />
             </Svg>
 
             <TouchableOpacity onPress={toggleSwitch}>
-              <View style={styles.switch}>
+              <View style={[styles.switch, { backgroundColor: theme.switchTrack }]}> 
                 <Animated.View
                   style={[
                     styles.circle,
                     {
-                      backgroundColor: darkMode ? "#3b82f6" : "#ddd",
+                      backgroundColor: theme.switchThumb,
                       transform: [{ translateX }],
                     },
                   ]}
@@ -109,7 +163,7 @@ export default function Config() {
             <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
               <Path
                 d="M12 18a6 6 0 100-12 6 6 0 000 12zM12 2v2m0 16v2m10-10h-2M4 12H2m16.95 6.95l-1.41-1.41M6.46 6.46L5.05 5.05m0 13.9l1.41-1.41M17.54 6.46l1.41-1.41"
-                stroke={darkMode ? "#888" : "#444"}
+                stroke={theme.iconMuted}
                 strokeWidth={2}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -118,16 +172,20 @@ export default function Config() {
           </View>
         </View>
 
+        {isLoadingTheme && (
+          <Text style={[styles.themeLoadingText, { color: theme.loading }]}>Carregando tema...</Text>
+        )}
+
         {/* Sair */}
         <TouchableOpacity onPress={handleLogout} style={styles.itemRow}>
-          <Text style={styles.logoutText}>Sair</Text>
-          <Text style={styles.arrowText}>➔</Text>
+          <Text style={[styles.logoutText, { color: theme.textPrimary }]}>Sair</Text>
+          <Text style={[styles.arrowText, { color: theme.arrow }]}>➔</Text>
         </TouchableOpacity>
 
         {/* Excluir conta */}
         <TouchableOpacity style={styles.itemRow}>
-          <Text style={styles.deleteText}>Excluir conta</Text>
-          <Text style={styles.arrowText}>➔</Text>
+          <Text style={[styles.deleteText, { color: theme.textDanger }]}>Excluir conta</Text>
+          <Text style={[styles.arrowText, { color: theme.arrow }]}>➔</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -137,7 +195,6 @@ export default function Config() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#000",
   },
   container: {
     flex: 1,
@@ -160,19 +217,16 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   backIcon: {
-    color: "#FFFFFF",
     fontSize: 20,
     marginRight: 4,
   },
   backText: {
-    color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "bold",
   },
   title: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#FFFFFF",
     marginTop: 8,
     marginBottom: 20,
   },
@@ -183,12 +237,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   itemText: {
-    color: "white",
     fontSize: 15,
     fontWeight: "500",
   },
   arrowText: {
-    color: "#7A7A7A",
     fontSize: 16,
     marginLeft: "auto",
   },
@@ -203,7 +255,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 22,
     borderRadius: 11,
-    backgroundColor: "#fff",
     justifyContent: "center",
     paddingHorizontal: 2,
     marginHorizontal: 10,
@@ -214,14 +265,16 @@ const styles = StyleSheet.create({
     borderRadius: 9,
   },
   logoutText: {
-    color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "500",
   },
   deleteText: {
-    color: "#FF4B4B",
     fontSize: 15,
     fontWeight: "500",
+  },
+  themeLoadingText: {
+    fontSize: 13,
+    marginBottom: 10,
   },
 });
 

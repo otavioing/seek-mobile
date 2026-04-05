@@ -1,13 +1,17 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type ToggleSwitchProps = {
 	value: boolean;
 	onToggle: () => void;
+	trackColor: string;
+	thumbColor: string;
 };
 
-function ToggleSwitch({ value, onToggle }: ToggleSwitchProps) {
+function ToggleSwitch({ value, onToggle, trackColor, thumbColor }: ToggleSwitchProps) {
 	const progress = useRef(new Animated.Value(value ? 1 : 0)).current;
 
 	useEffect(() => {
@@ -27,12 +31,17 @@ function ToggleSwitch({ value, onToggle }: ToggleSwitchProps) {
 	return (
 		<TouchableOpacity
 			onPress={onToggle}
-			style={styles.switchTrack}
+			style={[styles.switchTrack, { backgroundColor: trackColor }]}
 			activeOpacity={0.85}
 			accessibilityRole="switch"
 			accessibilityState={{ checked: value }}
 		>
-			<Animated.View style={[styles.switchThumb, { transform: [{ translateX }] }]} />
+			<Animated.View
+				style={[
+					styles.switchThumb,
+					{ backgroundColor: thumbColor, transform: [{ translateX }] },
+				]}
+			/>
 		</TouchableOpacity>
 	);
 }
@@ -44,52 +53,113 @@ export default function Notificacoes() {
 	const [comentou, setComentou] = useState(false);
 	const [geral, setGeral] = useState(false);
 	const [emailLogin, setEmailLogin] = useState(false);
+	const [darkMode, setDarkMode] = useState(true);
+
+	const carregarTema = useCallback(async () => {
+		try {
+			const temaSalvo = await AsyncStorage.getItem('tema');
+			const isDark = temaSalvo !== 'claro';
+			setDarkMode(isDark);
+
+			if (!temaSalvo) {
+				await AsyncStorage.setItem('tema', 'escuro');
+			}
+		} catch (error) {
+			console.log('Erro ao carregar tema:', error);
+		}
+	}, []);
+
+	useEffect(() => {
+		carregarTema();
+	}, [carregarTema]);
+
+	useFocusEffect(
+		useCallback(() => {
+			carregarTema();
+		}, [carregarTema])
+	);
+
+	const theme = darkMode
+		? {
+				background: '#000000',
+				textPrimary: '#f4f4f5',
+				switchTrack: '#252a33',
+				switchThumb: '#f4f4f5',
+			}
+		: {
+				background: '#d9d9d9',
+				textPrimary: '#111111',
+				switchTrack: '#bdbdbd',
+				switchThumb: '#111111',
+			};
 
 	return (
-		<SafeAreaView style={styles.safeArea}>
-			<View style={styles.container}>
+		<SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+			<View style={[styles.container, { backgroundColor: theme.background }]}>
 				<View style={styles.headerRow}>
 					<TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-						<Text style={styles.backIcon}>←</Text>
-						<Text style={styles.backText}>Voltar</Text>
+						<Text style={[styles.backIcon, { color: theme.textPrimary }]}>←</Text>
+						<Text style={[styles.backText, { color: theme.textPrimary }]}>Voltar</Text>
 					</TouchableOpacity>
 				</View>
 
-				<Text style={styles.title}>Notificações</Text>
+				<Text style={[styles.title, { color: theme.textPrimary }]}>Notificações</Text>
 
 				<View style={styles.list}>
 					<View style={styles.row}>
-						<Text style={styles.label}>Curtidas</Text>
-						<ToggleSwitch value={curtidas} onToggle={() => setCurtidas((prev) => !prev)} />
-					</View>
-
-					<View style={styles.row}>
-						<Text style={styles.label}>Novos Seguidores</Text>
+						<Text style={[styles.label, { color: theme.textPrimary }]}>Curtidas</Text>
 						<ToggleSwitch
-							value={novosSeguidores}
-							onToggle={() => setNovosSeguidores((prev) => !prev)}
+							value={curtidas}
+							onToggle={() => setCurtidas((prev) => !prev)}
+							trackColor={theme.switchTrack}
+							thumbColor={theme.switchThumb}
 						/>
 					</View>
 
 					<View style={styles.row}>
-						<Text style={styles.label}>Comentou</Text>
-						<ToggleSwitch value={comentou} onToggle={() => setComentou((prev) => !prev)} />
+						<Text style={[styles.label, { color: theme.textPrimary }]}>Novos Seguidores</Text>
+						<ToggleSwitch
+							value={novosSeguidores}
+							onToggle={() => setNovosSeguidores((prev) => !prev)}
+							trackColor={theme.switchTrack}
+							thumbColor={theme.switchThumb}
+						/>
 					</View>
 
 					<View style={styles.row}>
-						<Text style={styles.label}>Receber e-mail quando houver login na conta</Text>
-						<ToggleSwitch value={emailLogin} onToggle={() => setEmailLogin((prev) => !prev)} />
+						<Text style={[styles.label, { color: theme.textPrimary }]}>Comentou</Text>
+						<ToggleSwitch
+							value={comentou}
+							onToggle={() => setComentou((prev) => !prev)}
+							trackColor={theme.switchTrack}
+							thumbColor={theme.switchThumb}
+						/>
+					</View>
+
+					<View style={styles.row}>
+						<Text style={[styles.label, { color: theme.textPrimary }]}>Receber e-mail quando houver login na conta</Text>
+						<ToggleSwitch
+							value={emailLogin}
+							onToggle={() => setEmailLogin((prev) => !prev)}
+							trackColor={theme.switchTrack}
+							thumbColor={theme.switchThumb}
+						/>
 					</View>
                     
 					<View style={styles.row}>
-						<Text style={styles.label}>Ativar/desativar geral</Text>
-						<ToggleSwitch value={geral} onToggle={() => setGeral((prev) => !prev)} />
+						<Text style={[styles.label, { color: theme.textPrimary }]}>Ativar/desativar geral</Text>
+						<ToggleSwitch
+							value={geral}
+							onToggle={() => setGeral((prev) => !prev)}
+							trackColor={theme.switchTrack}
+							thumbColor={theme.switchThumb}
+						/>
 					</View>
 
 
 					<TouchableOpacity activeOpacity={0.8} style={styles.row}>
-						<Text style={styles.label}>Selenciar por um tempo</Text>
-						<Text style={styles.chevron}>⌄</Text>
+						<Text style={[styles.label, { color: theme.textPrimary }]}>Selenciar por um tempo</Text>
+						<Text style={[styles.chevron, { color: theme.textPrimary }]}>⌄</Text>
 					</TouchableOpacity>
 				</View>
 			</View>
@@ -120,17 +190,14 @@ const styles = StyleSheet.create({
 		paddingRight: 8,
 	},
 	backIcon: {
-		color: '#f4f4f5',
 		fontSize: 20,
 		marginRight: 4,
 	},
 	backText: {
-		color: '#f4f4f5',
 		fontSize: 18,
 		fontWeight: '700',
 	},
 	title: {
-		color: '#f4f4f5',
 		fontSize: 26,
 		fontWeight: '700',
 		marginBottom: 20,
@@ -144,13 +211,11 @@ const styles = StyleSheet.create({
 		justifyContent: 'space-between',
 	},
 	label: {
-		color: '#f4f4f5',
 		fontSize: 15,
 		fontWeight: '600',
 		flex: 1,
 	},
 	chevron: {
-		color: '#f4f4f5',
 		fontSize: 18,
 		marginLeft: 10,
 	},
@@ -158,13 +223,11 @@ const styles = StyleSheet.create({
 		width: 52,
 		height: 28,
 		borderRadius: 16,
-		backgroundColor: '#252a33',
 		justifyContent: 'center',
 	},
 	switchThumb: {
 		width: 22,
 		height: 22,
 		borderRadius: 11,
-		backgroundColor: '#f4f4f5',
 	},
 });
