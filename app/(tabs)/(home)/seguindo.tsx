@@ -1,18 +1,19 @@
 import { api } from '@/src/services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useIsFocused } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
-  Dimensions,
-  Image,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleProp,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle
+    Dimensions,
+    Image,
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StyleProp,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+    ViewStyle
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -35,6 +36,14 @@ interface PostData {
   comments: Comment[];
 }
 
+type Theme = {
+  background: string;
+  card: string;
+  textPrimary: string;
+  textSecondary: string;
+  statusBarIcon: string;
+};
+
 // ---------------- STORY MOCK (mantido) ----------------
 
 const followingStories = [
@@ -46,49 +55,49 @@ const { width } = Dimensions.get('window');
 
 // ---------------- COMPONENTS ----------------
 
-const ModalHeader = ({ onClose }: { onClose: () => void }) => (
+const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: Theme }) => (
   <TouchableOpacity style={styles.modalGoBack} onPress={onClose}>
-    <Icon name="arrow-back-outline" size={28} color="white" />
-    <Text style={styles.modalGoBackText}>Voltar</Text>
+    <Icon name="arrow-back-outline" size={28} color={theme.textPrimary} />
+    <Text style={[styles.modalGoBackText, { color: theme.textPrimary }]}>Voltar</Text>
   </TouchableOpacity>
 );
 
 // ---------------- POST MODAL ----------------
 
-const PostDetailModal = ({ visible, onClose, post }: any) => {
+const PostDetailModal = ({ visible, onClose, post, theme }: any) => {
   if (!post) return null;
 
   return (
     <Modal animationType="slide" visible={visible} onRequestClose={onClose}>
-      <SafeAreaView style={styles.modalContainer}>
+      <SafeAreaView style={[styles.modalContainer, { backgroundColor: theme.background }]}>
         <ScrollView>
-          <ModalHeader onClose={onClose} />
+          <ModalHeader onClose={onClose} theme={theme} />
 
           <View style={styles.modalHeader}>
             <Image source={post.avatar} style={styles.modalUserAvatar} />
-            <Text style={styles.modalUserName}>{post.author}</Text>
+            <Text style={[styles.modalUserName, { color: theme.textPrimary }]}>{post.author}</Text>
           </View>
 
-          {post.title ? <Text style={styles.modalTitle}>{post.title}</Text> : null}
+          {post.title ? <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>{post.title}</Text> : null}
           <Image source={post.imageUrl} style={styles.modalImage} />
 
           <View style={styles.modalContent}>
             <View style={styles.likesContainer}>
-              <Icon name="thumbs-up-outline" size={22} color="#fff" />
-              <Text style={styles.likesText}>{post.likes} curtidas</Text>
+              <Icon name="thumbs-up-outline" size={22} color={theme.textPrimary} />
+              <Text style={[styles.likesText, { color: theme.textPrimary }]}>{post.likes} curtidas</Text>
             </View>
 
-            <Text style={styles.commentsTitle}>Comentários</Text>
+            <Text style={[styles.commentsTitle, { color: theme.textPrimary }]}>Comentários</Text>
 
             {post.comments.length > 0 ? (
               post.comments.map((comment: any) => (
-                <View key={comment.id} style={styles.commentContainer}>
-                  <Text style={styles.commentUser}>{comment.user}</Text>
-                  <Text style={styles.commentText}>{comment.text}</Text>
+                <View key={comment.id} style={[styles.commentContainer, { backgroundColor: theme.card }]}>
+                  <Text style={[styles.commentUser, { color: theme.textPrimary }]}>{comment.user}</Text>
+                  <Text style={[styles.commentText, { color: theme.textSecondary }]}>{comment.text}</Text>
                 </View>
               ))
             ) : (
-              <Text style={styles.commentText}>Nenhum comentário ainda.</Text>
+              <Text style={[styles.commentText, { color: theme.textSecondary }]}>Nenhum comentário ainda.</Text>
             )}
           </View>
         </ScrollView>
@@ -136,6 +145,24 @@ const SeguindoScreen = () => {
   const [posts, setPosts] = useState<PostData[]>([]);
   const [isPostModalVisible, setIsPostModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState<PostData | null>(null);
+  const [darkMode, setDarkMode] = useState(false);
+  const isFocused = useIsFocused();
+
+  const theme: Theme = darkMode
+    ? {
+        background: '#000000',
+        card: '#1a1a1a',
+        textPrimary: '#FFFFFF',
+        textSecondary: '#CCCCCC',
+        statusBarIcon: '#FFFFFF',
+      }
+    : {
+        background: '#E6E6E6',
+        card: '#FFFFFF',
+        textPrimary: '#111111',
+        textSecondary: '#444444',
+        statusBarIcon: '#111111',
+      };
 
   // 🔥 BUSCAR POSTS DA API
   const buscarPosts = async () => {
@@ -176,6 +203,21 @@ const SeguindoScreen = () => {
     buscarPosts();
   }, []);
 
+  useEffect(() => {
+    const loadTheme = async () => {
+      try {
+        const savedTheme = await AsyncStorage.getItem('tema');
+        setDarkMode(savedTheme === 'escuro');
+      } catch (error) {
+        console.log('Erro ao carregar tema:', error);
+      }
+    };
+
+    if (isFocused) {
+      loadTheme();
+    }
+  }, [isFocused]);
+
   const handleOpenPostModal = (post: PostData) => {
     setSelectedPost(post);
     setIsPostModalVisible(true);
@@ -187,7 +229,7 @@ const SeguindoScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
 
         {/* STORIES */}
@@ -205,7 +247,17 @@ const SeguindoScreen = () => {
         <View style={styles.feedContainer}>
           {posts.map((post) => (
             <TouchableOpacity key={post.id} onPress={() => handleOpenPostModal(post)}>
-              <PostCard post={post} />
+              <View style={[styles.cardContainer, { backgroundColor: theme.card }] }>
+                {post.title ? <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>{post.title}</Text> : null}
+                <Image source={post.imageUrl} style={styles.galleryImage} />
+                <View style={styles.cardInfo}>
+                  <View>
+                    <Text style={[styles.cardAuthor, { color: theme.textPrimary }]}>{post.author}</Text>
+                    <Text style={[styles.cardFollowers, { color: theme.textSecondary }]}>{post.followers}</Text>
+                  </View>
+                  <AuthorAvatar source={post.avatar} />
+                </View>
+              </View>
             </TouchableOpacity>
           ))}
         </View>
@@ -215,6 +267,7 @@ const SeguindoScreen = () => {
         visible={isPostModalVisible}
         onClose={handleClosePostModal}
         post={selectedPost}
+        theme={theme}
       />
     </View>
   );

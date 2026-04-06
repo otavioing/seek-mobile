@@ -1,22 +1,23 @@
 import { api } from '@/src/services/api';
 import { MaterialIcons } from "@expo/vector-icons";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from "@react-navigation/native";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Dimensions,
-  Image,
-  ImageSourcePropType,
-  Keyboard,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
+    Dimensions,
+    Image,
+    ImageSourcePropType,
+    Keyboard,
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 
@@ -41,6 +42,17 @@ interface Post {
   title?: string;
 }
 
+type Theme = {
+  background: string;
+  card: string;
+  textPrimary: string;
+  textSecondary: string;
+  textMuted: string;
+  border: string;
+  inputBg: string;
+  inputText: string;
+};
+
 /* ============================================================
    VARIÁVEIS
 ============================================================ */
@@ -51,47 +63,47 @@ const { width } = Dimensions.get("window");
    MODAL
 ============================================================ */
 
-const ModalHeader = ({ onClose }: { onClose: () => void }) => (
+const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: Theme }) => (
   <TouchableOpacity style={styles.modalGoBack} onPress={onClose}>
-    <Icon name="arrow-back-outline" size={28} color="white" />
-    <Text style={styles.modalGoBackText}>Voltar</Text>
+    <Icon name="arrow-back-outline" size={28} color={theme.textPrimary} />
+    <Text style={[styles.modalGoBackText, { color: theme.textPrimary }]}>Voltar</Text>
   </TouchableOpacity>
 );
 
-const PostDetailModal = ({ visible, onClose, post }: any) => {
+const PostDetailModal = ({ visible, onClose, post, theme }: any) => {
   if (!post) return null;
 
   return (
     <Modal animationType="slide" visible={visible} onRequestClose={onClose}>
-      <SafeAreaView style={styles.modalContainer}>
+      <SafeAreaView style={[styles.modalContainer, { backgroundColor: theme.background }]}>
         <ScrollView>
-          <ModalHeader onClose={onClose} />
+          <ModalHeader onClose={onClose} theme={theme} />
 
           <View style={styles.modalHeader}>
             <Image source={post.userImage} style={styles.authorLogo} />
-            <Text style={styles.modalUserName}>{post.author}</Text>
+            <Text style={[styles.modalUserName, { color: theme.textPrimary }]}>{post.author}</Text>
           </View>
 
-          {post.title ? <Text style={styles.modalTitle}>{post.title}</Text> : null}
+          {post.title ? <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>{post.title}</Text> : null}
           <Image source={post.imageUrl} style={styles.modalImage} />
 
           <View style={styles.modalContent}>
-            <View style={styles.likesContainer}>
-              <Icon name="thumbs-up-outline" size={22} color="#fff" />
-              <Text style={styles.likesText}>{post.likes} curtidas</Text>
+            <View style={[styles.likesContainer, { borderBottomColor: theme.border }]}>
+              <Icon name="thumbs-up-outline" size={22} color={theme.textPrimary} />
+              <Text style={[styles.likesText, { color: theme.textPrimary }]}>{post.likes} curtidas</Text>
             </View>
 
-            <Text style={styles.commentsTitle}>Comentários</Text>
+            <Text style={[styles.commentsTitle, { color: theme.textPrimary }]}>Comentários</Text>
 
             {post.comments.length > 0 ? (
               post.comments.map((c: any) => (
-                <View key={c.id} style={styles.commentContainer}>
-                  <Text style={styles.commentUser}>{c.user}</Text>
-                  <Text style={styles.commentText}>{c.text}</Text>
+                <View key={c.id} style={[styles.commentContainer, { backgroundColor: theme.card }]}>
+                  <Text style={[styles.commentUser, { color: theme.textPrimary }]}>{c.user}</Text>
+                  <Text style={[styles.commentText, { color: theme.textSecondary }]}>{c.text}</Text>
                 </View>
               ))
             ) : (
-              <Text style={styles.commentText}>Nenhum comentário ainda.</Text>
+              <Text style={[styles.commentText, { color: theme.textSecondary }]}>Nenhum comentário ainda.</Text>
             )}
           </View>
         </ScrollView>
@@ -107,29 +119,31 @@ const PostDetailModal = ({ visible, onClose, post }: any) => {
 const AuthorInfo = ({
   author,
   userImage,
+  theme,
 }: {
   author: string;
   userImage: ImageSourcePropType;
+  theme: Theme;
 }) => (
   <View style={styles.authorInfo}>
-    <Text style={styles.authorName}>{author}</Text>
+    <Text style={[styles.authorName, { color: theme.textPrimary }]}>{author}</Text>
     <Image source={userImage} style={styles.authorLogo} />
   </View>
 );
 
-const PostCard = ({ post, onPress, style }: any) => (
+const PostCard = ({ post, onPress, style, theme }: any) => (
   <TouchableOpacity onPress={() => onPress(post)}>
-    <View style={[styles.card, style]}>
-      {post.title ? <Text style={styles.cardTitle}>{post.title}</Text> : null}
+    <View style={[styles.card, style, { backgroundColor: theme.card }]}>
+      {post.title ? <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>{post.title}</Text> : null}
       <Image source={post.imageUrl} style={styles.cardImage} />
-      <AuthorInfo author={post.author} userImage={post.userImage} />
+      <AuthorInfo author={post.author} userImage={post.userImage} theme={theme} />
     </View>
   </TouchableOpacity>
 );
 
-const SectionCarousel = ({ title, children }: any) => (
+const SectionCarousel = ({ title, children, theme }: any) => (
   <View style={styles.section}>
-    <Text style={styles.sectionTitle}>{title}</Text>
+    <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>{title}</Text>
 
     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
       {children}
@@ -146,6 +160,29 @@ const TendenciasScreen = () => {
   const [postsPorCategoria, setPostsPorCategoria] = useState<any>({});
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState<any>(null);
+  const [darkMode, setDarkMode] = useState(false);
+
+  const theme: Theme = darkMode
+    ? {
+        background: '#000000',
+        card: '#1a1a1a',
+        textPrimary: '#FFFFFF',
+        textSecondary: '#DDDDDD',
+        textMuted: '#666666',
+        border: '#333333',
+        inputBg: '#f0f0f0',
+        inputText: '#000000',
+      }
+    : {
+        background: '#E6E6E6',
+        card: '#FFFFFF',
+        textPrimary: '#111111',
+        textSecondary: '#333333',
+        textMuted: '#666666',
+        border: '#CCCCCC',
+        inputBg: '#FFFFFF',
+        inputText: '#111111',
+      };
 
   const inputRef = useRef<TextInput>(null);
   const params = useLocalSearchParams();
@@ -154,6 +191,21 @@ const TendenciasScreen = () => {
   useEffect(() => {
     fetchTendencias();
   }, []);
+
+  useEffect(() => {
+    const loadTheme = async () => {
+      try {
+        const savedTheme = await AsyncStorage.getItem('tema');
+        setDarkMode(savedTheme === 'escuro');
+      } catch (error) {
+        console.log('Erro ao carregar tema:', error);
+      }
+    };
+
+    if (isFocused) {
+      loadTheme();
+    }
+  }, [isFocused]);
 
   const fetchTendencias = async () => {
     try {
@@ -221,22 +273,22 @@ const TendenciasScreen = () => {
   }, [params, isFocused]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.screen}>
+        <View style={[styles.screen, { backgroundColor: theme.background }]}>
 
           {/* 🔍 SEARCH */}
           <View style={styles.searchContainer}>
-            <View style={styles.searchBox}>
+            <View style={[styles.searchBox, { backgroundColor: theme.inputBg }]}>
               <TextInput
                 ref={inputRef}
                 placeholder="Buscar..."
-                placeholderTextColor="#666"
-                style={styles.searchInput}
+                placeholderTextColor={theme.textMuted}
+                style={[styles.searchInput, { color: theme.inputText }]}
               />
 
               <TouchableOpacity onPress={() => inputRef.current?.focus()}>
-                <MaterialIcons name="search" size={24} color="#666" />
+                <MaterialIcons name="search" size={24} color={theme.textMuted} />
               </TouchableOpacity>
             </View>
           </View>
@@ -246,6 +298,7 @@ const TendenciasScreen = () => {
               <SectionCarousel
                 key={categoria.id_categoria}
                 title={categoria.nome_categoria}
+                theme={theme}
               >
                 {postsPorCategoria[categoria.nome_categoria]?.map((post: any) => (
                   <PostCard
@@ -253,6 +306,7 @@ const TendenciasScreen = () => {
                     post={post}
                     onPress={handleOpenModal}
                     style={styles.largeCard}
+                    theme={theme}
                   />
                 ))}
               </SectionCarousel>
@@ -266,6 +320,7 @@ const TendenciasScreen = () => {
         visible={isModalVisible}
         onClose={handleCloseModal}
         post={selectedPost}
+        theme={theme}
       />
     </SafeAreaView>
   );

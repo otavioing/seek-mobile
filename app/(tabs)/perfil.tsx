@@ -3,18 +3,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-    Dimensions,
-    Image,
-    ImageBackground,
-    ImageSourcePropType,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Dimensions,
+  Image,
+  ImageBackground,
+  ImageSourcePropType,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Post, usePosts } from '../../src/context/PostsContext';
@@ -32,14 +32,29 @@ const formatRelativeTime = (timestamp: number) => {
 };
 
 type TabName = 'Postagens' | 'Cursos';
+type Theme = {
+  background: string;
+  backgroundAlt: string;
+  textPrimary: string;
+  textSecondary: string;
+  textMuted: string;
+  border: string;
+  card: string;
+  danger: string;
+  tabInactive: string;
+  tabActive: string;
+  buttonPrimary: string;
+  buttonSecondary: string;
+  statusBar: 'light-content' | 'dark-content';
+};
 
 const { width } = Dimensions.get('window');
 const photoSize = (width - 32 - 8) / 2;
 
-const ModalHeader = ({ onClose }: { onClose: () => void }) => (
+const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: Theme }) => (
   <TouchableOpacity style={styles.modalGoBack} onPress={onClose}>
-    <Icon name="arrow-back-outline" size={28} color="white" />
-    <Text style={styles.modalGoBackText}>Voltar</Text>
+    <Icon name="arrow-back-outline" size={28} color={theme.textPrimary} />
+    <Text style={[styles.modalGoBackText, { color: theme.textPrimary }]}>Voltar</Text>
   </TouchableOpacity>
 );
 
@@ -47,13 +62,14 @@ interface PostDetailModalProps {
   visible: boolean;
   onClose: () => void;
   post: Post | null;
+  theme: Theme;
   currentUserId?: string | null;
   currentUserName?: string;
   onOptions: (post: Post) => void;
   onPressAuthor?: (post: Post) => void;
 }
 
-const PostDetailModal = ({ visible, onClose, post, currentUserId, currentUserName, onOptions, onPressAuthor }: PostDetailModalProps) => {
+const PostDetailModal = ({ visible, onClose, post, theme, currentUserId, currentUserName, onOptions, onPressAuthor }: PostDetailModalProps) => {
   if (!post) return null;
 
   const isOwner = (currentUserId && post.userId === currentUserId) || (!!currentUserName && post.author === currentUserName);
@@ -64,9 +80,9 @@ const PostDetailModal = ({ visible, onClose, post, currentUserId, currentUserNam
       visible={visible}
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.modalContainer}>
+      <SafeAreaView style={[styles.modalContainer, { backgroundColor: theme.background }] }>
         <ScrollView>
-          <ModalHeader onClose={onClose} />
+          <ModalHeader onClose={onClose} theme={theme} />
 
           <TouchableOpacity
             style={styles.modalHeader}
@@ -74,15 +90,15 @@ const PostDetailModal = ({ visible, onClose, post, currentUserId, currentUserNam
             onPress={() => onPressAuthor?.(post)}
           >
             <Image source={post.avatar} style={styles.modalUserAvatar} />
-            <Text style={styles.modalUserName}>{post.author}</Text>
+            <Text style={[styles.modalUserName, { color: theme.textPrimary }]}>{post.author}</Text>
             {isOwner && (
               <TouchableOpacity style={styles.moreButton} onPress={() => onOptions(post)}>
-                <Icon name="ellipsis-vertical" size={22} color="#fff" />
+                <Icon name="ellipsis-vertical" size={22} color={theme.textPrimary} />
               </TouchableOpacity>
             )}
           </TouchableOpacity>
           {post.title ? (
-            <Text style={styles.modalTitle}>{post.title}</Text>
+            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>{post.title}</Text>
           ) : null}
           {post.images.map((img, idx) => (
             <Image key={idx} source={img} style={styles.modalImage} />
@@ -90,25 +106,25 @@ const PostDetailModal = ({ visible, onClose, post, currentUserId, currentUserNam
 
           <View style={styles.modalContent}>
             {post.description ? (
-              <Text style={styles.modalDescription}>{post.description}</Text>
+              <Text style={[styles.modalDescription, { color: theme.textPrimary }]}>{post.description}</Text>
             ) : null}
-            <View style={styles.likesContainer}>
+            <View style={[styles.likesContainer, { borderBottomColor: theme.border }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Icon name="thumbs-up-outline" size={22} color="#fff" />
-                <Text style={styles.likesText}>{post.likes} curtidas</Text>
+                <Icon name="thumbs-up-outline" size={22} color={theme.textPrimary} />
+                <Text style={[styles.likesText, { color: theme.textPrimary }]}>{post.likes} curtidas</Text>
               </View>
-              <Text style={styles.timeText}>{formatRelativeTime(post.postedAt)}</Text>
+              <Text style={[styles.timeText, { color: theme.textSecondary }]}>{formatRelativeTime(post.postedAt)}</Text>
             </View>
-            <Text style={styles.commentsTitle}>Comentários</Text>
+            <Text style={[styles.commentsTitle, { color: theme.textPrimary }]}>Comentários</Text>
             {post.comments.length > 0 ? (
               post.comments.map(comment => (
-                <View key={comment.id} style={styles.commentContainer}>
-                  <Text style={styles.commentUser}>{comment.user}</Text>
-                  <Text style={styles.commentText}>{comment.text}</Text>
+                <View key={comment.id} style={[styles.commentContainer, { backgroundColor: theme.backgroundAlt }]}>
+                  <Text style={[styles.commentUser, { color: theme.textPrimary }]}>{comment.user}</Text>
+                  <Text style={[styles.commentText, { color: theme.textSecondary }]}>{comment.text}</Text>
                 </View>
               ))
             ) : (
-              <Text style={styles.commentText}>Nenhum comentário ainda.</Text>
+              <Text style={[styles.commentText, { color: theme.textSecondary }]}>Nenhum comentário ainda.</Text>
             )}
           </View>
         </ScrollView>
@@ -122,9 +138,10 @@ interface SimpleImageModalProps {
   visible: boolean;
   onClose: () => void;
   image: ImageSourcePropType | null;
+  theme: Theme;
 }
 
-const SimpleImageModal = ({ visible, onClose, image }: SimpleImageModalProps) => {
+const SimpleImageModal = ({ visible, onClose, image, theme }: SimpleImageModalProps) => {
   if (!image) return null;
 
   return (
@@ -133,8 +150,8 @@ const SimpleImageModal = ({ visible, onClose, image }: SimpleImageModalProps) =>
       visible={visible}
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.modalContainer}>
-        <ModalHeader onClose={onClose} />
+      <SafeAreaView style={[styles.modalContainer, { backgroundColor: theme.background }]}>
+        <ModalHeader onClose={onClose} theme={theme} />
         <View style={styles.simpleImageContainer}>
           <Image
             source={image}
@@ -179,6 +196,39 @@ const ProfileScreen = () => {
   const [optionsPost, setOptionsPost] = useState<Post | null>(null);
   const [showInlineMenu, setShowInlineMenu] = useState(false);
   const [remoteUserPosts, setRemoteUserPosts] = useState<Post[]>([]);
+  const [darkMode, setDarkMode] = useState(false);
+
+  const theme: Theme = darkMode
+    ? {
+        background: '#000000',
+        backgroundAlt: '#1a1a1a',
+        textPrimary: '#FFFFFF',
+        textSecondary: '#DDDDDD',
+        textMuted: '#AAAAAA',
+        border: '#333333',
+        card: '#111111',
+        danger: '#ff5c5c',
+        tabInactive: '#888888',
+        tabActive: '#FFFFFF',
+        buttonPrimary: '#007BFF',
+        buttonSecondary: '#4F46E5',
+        statusBar: 'light-content',
+      }
+    : {
+        background: '#E6E6E6',
+        backgroundAlt: '#F6F6F6',
+        textPrimary: '#111111',
+        textSecondary: '#333333',
+        textMuted: '#666666',
+        border: '#CFCFCF',
+        card: '#FFFFFF',
+        danger: '#D32F2F',
+        tabInactive: '#666666',
+        tabActive: '#111111',
+        buttonPrimary: '#007BFF',
+        buttonSecondary: '#4F46E5',
+        statusBar: 'dark-content',
+      };
 
   useEffect(() => {
     const loadUser = async () => {
@@ -226,6 +276,19 @@ const ProfileScreen = () => {
 
     loadUser();
     refreshPosts();
+  }, []);
+
+  useEffect(() => {
+    const loadTheme = async () => {
+      try {
+        const savedTheme = await AsyncStorage.getItem('tema');
+        setDarkMode(savedTheme === 'escuro');
+      } catch (error) {
+        console.log('Erro ao carregar tema:', error);
+      }
+    };
+
+    loadTheme();
   }, []);
 
   const fetchFollowers = async () => {
@@ -327,17 +390,23 @@ const ProfileScreen = () => {
 
   const renderTabButton = (tabName: TabName) => (
     <TouchableOpacity style={styles.tabButton} onPress={() => setActiveTab(tabName)}>
-      <Text style={[styles.tabText, activeTab === tabName && styles.activeTabText]}>
+      <Text
+        style={[
+          styles.tabText,
+          { color: activeTab === tabName ? theme.tabActive : theme.tabInactive },
+          activeTab === tabName && styles.activeTabText,
+        ]}
+      >
         {tabName}
       </Text>
-      {activeTab === tabName && <View style={styles.activeTabIndicator} />}
+      {activeTab === tabName && <View style={[styles.activeTabIndicator, { backgroundColor: theme.tabActive }]} />}
     </TouchableOpacity>
   );
 
   const renderTabContent = () => {
     if (activeTab === 'Postagens') {
       if (!displayPosts.length) {
-        return <Text style={styles.placeholderText}>Você ainda não publicou nada.</Text>;
+        return <Text style={[styles.placeholderText, { color: theme.textPrimary }]}>Você ainda não publicou nada.</Text>;
       }
       return (
         <View style={styles.photoGrid}>
@@ -354,86 +423,84 @@ const ProfileScreen = () => {
       );
     }
     if (activeTab === 'Cursos') {
-      return <Text style={styles.placeholderText}>Seção de Cursos</Text>;
+      return <Text style={[styles.placeholderText, { color: theme.textPrimary }]}>Seção de Cursos</Text>;
     }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <StatusBar barStyle={theme.statusBar} backgroundColor={theme.background} />
       <ScrollView
-        style={styles.scrollContainer}
+        style={[styles.scrollContainer, { backgroundColor: theme.background }]}
         contentContainerStyle={styles.scrollContent}
       >
 
         <View style={styles.headerContainer}>
-          <TouchableOpacity onPress={() => handleOpenProfileModal(headerImageUrl)}>
+          <TouchableOpacity style={styles.bannerTouchable} onPress={() => handleOpenProfileModal(headerImageUrl)}>
             <ImageBackground
               source={headerImageUrl}
               style={styles.headerBackground}
+              resizeMode="cover"
             />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => handleOpenProfileModal(userAvatar)}>
-            <Image
-              source={userAvatar}
-              style={styles.profileImage}
-            />
+            <Image source={userAvatar} style={[styles.profileImage, { borderColor: theme.card }]} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.userInfoContainer}>
-          <Text style={styles.userName}>{userName || 'Meu perfil'}</Text>
-          <Text style={styles.userRole}>Empresa</Text>
-          <Text style={styles.userHandle}>@seeking</Text>
+          <Text style={[styles.userName, { color: theme.textPrimary }]}>{userName || 'Meu perfil'}</Text>
+          <Text style={[styles.userRole, { color: theme.textSecondary }]}>Empresa</Text>
+          <Text style={[styles.userHandle, { color: theme.textMuted }]}>@seeking</Text>
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
               <TouchableOpacity onPress={fetchFollowers}>
                 <View style={styles.statRow}>
-                  <Text style={styles.statNumber}>{userStats.seguidores}</Text>
+                  <Text style={[styles.statNumber, { color: theme.textPrimary }]}>{userStats.seguidores}</Text>
                   <Image
                     source={require('@/assets/images/seguindo.png')}
                     style={styles.statIcon}
                   />
                 </View>
-                <Text style={styles.statLabel}>Seguidores</Text>
+                <Text style={[styles.statLabel, { color: theme.textMuted }]}>Seguidores</Text>
               </TouchableOpacity>
 
             </View>
 
             <View style={styles.statItem}>
               <View style={styles.statRow}>
-                <Text style={styles.statNumber}>{userStats.posts}</Text>
+                <Text style={[styles.statNumber, { color: theme.textPrimary }]}>{userStats.posts}</Text>
                 <Image
                   source={require('@/assets/images/papel_dobrado.png')}
                   style={styles.statIcon}
                 />
               </View>
-              <Text style={styles.statLabel}>Posts</Text>
+              <Text style={[styles.statLabel, { color: theme.textMuted }]}>Posts</Text>
             </View>
 
             <View style={styles.statItem}>
               <View style={styles.statRow}>
-                <Text style={styles.statNumber}>{userStats.likes}</Text>
+                <Text style={[styles.statNumber, { color: theme.textPrimary }]}>{userStats.likes}</Text>
                 <Image
                   source={require('@/assets/images/likes.png')}
                   style={styles.statIcon}
                 />
               </View>
-              <Text style={styles.statLabel}>Curtidas</Text>
+              <Text style={[styles.statLabel, { color: theme.textMuted }]}>Curtidas</Text>
 
             </View>
           </View>
 
         </View>
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={[styles.button, styles.followButton]}>
+          <TouchableOpacity style={[styles.button, { backgroundColor: theme.buttonPrimary }]}>
             <Text style={styles.buttonText}>Seguir</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.button, styles.hireButton]}>
+          <TouchableOpacity style={[styles.button, { backgroundColor: theme.buttonSecondary }]}>
             <Text style={styles.buttonText}>Contratar</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.tabBar}>
+        <View style={[styles.tabBar, { borderBottomColor: theme.border }]}>
           {renderTabButton('Postagens')}
           {renderTabButton('Cursos')}
         </View>
@@ -446,6 +513,7 @@ const ProfileScreen = () => {
         visible={isPostModalVisible}
         onClose={handleClosePostModal}
         post={selectedPost}
+        theme={theme}
         currentUserId={currentUserId}
         currentUserName={userName}
         onOptions={(post) => {
@@ -458,6 +526,7 @@ const ProfileScreen = () => {
         visible={isProfileModalVisible}
         onClose={handleCloseProfileModal}
         image={selectedProfileImage}
+        theme={theme}
       />
 
       <Modal
@@ -465,25 +534,25 @@ const ProfileScreen = () => {
         animationType="slide"
         onRequestClose={() => setFollowersModalVisible(false)}
       >
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
 
           {/* HEADER */}
-          <View style={styles.modalHeaderFollowers}>
-            <Text style={styles.modalTitle}>Seguidores</Text>
+          <View style={[styles.modalHeaderFollowers, { borderBottomColor: theme.border }]}>
+            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Seguidores</Text>
             <TouchableOpacity onPress={() => setFollowersModalVisible(false)}>
-              <Text style={{ color: '#fff' }}>Fechar</Text>
+              <Text style={{ color: theme.textPrimary }}>Fechar</Text>
             </TouchableOpacity>
           </View>
 
           {/* LISTA */}
           <ScrollView>
             {followers.map((follower) => (
-              <View key={follower.id} style={styles.followerItem}>
+              <View key={follower.id} style={[styles.followerItem, { borderBottomColor: theme.border }]}>
                 <Image
                   source={{ uri: follower.foto }}
                   style={styles.followerAvatar}
                 />
-                <Text style={styles.followerName}>{follower.nome}</Text>
+                <Text style={[styles.followerName, { color: theme.textPrimary }]}>{follower.nome}</Text>
               </View>
             ))}
           </ScrollView>
@@ -512,7 +581,7 @@ const ProfileScreen = () => {
                 setOptionsPost(null);
               }}
             >
-              <Text style={styles.optionText}>Editar post</Text>
+              <Text style={[styles.optionText, { color: theme.textPrimary }]}>Editar post</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.inlineItem, styles.optionDelete]}
@@ -525,10 +594,10 @@ const ProfileScreen = () => {
                 setOptionsPost(null);
               }}
             >
-              <Text style={[styles.optionText, styles.optionDeleteText]}>Excluir post</Text>
+              <Text style={[styles.optionText, styles.optionDeleteText, { color: theme.danger }]}>Excluir post</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.inlineItem} onPress={() => { setShowInlineMenu(false); setOptionsPost(null); }}>
-              <Text style={styles.optionText}>Cancelar</Text>
+              <Text style={[styles.optionText, { color: theme.textPrimary }]}>Cancelar</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -542,7 +611,8 @@ const styles = StyleSheet.create({
   scrollContainer: { flex: 1 },
   scrollContent: { paddingBottom: 120 },
   headerContainer: { alignItems: 'center' },
-  headerBackground: { width: '100%', height: 200, transform: [{ translateX: -205 }] },
+  bannerTouchable: { width: '100%' },
+  headerBackground: { width: '100%', height: 200 },
   profileImage: { width: 150, height: 150, borderRadius: 75, borderWidth: 4, borderColor: '#fff', marginTop: -75 },
   userInfoContainer: { alignItems: 'center', marginTop: 16 },
   userName: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
@@ -552,12 +622,10 @@ const styles = StyleSheet.create({
   buttonContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20, paddingHorizontal: 20 },
   button: { flex: 1, paddingVertical: 12, borderRadius: 25, marginHorizontal: 8, alignItems: 'center' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  followButton: { backgroundColor: '#007BFF' },
-  hireButton: { backgroundColor: '#4F46E5' },
   tabBar: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 24, borderBottomWidth: 1, borderBottomColor: '#333' },
   tabButton: { paddingHorizontal: 16 },
   tabText: { color: '#888', fontSize: 16, paddingBottom: 12 },
-  activeTabText: { color: '#fff', fontWeight: 'bold' },
+  activeTabText: { fontWeight: 'bold' },
   activeTabIndicator: { height: 3, backgroundColor: '#fff', position: 'absolute', bottom: 0, left: 0, right: 0 },
   contentContainer: { padding: 16 },
   photoGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
@@ -628,6 +696,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     marginBottom: 12,
+  },
+  modalTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 16,
+    marginTop: 8,
   },
   likesText: {
     color: '#fff',
@@ -769,12 +844,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#222',
-  },
-
-  modalTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
   },
 
   followerItem: {

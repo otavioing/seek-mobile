@@ -14,7 +14,7 @@ import { Path, Svg } from "react-native-svg";
 
 export default function Config() {
   const router = useRouter();
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
   const [isLoadingTheme, setIsLoadingTheme] = useState(true);
   const translateX = useRef(new Animated.Value(2)).current;
 
@@ -44,14 +44,7 @@ export default function Config() {
     const loadTheme = async () => {
       try {
         const savedTheme = await AsyncStorage.getItem('tema');
-        const isDark = savedTheme !== 'claro';
-
-        setDarkMode(isDark);
-        translateX.setValue(isDark ? 2 : 26);
-
-        if (!savedTheme) {
-          await AsyncStorage.setItem('tema', 'escuro');
-        }
+        setDarkMode(savedTheme === 'escuro');
       } catch (error) {
         console.log('Erro ao carregar tema:', error);
       } finally {
@@ -60,13 +53,17 @@ export default function Config() {
     };
 
     loadTheme();
-  }, [translateX]);
+  }, []);
+
+  useEffect(() => {
+    translateX.setValue(darkMode ? 22 : 2);
+  }, [darkMode, translateX]);
 
   const toggleSwitch = async () => {
     const nextDarkMode = !darkMode;
 
     Animated.timing(translateX, {
-      toValue: darkMode ? 26 : 2,
+      toValue: nextDarkMode ? 22 : 2,
       duration: 200,
       useNativeDriver: true,
     }).start();
@@ -258,6 +255,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 2,
     marginHorizontal: 10,
+    overflow: "hidden",
   },
   circle: {
     width: 18,

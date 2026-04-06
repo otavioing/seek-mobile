@@ -1,10 +1,12 @@
 import { api } from '@/src/services/api';
-import { router } from 'expo-router';
-import { useState, useEffect } from 'react';
-import { Animated, Alert, colorScheme, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { MaterialIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Alert, Animated, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
-const logoapp = require('@/assets/images/logo_seek.png');
+const logoapptemaescuro = require('@/assets/images/logo_seek_letrabranca.png');
+const logoapptemaclaro = require('@/assets/images/logo_seek_letrapreta.png');
 
 /* =========================
    COMPONENTES (FORA)
@@ -12,7 +14,7 @@ const logoapp = require('@/assets/images/logo_seek.png');
 
 function FormEtapa2({
   handleCadastro, nome, setNome, email, setEmail,
-  senha, setSenha, confirmarSenha, setConfirmarSenha
+  senha, setSenha, confirmarSenha, setConfirmarSenha, theme
 }: any) {
   const [verSenha1, setVerSenha1] = useState(false);
   const [verSenha2, setVerSenha2] = useState(false);
@@ -34,18 +36,36 @@ function FormEtapa2({
     <>
       <TextInput
         style={[styles.input, tentouEnviar && !nome && styles.inputErro]}
+        placeholderTextColor={theme.placeholder}
+        selectionColor={theme.selection}
+        cursorColor={theme.selection}
+        color={theme.inputText}
         placeholder="Nome" value={nome} onChangeText={setNome}
       />
       <TextInput
         style={[styles.input, tentouEnviar && !email && styles.inputErro]}
+        placeholderTextColor={theme.placeholder}
+        selectionColor={theme.selection}
+        cursorColor={theme.selection}
+        color={theme.inputText}
         placeholder="Email" value={email} onChangeText={setEmail}
         autoCapitalize="none"
         keyboardType="email-address"
       />
 
-      <View style={[styles.passwordContainer, tentouEnviar && !senha && styles.inputErro]}>
+      <View
+        style={[
+          styles.passwordContainer,
+          { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder },
+          tentouEnviar && !senha && styles.inputErro,
+        ]}
+      >
         <TextInput
           style={styles.inputFlex}
+          placeholderTextColor={theme.placeholder}
+          selectionColor={theme.selection}
+          cursorColor={theme.selection}
+          color={theme.inputText}
           placeholder="Senha"
           value={senha}
           onChangeText={setSenha}
@@ -54,13 +74,23 @@ function FormEtapa2({
           autoComplete="off"
         />
         <TouchableOpacity style={styles.eyeIcon} onPress={() => setVerSenha1(!verSenha1)}>
-          <MaterialIcons name={verSenha1 ? "visibility" : "visibility-off"} size={22} color="#999" />
+          <MaterialIcons name={verSenha1 ? "visibility" : "visibility-off"} size={22} color={theme.icon} />
         </TouchableOpacity>
       </View>
 
-      <View style={[styles.passwordContainer, tentouEnviar && !confirmarSenha && styles.inputErro]}>
+      <View
+        style={[
+          styles.passwordContainer,
+          { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder },
+          tentouEnviar && !confirmarSenha && styles.inputErro,
+        ]}
+      >
         <TextInput
           style={styles.inputFlex}
+          placeholderTextColor={theme.placeholder}
+          selectionColor={theme.selection}
+          cursorColor={theme.selection}
+          color={theme.inputText}
           placeholder="Confirmar senha"
           value={confirmarSenha}
           onChangeText={setConfirmarSenha}
@@ -69,7 +99,7 @@ function FormEtapa2({
           autoComplete="off"
         />
         <TouchableOpacity style={styles.eyeIcon} onPress={() => setVerSenha2(!verSenha2)}>
-          <MaterialIcons name={verSenha2 ? "visibility" : "visibility-off"} size={22} color="#999" />
+          <MaterialIcons name={verSenha2 ? "visibility" : "visibility-off"} size={22} color={theme.icon} />
         </TouchableOpacity>
       </View>
 
@@ -80,7 +110,7 @@ function FormEtapa2({
   );
 }
 
-function FormEtapa1({ tipoConta, setTipoConta, setStep }: any) {
+function FormEtapa1({ tipoConta, setTipoConta, setStep, theme }: any) {
   const avancar = () => {
     if (!tipoConta) {
       return Alert.alert("Seleção Necessária", "Escolha se você é Artista ou Empresa para continuar.");
@@ -90,26 +120,34 @@ function FormEtapa1({ tipoConta, setTipoConta, setStep }: any) {
 
   return (
     <>
-      <Text style={{ color: '#fff', marginBottom: 20 }}>Qual tipo de conta você quer criar?</Text>
+      <Text style={{ color: theme.textPrimary, marginBottom: 20 }}>Qual tipo de conta você quer criar?</Text>
       <View style={{ flexDirection: 'row', gap: 12, width: '100%', marginBottom: 20 }}>
         <View style={{ flex: 1, alignItems: 'center' }}>
           <TouchableOpacity
-            style={[styles.card, tipoConta === 'artista' && styles.cardSelected]}
+            style={[
+              styles.card,
+              { backgroundColor: theme.cardBackground },
+              tipoConta === 'artista' && styles.cardSelected,
+            ]}
             onPress={() => setTipoConta('artista')}
           >
-            <MaterialIcons name="person-outline" size={80} color={tipoConta === 'artista' ? '#fff' : '#2563EB'} />
+            <MaterialIcons name="person-outline" size={80} color={tipoConta === 'artista' ? '#fff' : theme.link} />
           </TouchableOpacity>
-          <Text style={{ marginTop: 8, color: '#fff' }}>Artista</Text>
+          <Text style={{ marginTop: 8, color: theme.textPrimary }}>Artista</Text>
         </View>
 
         <View style={{ flex: 1, alignItems: 'center' }}>
           <TouchableOpacity
-            style={[styles.card, tipoConta === 'empresa' && styles.cardSelected]}
+            style={[
+              styles.card,
+              { backgroundColor: theme.cardBackground },
+              tipoConta === 'empresa' && styles.cardSelected,
+            ]}
             onPress={() => setTipoConta('empresa')}
           >
-            <MaterialIcons name="business" size={80} color={tipoConta === 'empresa' ? '#fff' : '#2563EB'} />
+            <MaterialIcons name="business" size={80} color={tipoConta === 'empresa' ? '#fff' : theme.link} />
           </TouchableOpacity>
-          <Text style={{ marginTop: 8, color: '#fff' }}>Empresa</Text>
+          <Text style={{ marginTop: 8, color: theme.textPrimary }}>Empresa</Text>
         </View>
       </View>
 
@@ -131,6 +169,35 @@ export default function Cadastro() {
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [tipoConta, setTipoConta] = useState<'artista' | 'empresa' | null>(null);
   const [step, setStep] = useState(1);
+  const [darkMode, setDarkMode] = useState(false);
+
+  const theme = darkMode
+    ? {
+        background: '#0F0F0F',
+        textPrimary: '#FFFFFF',
+        divider: 'rgba(255,255,255,0.5)',
+        inputBackground: '#FFFFFF',
+        inputBorder: '#000000',
+        inputText: '#111111',
+        placeholder: '#7A7A7A',
+        selection: '#322BF0',
+        icon: '#999999',
+        cardBackground: '#FFFFFF',
+        link: '#2563EB',
+      }
+    : {
+        background: '#D9D9D9',
+        textPrimary: '#111111',
+        divider: '#A6A6A6',
+        inputBackground: '#FFFFFF',
+      inputBorder: '#000000',
+        inputText: '#111111',
+        placeholder: '#7A7A7A',
+        selection: '#322BF0',
+        icon: '#666666',
+        cardBackground: '#FFFFFF',
+        link: '#2563EB',
+      };
 
   const dot1 = useState(new Animated.Value(1))[0];
   const dot2 = useState(new Animated.Value(0))[0];
@@ -141,6 +208,19 @@ export default function Cadastro() {
       Animated.timing(dot2, { toValue: step === 2 ? 1 : 0, duration: 250, useNativeDriver: false })
     ]).start();
   }, [step]);
+
+  useEffect(() => {
+    const loadTheme = async () => {
+      try {
+        const savedTheme = await AsyncStorage.getItem('tema');
+        setDarkMode(savedTheme === 'escuro');
+      } catch (error) {
+        console.log('Erro ao carregar tema:', error);
+      }
+    };
+
+    loadTheme();
+  }, []);
 
   const handleCadastro = async () => {
     // Validações de regra de negócio
@@ -160,7 +240,7 @@ export default function Cadastro() {
       });
 
       Alert.alert("Sucesso!", "Sua conta Seek foi criada com sucesso.");
-      router.replace('/(tabs)');
+      router.replace('/principal');
 
     } catch (error: any) {
       const msg = error.response?.data?.message || "Não foi possível conectar ao servidor.";
@@ -170,21 +250,21 @@ export default function Cadastro() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <Image style={styles.logo} source={logoapp} />
+        <Image style={styles.logo} source={darkMode ? logoapptemaescuro : logoapptemaclaro} />
       </View>
 
       <View style={styles.main}>
         <View style={styles.titleRow}>
           <View style={{ flexDirection: 'row' }}>
-            <Animated.View style={styles.dot(dot1)} />
-            <Animated.View style={styles.dot(dot2)} />
+            <Animated.View style={dotStyle(dot1)} />
+            <Animated.View style={dotStyle(dot2)} />
           </View>
-          <Text style={styles.title}>Cadastro</Text>
+          <Text style={[styles.title, { color: theme.textPrimary }]}>Cadastro</Text>
           <TouchableOpacity onPress={() => setStep(1)} disabled={step === 1}>
             <MaterialIcons
-              name="arrow-back" size={24} color="#fff"
+              name="arrow-back" size={24} color={theme.textPrimary}
               style={{ opacity: step === 1 ? 0 : 1 }}
             />
           </TouchableOpacity>
@@ -192,21 +272,21 @@ export default function Cadastro() {
 
         <View style={styles.content}>
           {step === 1 ? (
-            <FormEtapa1 tipoConta={tipoConta} setTipoConta={setTipoConta} setStep={setStep} />
+            <FormEtapa1 tipoConta={tipoConta} setTipoConta={setTipoConta} setStep={setStep} theme={theme} />
           ) : (
             <FormEtapa2
               nome={nome} setNome={setNome} email={email} setEmail={setEmail}
               senha={senha} setSenha={setSenha} confirmarSenha={confirmarSenha}
-              setConfirmarSenha={setConfirmarSenha} handleCadastro={handleCadastro}
+              setConfirmarSenha={setConfirmarSenha} handleCadastro={handleCadastro} theme={theme}
             />
           )}
         </View>
 
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: theme.divider }]} />
         <View style={styles.footer}>
-          <Text style={styles.footerA}>
+          <Text style={[styles.footerA, { color: theme.textPrimary }]}>
             Já possui uma conta?{' '}
-            <Text style={styles.footerLink} onPress={() => router.replace('/login')}>Entrar</Text>
+            <Text style={[styles.footerLink, { color: theme.link }]} onPress={() => router.replace('/login')}>Entrar</Text>
           </Text>
         </View>
       </View>
@@ -223,267 +303,118 @@ export default function Cadastro() {
 
 
 const styles = StyleSheet.create({
-
   container: {
-
     flex: 1,
-
-    backgroundColor: colorScheme === "light" ? "#FFFFFF" : "#0F0F0F",
-
   },
-
   header: {
-
     flex: 2 / 10,
-
     paddingTop: 30,
-
     paddingLeft: 45,
-
-    marginBottom: 20
-
-  },
-
-  main: {
-
-    flex: 1,
-
-    alignItems: 'center',
-
-    paddingHorizontal: 30,
-
-  },
-
-  titleRow: {
-
-    flexDirection: 'row-reverse',
-
-    justifyContent: 'space-between',
-
-    width: '100%',
-
     marginBottom: 20,
-
-    alignItems: 'center',
-
   },
-
-  title: {
-
-    fontSize: 24,
-
-    color: '#fff',
-
-    fontWeight: 'bold',
-
-  },
-
-  content: {
-
-    width: '100%',
-
-    alignItems: 'center',
-
-  },
-
   main: {
-
     flex: 6 / 10,
-
     width: '100%',
-
     justifyContent: 'center',
-
     alignItems: 'center',
-
     paddingLeft: 30,
-
     paddingRight: 30,
-
   },
-
-  divider: {
-
-    width: '80%',
-
-    height: 1,
-
-    backgroundColor: 'rgba(255,255,255,0.5)',
-
-    alignSelf: 'center',
-
-    margin: 10,
-
-    marginBottom: 10,
-
-  },
-
-  footer: {
-
-    margin: 10,
-
+  titleRow: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
     width: '100%',
-
-    flexDirection: 'row',
-
-    alignItems: 'flex-end',
-
-    justifyContent: 'center',
-
-
-
-  },
-
-  logo: {
-
-    width: 160,
-
-    height: undefined,
-
-    aspectRatio: 0.65,
-
-    resizeMode: 'contain',
-
-  },
-
-  input: {
-
-    backgroundColor: '#fff',
-
-    borderRadius: 8,
-
-    padding: 15,
-
-    marginBottom: 12,
-
-    width: '100%',
-
-  },
-
-  button: {
-
-    backgroundColor: '#322BF0',
-
-    padding: 12,
-
-    borderRadius: 8,
-
+    marginBottom: 20,
     alignItems: 'center',
-
-    width: '100%',
-
   },
-
-  buttonText: {
-
-    color: '#fff',
-
-  },
-
-  card: {
-
-    backgroundColor: '#fff',
-
-    borderRadius: 12,
-
-    padding: 40,
-
-    alignItems: 'center',
-
-    justifyContent: 'center',
-
-  },
-
-  cardSelected: {
-
-    backgroundColor: '#2563EB',
-
-  },
-
-  divider: {
-
-    width: '80%',
-
-    height: 1,
-
-    backgroundColor: 'rgba(255,255,255,0.5)',
-
-    marginVertical: 10,
-
-  },
-
-  footerA: {
-
-    color: '#fff',
-
-  },
-
-  footerLink: {
-
-    color: '#2563EB',
-
+  title: {
+    fontSize: 24,
     fontWeight: 'bold',
-
   },
-
-  passwordContainer: {
-
-    flexDirection: 'row',
-
-    alignItems: 'center',
-
-    backgroundColor: '#fff',
-
-    borderRadius: 8,
-
-    marginBottom: 12,
-
+  content: {
     width: '100%',
-
+    alignItems: 'center',
   },
-
-  inputFlex: {
-
-    flex: 1, // Faz o texto ocupar todo o espaço e empurrar o ícone pro canto
-
-    padding: 15,
-
+  divider: {
+    width: '80%',
+    height: 1,
+    marginVertical: 10,
   },
-
-  eyeIcon: {
-
-    paddingHorizontal: 15, // Área de clique do ícone
-
+  footer: {
+    margin: 10,
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
   },
-
   logo: {
-
     width: 160,
-
+    height: undefined,
     aspectRatio: 0.65,
-
     resizeMode: 'contain',
-
   },
+  input: {
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 12,
+    width: '100%',
+    borderWidth: 1,
+    backgroundColor: '#fff',
+    borderColor: '#000',
+  },
+  inputErro: {
+    borderColor: '#EF4444',
+  },
+  button: {
+    backgroundColor: '#322BF0',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    width: '100%',
+  },
+  buttonText: {
+    color: '#fff',
+  },
+  card: {
+    borderRadius: 12,
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardSelected: {
+    backgroundColor: '#2563EB',
+  },
+  footerA: {
+    color: '#fff',
+  },
+  footerLink: {
+    color: '#2563EB',
+    fontWeight: 'bold',
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 8,
+    marginBottom: 12,
+    width: '100%',
+    borderWidth: 1,
+  },
+  inputFlex: {
+    flex: 1,
+    padding: 15,
+  },
+  eyeIcon: {
+    paddingHorizontal: 15,
+  },
+});
 
-  dot: (anim: any) => ({
-
-    width: 10,
-
-    height: 10,
-
-    borderRadius: 5,
-
-    marginLeft: 6,
-
-    backgroundColor: anim.interpolate({
-
-      inputRange: [0, 1],
-
-      outputRange: ['#FFFFFF', '#322BF0'],
-
-    }),
-
+const dotStyle = (anim: Animated.Value) => ({
+  width: 10,
+  height: 10,
+  borderRadius: 5,
+  marginLeft: 6,
+  backgroundColor: anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#FFFFFF', '#322BF0'],
   }),
-
 });

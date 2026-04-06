@@ -2,10 +2,11 @@ import { api } from '@/src/services/api';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link, router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Image, Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
-const logoapp = require('@/assets/images/logo_seek.png');
+const logoapptemaescuro = require('@/assets/images/logo_seek_letrabranca.png');
+const logoapptemaclaro = require('@/assets/images/logo_seek_letrapreta.png');
 
 export default function Login() {
 
@@ -18,6 +19,69 @@ export default function Login() {
     const [forgotEmail, setForgotEmail] = useState('');
     const [forgotCode, setForgotCode] = useState('');
     const [forgotNewPassword, setForgotNewPassword] = useState('');
+    const [darkMode, setDarkMode] = useState(false);
+    const [isLoadingTheme, setIsLoadingTheme] = useState(true);
+
+    const theme = darkMode
+        ? {
+            background: "#000000",
+            textPrimary: "#FFFFFF",
+            textSecondary: "#aaa",
+            inputBackground: "#ffffff",
+            inputBorder: "#000000",
+            inputText: "#111111",
+            button: "#322BF0",
+            buttonText: "#FFFFFF",
+            link: "#2563EB",
+            separator: "#b5b5b5",
+            modalOverlay: "rgba(0,0,0,0.6)",
+            modalBackground: "#0F0F0F",
+            modalBorder: "#1f2937",
+            modalText: "#FFFFFF",
+            modalTextSecondary: "#E5E7EB",
+            iconColor: "#666",
+            modalBackButton: "#1f2937",
+            modalCancelButton: "#374151",
+            modalBorderColor: "#6b7280",
+        }
+        : {
+            background: "#FAFAFA",
+            textPrimary: "#111111",
+            textSecondary: "#666",
+            inputBackground: "#ffffff",
+            inputBorder: "#cccccc",
+            inputText: "#111111",
+            button: "#322BF0",
+            buttonText: "#FFFFFF",
+            link: "#2563EB",
+            separator: "#999999",
+            modalOverlay: "rgba(0,0,0,0.4)",
+            modalBackground: "#f5f5f5",
+            modalBorder: "#e5e5e5",
+            modalText: "#111111",
+            modalTextSecondary: "#666",
+            iconColor: "#999",
+            modalBackButton: "#e0e0e0",
+            modalCancelButton: "#f0f0f0",
+            modalBorderColor: "#bdbdbd",
+        };
+
+    useEffect(() => {
+        const loadTheme = async () => {
+            try {
+                const savedTheme = await AsyncStorage.getItem('tema');
+                const isDark = savedTheme === 'escuro';
+                setDarkMode(isDark);
+            } catch (error) {
+                console.log('Erro ao carregar tema:', error);
+            } finally {
+                setIsLoadingTheme(false);
+            }
+        };
+
+        loadTheme();
+    }, []);
+
 
     const handleLogin = async () => {
         try {
@@ -115,29 +179,29 @@ export default function Login() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
             <View style={styles.header}>
-                <Image style={styles.logo} source={logoapp} />
+                <Image style={styles.logo} source={darkMode ? logoapptemaescuro : logoapptemaclaro} />
             </View>
 
             <View style={styles.main}>
-                <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 45, color: "#FFFFFF" }}>
+                <Text style={[styles.loginTitle, { color: theme.textPrimary }]}>
                     Login
                 </Text>
 
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.inputText }]}
                     placeholder="Email"
-                    placeholderTextColor="#aaa"
+                    placeholderTextColor={theme.textSecondary}
                     value={email}
                     onChangeText={setEmail}
                 />
 
                 <View style={styles.passwordContainer}>
                     <TextInput
-                        style={styles.passwordInput}
+                        style={[styles.passwordInput, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.inputText }]}
                         placeholder="Senha"
-                        placeholderTextColor="#aaa"
+                        placeholderTextColor={theme.textSecondary}
                         secureTextEntry={!showPassword}
                         value={senha}
                         onChangeText={setSenha}
@@ -149,7 +213,7 @@ export default function Login() {
                         <Ionicons
                             name={showPassword ? 'eye' : 'eye-off'}
                             size={20}
-                            color="#666"
+                            color={theme.iconColor}
                         />
                     </TouchableOpacity>
                 </View>
@@ -165,15 +229,15 @@ export default function Login() {
                 </TouchableOpacity>
 
                 <TouchableOpacity onPress={startForgotFlow} style={styles.linkLikeButton}>
-                    <Text style={styles.linkLikeText}>Esqueci minha senha</Text>
+                    <Text style={[styles.linkLikeText, { color: theme.link }]}>Esqueci minha senha</Text>
                 </TouchableOpacity>
 
-                <View style={{ width: '80%', borderBottomWidth: 1, borderBottomColor: '#b5b5b5', marginTop: 25 }} />
+                <View style={[styles.separator, { borderBottomColor: theme.separator }]} />
 
                 <View style={styles.footer}>
-                    <Text style={styles.footerA}>Não tenho conta. </Text>
+                    <Text style={[styles.footerA, { color: theme.textPrimary }]}>Não tenho conta. </Text>
                     <Link href="/cadastro">
-                        <Text style={styles.footerLink}>Criar conta agora.</Text>
+                        <Text style={[styles.footerLink, { color: theme.link }]}>Criar conta agora.</Text>
                     </Link>
                 </View>
 
@@ -185,22 +249,22 @@ export default function Login() {
                 animationType="fade"
                 onRequestClose={closeForgotFlow}
             >
-                <Pressable style={styles.modalOverlay} onPress={closeForgotFlow}>
-                    <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
-                        <Text style={styles.modalTitle}>
+                <Pressable style={[styles.modalOverlay, { backgroundColor: theme.modalOverlay }]} onPress={closeForgotFlow}>
+                    <View style={[styles.modalContent, { backgroundColor: theme.modalBackground, borderColor: theme.modalBorder }]} onStartShouldSetResponder={() => true}>
+                        <Text style={[styles.modalTitle, { color: theme.modalText }]}>
                             {forgotStep === 'email' && 'Recuperar senha'}
                             {forgotStep === 'code' && 'Código e nova senha'}
                         </Text>
 
                         {forgotStep === 'email' && (
                             <>
-                                <Text style={styles.modalMessage}>
+                                <Text style={[styles.modalMessage, { color: theme.modalTextSecondary }]}>
                                     Insira o email associado à sua conta para receber um código de verificação e redefinir sua senha.
                                 </Text>
                                 <TextInput
-                                    style={styles.modalInput}
+                                    style={[styles.modalInput, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.inputText }]}
                                     placeholder="Informe seu email"
-                                    placeholderTextColor="#6b7280"
+                                    placeholderTextColor={theme.textSecondary}
                                     keyboardType="email-address"
                                     autoCapitalize="none"
                                     value={forgotEmail}
@@ -211,9 +275,9 @@ export default function Login() {
 
                         {forgotStep === 'code' && (
                             <TextInput
-                                style={styles.modalInput}
+                                style={[styles.modalInput, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.inputText }]}
                                 placeholder="Código de 6 dígitos"
-                                placeholderTextColor="#6b7280"
+                                placeholderTextColor={theme.textSecondary}
                                 keyboardType="number-pad"
                                 maxLength={6}
                                 value={forgotCode}
@@ -223,9 +287,9 @@ export default function Login() {
 
                         {forgotStep === 'code' && (
                             <TextInput
-                                style={styles.modalInput}
+                                style={[styles.modalInput, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.inputText }]}
                                 placeholder="Nova senha"
-                                placeholderTextColor="#6b7280"
+                                placeholderTextColor={theme.textSecondary}
                                 secureTextEntry
                                 value={forgotNewPassword}
                                 onChangeText={setForgotNewPassword}
@@ -234,15 +298,15 @@ export default function Login() {
 
                         <View style={styles.modalActions}>
                             {forgotStep !== 'email' && (
-                                <TouchableOpacity style={styles.modalBack} onPress={goBackForgotStep}>
-                                    <Text style={styles.modalActionText}>Voltar</Text>
+                                <TouchableOpacity style={[styles.modalBack, { backgroundColor: theme.modalBackButton, borderColor: theme.modalBorderColor }]} onPress={goBackForgotStep}>
+                                    <Text style={[styles.modalActionText, { color: theme.modalText }]}>Voltar</Text>
                                 </TouchableOpacity>
                             )}
-                            <TouchableOpacity style={styles.modalCancel} onPress={closeForgotFlow}>
-                                <Text style={styles.modalActionText}>Cancelar</Text>
+                            <TouchableOpacity style={[styles.modalCancel, { backgroundColor: theme.modalCancelButton }]} onPress={closeForgotFlow}>
+                                <Text style={[styles.modalActionText, { color: theme.modalText }]}>Cancelar</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.modalActionButton} onPress={confirmForgotStep}>
-                                <Text style={styles.modalActionText}>Confirmar</Text>
+                                <Text style={[styles.modalActionText, { color: theme.modalText }]}>Confirmar</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -254,7 +318,6 @@ export default function Login() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#0F0F0F',
     },
     header: {
         flex: 2 / 12,
@@ -286,10 +349,13 @@ const styles = StyleSheet.create({
         aspectRatio: 0.65,
         resizeMode: 'contain',
     },
+    loginTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginBottom: 45,
+    },
     input: {
-        backgroundColor: '#ffffff',
         borderWidth: 1,
-        borderColor: '#000000',
         borderRadius: 8,
         padding: 15,
         marginBottom: 12,
@@ -302,9 +368,7 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     passwordInput: {
-        backgroundColor: '#ffffff',
         borderWidth: 1,
-        borderColor: '#000000',
         borderRadius: 8,
         padding: 15,
         flex: 1,
@@ -331,84 +395,43 @@ const styles = StyleSheet.create({
         marginTop: 12,
     },
     linkLikeText: {
-        color: '#2563EB',
         fontWeight: 'bold',
     },
-    // logobotaogoogle: {
-    //     width: 35,
-    //     height: 40,
-    // },
-    // logobotaoapple: {
-    //     width: 45,
-    //     height: 40,
-    // },
-    // loginGoogle: {
-    //     display: 'flex',
-    //     flexDirection: 'row',
-    //     alignItems: 'center',
-    //     justifyContent: 'center',
-    //     marginTop: 20,
-    //     padding: 10,
-    //     gap: 28,
-    //     boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
-    //     borderRadius: 15,
-    //     width: '55%',
-    //     backgroundColor: '#FFFFFF',
-    // },
-    // loginApple: {
-    //     display: 'flex',
-    //     flexDirection: 'row',
-    //     alignItems: 'center',
-    //     justifyContent: 'center',
-    //     marginTop: 20,
-    //     padding: 10,
-    //     gap: 28,
-    //     boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
-    //     borderRadius: 10,
-    //     width: '55%',
-    //     backgroundColor: '#000000',
-    //     color: '#FFFFFF',
-    // },
+    separator: {
+        width: '80%',
+        borderBottomWidth: 1,
+        marginTop: 25,
+    },
     footerA: {
-        color: '#FFFFFF',
     },
     footerLink: {
-        color: '#2563EB',
         fontWeight: 'bold',
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.6)',
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
     },
     modalContent: {
         width: '100%',
-        backgroundColor: '#0F0F0F',
         borderRadius: 12,
         padding: 20,
         gap: 12,
         borderWidth: 1,
-        borderColor: '#1f2937',
     },
     modalTitle: {
-        color: '#FFFFFF',
         fontSize: 18,
         fontWeight: 'bold',
     },
     modalMessage: {
-        color: '#E5E7EB',
         fontSize: 14,
         marginBottom: 8,
     },
     modalInput: {
-        backgroundColor: '#ffffff',
         borderWidth: 1,
-        borderColor: '#000000',
         borderRadius: 8,
         padding: 12,
-        color: '#111827',
     },
     modalActions: {
         flexDirection: 'row',
@@ -416,9 +439,7 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     modalBack: {
-        backgroundColor: '#1f2937',
         borderWidth: 1,
-        borderColor: '#6b7280',
         paddingVertical: 10,
         paddingHorizontal: 16,
         borderRadius: 8,
@@ -430,13 +451,11 @@ const styles = StyleSheet.create({
         borderRadius: 8,
     },
     modalCancel: {
-        backgroundColor: '#374151',
         paddingVertical: 10,
         paddingHorizontal: 16,
         borderRadius: 8,
     },
     modalActionText: {
-        color: '#FFFFFF',
         fontWeight: 'bold',
     },
 });

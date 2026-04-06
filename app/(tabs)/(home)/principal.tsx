@@ -1,26 +1,40 @@
 import { useComments } from '@/src/context/CommentsContext';
 import { api } from '@/src/services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useIsFocused } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Dimensions,
-  Image,
-  ImageStyle,
-  Modal,
-  RefreshControl,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleProp,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Dimensions,
+    Image,
+    ImageStyle,
+    Modal,
+    RefreshControl,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleProp,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from "react-native";
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Post, usePosts } from '../../../src/context/PostsContext';
+
+type Theme = {
+  background: string;
+  card: string;
+  textPrimary: string;
+  textSecondary: string;
+  textMuted: string;
+  border: string;
+  inputBg: string;
+  inputBorder: string;
+  inputText: string;
+  statusBar: 'light-content' | 'dark-content';
+};
 
 const formatRelativeTime = (timestamp: number) => {
   const diff = Date.now() - timestamp;
@@ -42,10 +56,10 @@ const AuthorAvatar: React.FC<AuthorAvatarProps> = ({ source, style }) => (
   <Image source={source} style={[styles.avatar, style]} />
 );
 
-const ModalHeader = ({ onClose }: { onClose: () => void }) => (
+const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: Theme }) => (
   <TouchableOpacity style={styles.modalGoBack} onPress={onClose}>
-    <Icon name="arrow-back-outline" size={28} color="white" />
-    <Text style={styles.modalGoBackText}>Voltar</Text>
+    <Icon name="arrow-back-outline" size={28} color={theme.textPrimary} />
+    <Text style={[styles.modalGoBackText, { color: theme.textPrimary }]}>Voltar</Text>
   </TouchableOpacity>
 );
 
@@ -53,10 +67,11 @@ interface PostDetailModalProps {
   visible: boolean;
   onClose: () => void;
   post: Post | null;
+  theme: Theme;
   onPressAuthor?: (post: Post) => void;
 }
 
-const PostDetailModal = ({ visible, onClose, post, onPressAuthor }: PostDetailModalProps) => {
+const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor }: PostDetailModalProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const pagerRef = useRef<ScrollView>(null);
   const [commentText, setCommentText] = useState('');
@@ -136,20 +151,20 @@ const PostDetailModal = ({ visible, onClose, post, onPressAuthor }: PostDetailMo
 
   return (
     <Modal animationType="slide" visible={visible} onRequestClose={onClose}>
-      <SafeAreaView style={styles.modalContainer}>
+      <SafeAreaView style={[styles.modalContainer, { backgroundColor: theme.background }]}>
         <ScrollView>
-          <ModalHeader onClose={onClose} />
+          <ModalHeader onClose={onClose} theme={theme} />
           <TouchableOpacity
             style={styles.modalHeader}
             disabled={!onPressAuthor || !post.userId}
             onPress={() => onPressAuthor?.(post)}
           >
             <AuthorAvatar source={post.avatar} style={styles.modalUserAvatar} />
-            <Text style={styles.modalUserName}>{post.author}</Text>
+            <Text style={[styles.modalUserName, { color: theme.textPrimary }]}>{post.author}</Text>
           </TouchableOpacity>
 
           {post.title && (
-            <Text style={styles.modalTitle}>{post.title}</Text>
+            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>{post.title}</Text>
           )}
 
           <ScrollView
@@ -176,10 +191,10 @@ const PostDetailModal = ({ visible, onClose, post, onPressAuthor }: PostDetailMo
 
           <View style={styles.modalContent}>
             {post.description && (
-              <Text style={styles.modalDescription}>{post.description}</Text>
+              <Text style={[styles.modalDescription, { color: theme.textSecondary }]}>{post.description}</Text>
             )}
 
-            <View style={styles.likesContainer}>
+            <View style={[styles.likesContainer, { borderBottomColor: theme.border }]}>
               <TouchableOpacity
                 style={styles.likesButton}
                 onPress={handleToggleLike}
@@ -188,25 +203,25 @@ const PostDetailModal = ({ visible, onClose, post, onPressAuthor }: PostDetailMo
                 <Icon
                   name={liked ? 'thumbs-up' : 'thumbs-up-outline'}
                   size={22}
-                  color={liked ? '#2563EB' : '#fff'}
+                  color={liked ? '#2563EB' : theme.textPrimary}
                 />
-                <Text style={[styles.likesText, liked && { color: '#2563EB' }]}>
+                <Text style={[styles.likesText, { color: theme.textPrimary }, liked && { color: '#2563EB' }]}>
                   {likesCount} curtidas
                 </Text>
               </TouchableOpacity>
 
-              <Text style={styles.timeText}>
+              <Text style={[styles.timeText, { color: theme.textMuted }]}>
                 {formatRelativeTime(post.postedAt)}
               </Text>
             </View>
 
-            <Text style={styles.commentsTitle}>Comentários</Text>
+            <Text style={[styles.commentsTitle, { color: theme.textPrimary }]}>Comentários</Text>
 
             <View style={styles.commentInputRow}>
               <TextInput
-                style={styles.commentInput}
+                style={[styles.commentInput, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.inputText }]}
                 placeholder="Escreva um comentário"
-                placeholderTextColor="#999"
+                placeholderTextColor={theme.textMuted}
                 value={commentText}
                 onChangeText={setCommentText}
               />
@@ -217,7 +232,7 @@ const PostDetailModal = ({ visible, onClose, post, onPressAuthor }: PostDetailMo
 
             {comments.length > 0 ? (
               comments.map(comment => (
-                <View key={comment.id} style={styles.commentContainer}>
+                <View key={comment.id} style={[styles.commentContainer, { backgroundColor: theme.card }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     {comment.avatar && (
                       <Image
@@ -225,13 +240,13 @@ const PostDetailModal = ({ visible, onClose, post, onPressAuthor }: PostDetailMo
                         style={{ width: 30, height: 30, borderRadius: 15, marginRight: 8 }}
                       />
                     )}
-                    <Text style={styles.commentUser}>{comment.user}</Text>
+                    <Text style={[styles.commentUser, { color: theme.textPrimary }]}>{comment.user}</Text>
                   </View>
-                  <Text style={styles.commentText}>{comment.text}</Text>
+                  <Text style={[styles.commentText, { color: theme.textSecondary }]}>{comment.text}</Text>
                 </View>
               ))
             ) : (
-              <Text style={[styles.commentText, styles.commentEmpty]}>
+              <Text style={[styles.commentText, styles.commentEmpty, { color: theme.textSecondary }]}>
                 Nenhum comentário ainda.
               </Text>
             )}
@@ -242,7 +257,6 @@ const PostDetailModal = ({ visible, onClose, post, onPressAuthor }: PostDetailMo
   );
 };
 
-    const router = useRouter();
 export default function HomeScreen() {
   const { posts, refreshPosts } = usePosts();
   const router = useRouter();
@@ -250,6 +264,49 @@ export default function HomeScreen() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const isFocused = useIsFocused();
+
+  const theme: Theme = darkMode
+    ? {
+        background: '#090909',
+        card: '#1a1a1a',
+        textPrimary: '#FFFFFF',
+        textSecondary: '#DDDDDD',
+        textMuted: '#888888',
+        border: '#333333',
+        inputBg: '#0f0f0f',
+        inputBorder: '#333333',
+        inputText: '#FFFFFF',
+        statusBar: 'light-content',
+      }
+    : {
+        background: '#E6E6E6',
+        card: '#FFFFFF',
+        textPrimary: '#111111',
+        textSecondary: '#333333',
+        textMuted: '#666666',
+        border: '#CCCCCC',
+        inputBg: '#FFFFFF',
+        inputBorder: '#C7C7C7',
+        inputText: '#111111',
+        statusBar: 'dark-content',
+      };
+
+  useEffect(() => {
+    const loadTheme = async () => {
+      try {
+        const savedTheme = await AsyncStorage.getItem('tema');
+        setDarkMode(savedTheme === 'escuro');
+      } catch (error) {
+        console.log('Erro ao carregar tema:', error);
+      }
+    };
+
+    if (isFocused) {
+      loadTheme();
+    }
+  }, [isFocused]);
 
   const openImageModal = (post: Post) => {
     setSelectedPost(post);
@@ -274,11 +331,11 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <StatusBar barStyle={theme.statusBar} backgroundColor={theme.background} />
 
       <ScrollView
-        style={styles.gallery}
+        style={[styles.gallery, { backgroundColor: theme.background }]}
         contentContainerStyle={styles.galleryContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -290,8 +347,8 @@ export default function HomeScreen() {
             : post.images[0];
 
           return (
-            <View key={post.id} style={styles.cardContainer}>
-              {post.title && <Text style={styles.cardTitle}>{post.title}</Text>}
+            <View key={post.id} style={[styles.cardContainer, { backgroundColor: theme.card }]}>
+              {post.title && <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>{post.title}</Text>}
 
               <TouchableOpacity onPress={() => openImageModal(post)}>
                 <Image style={styles.galleryImage} source={cover} />
@@ -299,11 +356,11 @@ export default function HomeScreen() {
 
               <View style={styles.cardInfo}>
                 <View style={styles.cardTextContainer}>
-                  <Text style={styles.cardAuthor}>{post.author}</Text>
-                  <Text style={styles.cardFollowers}>{post.followers}</Text>
+                  <Text style={[styles.cardAuthor, { color: theme.textPrimary }]}>{post.author}</Text>
+                  <Text style={[styles.cardFollowers, { color: theme.textMuted }]}>{post.followers}</Text>
                 </View>
 
-                <Text style={styles.timeText}>
+                <Text style={[styles.timeText, { color: theme.textMuted }]}>
                   {formatRelativeTime(post.postedAt)}
                 </Text>
 
@@ -311,7 +368,7 @@ export default function HomeScreen() {
               </View>
 
               {post.description && (
-                <Text style={styles.cardDescription} numberOfLines={2}>
+                <Text style={[styles.cardDescription, { color: theme.textSecondary }]} numberOfLines={2}>
                   {post.description}
                 </Text>
               )}
@@ -324,6 +381,7 @@ export default function HomeScreen() {
         visible={isModalVisible}
         onClose={closeImageModal}
         post={selectedPost}
+        theme={theme}
         onPressAuthor={handleOpenAuthorProfile}
       />
     </View>
