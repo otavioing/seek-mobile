@@ -2,7 +2,7 @@ import { Post } from '@/src/context/PostsContext';
 import { api } from '@/src/services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Dimensions,
@@ -91,6 +91,7 @@ const PostDetailModal = ({ visible, onClose, post, theme }: PostDetailModalProps
 };
 
 const UserProfileScreen = () => {
+  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string | string[] }>();
   const isFocused = useIsFocused();
   const userId = useMemo(() => (Array.isArray(id) ? id[0] : id) || '', [id]);
@@ -241,6 +242,13 @@ const UserProfileScreen = () => {
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <StatusBar barStyle={theme.statusBar} backgroundColor={theme.background} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.headerRow}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Icon name="arrow-back-outline" size={24} color={theme.textPrimary} style={styles.backIcon} />
+            <Text style={[styles.backText, { color: theme.textPrimary }]}>Voltar</Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.headerContainer}>
           <ImageBackground source={banner} style={styles.headerBackground} resizeMode="cover" />
           <Image source={avatar} style={[styles.profileImage, { borderColor: theme.card }]} />
@@ -313,6 +321,27 @@ const UserProfileScreen = () => {
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   scrollContent: { paddingBottom: 120 },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    marginBottom: 8,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
+  backIcon: {
+    marginRight: 0,
+  },
+  backText: {
+    fontSize: 16,
+    marginLeft: 6,
+    fontWeight: '700',
+  },
   headerContainer: { alignItems: 'center', paddingBottom: 24 },
   headerBackground: { width: '100%', height: 200, marginBottom: -70 },
   profileImage: { width: 140, height: 140, borderRadius: 70, borderWidth: 3 },

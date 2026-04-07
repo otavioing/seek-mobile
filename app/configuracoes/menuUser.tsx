@@ -1,4 +1,6 @@
+import Breadcrumb from "@/components/Breadcrumb";
 import { api } from '@/src/services/api';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { Link, useRouter } from "expo-router";
@@ -66,6 +68,18 @@ export default function menuUser() {
     }, [carregarTema])
   );
 
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem('userId');
+
+      router.replace('/login');
+    } catch (error) {
+      console.log('Erro', 'Erro ao sair da conta');
+      console.log(error);
+    }
+  };
+
   const theme = darkMode
     ? {
         background: "#121212",
@@ -88,10 +102,21 @@ export default function menuUser() {
     <View style={[styles.container, { backgroundColor: theme.background }]}> 
 
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backRow}>
-          <Text style={[styles.backIcon, { color: theme.textPrimary }]}>←</Text>
-          <Text style={[styles.backText, { color: theme.textPrimary }]}>Voltar</Text>
-        </TouchableOpacity>
+        <View style={styles.topRow}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backRow}>
+            <Ionicons name="arrow-back-outline" size={24} color={theme.textPrimary} style={styles.backIcon} />
+            <Text style={[styles.backText, { color: theme.textPrimary }]}>Voltar</Text>
+          </TouchableOpacity>
+
+          <Breadcrumb
+            items={[
+              { label: "Perfil", href: "/(tabs)/perfil" },
+              { label: "Menu" },
+            ]}
+            textColor={theme.textSecondary}
+            containerStyle={{ marginBottom: 0, marginLeft: 8, flex: 1 }}
+          />
+        </View>
       </View>
 
       <View style={styles.header}>
@@ -147,7 +172,7 @@ export default function menuUser() {
         }}
       />
 
-      <TouchableOpacity style={styles.fbtContainer}>
+      <TouchableOpacity style={styles.fbtContainer} onPress={() => router.push('/configuracoes/notificacoes')}>
         <Svg width={size} height={size} viewBox="0 0 60 60" fill="none">
           <Path
             d="M10 47.5V42.5H15V25C15 21.5417 16.0417 18.4688 18.125 15.7812C20.2083 13.0938 22.9167 11.3333 26.25 10.5V8.75C26.25 7.70833 26.6146 6.82292 27.3438 6.09375C28.0729 5.36458 28.9583 5 30 5C31.0417 5 31.9271 5.36458 32.6562 6.09375C33.3854 6.82292 33.75 7.70833 33.75 8.75V10.5C37.0833 11.3333 39.7917 13.0938 41.875 15.7812C43.9583 18.4688 45 21.5417 45 25V42.5H50V47.5H10ZM30 55C28.625 55 27.4479 54.5104 26.4688 53.5312C25.4896 52.5521 25 51.375 25 50H35C35 51.375 34.5104 52.5521 33.5312 53.5312C32.5521 54.5104 31.375 55 30 55ZM20 42.5H40V25C40 22.25 39.0208 19.8958 37.0625 17.9375C35.1042 15.9792 32.75 15 30 15C27.25 15 24.8958 15.9792 22.9375 17.9375C20.9792 19.8958 20 22.25 20 25V42.5Z"
@@ -156,7 +181,7 @@ export default function menuUser() {
         </Svg>
         <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Notificação</Text>
       </TouchableOpacity>
-  <TouchableOpacity style={styles.fbtContainer}>
+  <TouchableOpacity style={styles.fbtContainer} onPress={() => router.push('/configuracoes/atualizacoes')}>
         <Svg width={size} height={size} viewBox="0 0 60 60" fill="none">
           <Path
             d="M30 52.5C26.875 52.5 23.9479 51.9062 21.2188 50.7188C18.4896 49.5312 16.1146 47.9271 14.0938 45.9062C12.0729 43.8854 10.4688 41.5104 9.28125 38.7812C8.09375 36.0521 7.5 33.125 7.5 30C7.5 26.875 8.09375 23.9479 9.28125 21.2188C10.4688 18.4896 12.0729 16.1146 14.0938 14.0938C16.1146 12.0729 18.4896 10.4688 21.2188 9.28125C23.9479 8.09375 26.875 7.5 30 7.5C33.4167 7.5 36.6562 8.22917 39.7188 9.6875C42.7812 11.1458 45.375 13.2083 47.5 15.875V10H52.5V25H37.5V20H44.375C42.6667 17.6667 40.5625 15.8333 38.0625 14.5C35.5625 13.1667 32.875 12.5 30 12.5C25.125 12.5 20.9896 14.1979 17.5938 17.5938C14.1979 20.9896 12.5 25.125 12.5 30C12.5 34.875 14.1979 39.0104 17.5938 42.4062C20.9896 45.8021 25.125 47.5 30 47.5C34.375 47.5 38.1979 46.0833 41.4688 43.25C44.7396 40.4167 46.6667 36.8333 47.25 32.5H52.375C51.75 38.2083 49.3021 42.9688 45.0312 46.7812C40.7604 50.5938 35.75 52.5 30 52.5ZM37 40.5L27.5 31V17.5H32.5V29L40.5 37L37 40.5Z"
@@ -213,7 +238,7 @@ export default function menuUser() {
         </Svg>
         <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Analytics</Text>
       </TouchableOpacity>
-  <TouchableOpacity style={styles.fbtContainer}>
+  <TouchableOpacity style={styles.fbtContainer} onPress={handleLogout}>
         <Svg width={size} height={size} viewBox="0 0 60 60" fill="none">
           <Path
             d="M12 52C10.625 52 9.44792 51.5104 8.46875 50.5312C7.48958 49.5521 7 48.375 7 47V12C7 10.625 7.48958 9.44792 8.46875 8.46875C9.44792 7.48958 10.625 7 12 7H29.5V12H12V47H29.5V52H12ZM39.5 42L36.0625 38.375L42.4375 32H22V27H42.4375L36.0625 20.625L39.5 17L52 29.5L39.5 42Z"
@@ -234,19 +259,23 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingHorizontal: 16,
   },
-  backRow: {
+  topRow: {
     flexDirection: "row",
     alignItems: "center",
   },
+  backRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
   backIcon: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    marginRight: 6,
+    marginRight: 0,
   },
   backText: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 16,
+    marginLeft: 6,
+    fontWeight: "700",
   },
   header: {
     flexDirection: "row",

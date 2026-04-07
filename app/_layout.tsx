@@ -1,14 +1,15 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { PostsProvider } from '../src/context/PostsContext';
 import { CommentsProvider } from '../src/context/CommentsContext'; // 👈 IMPORTANTE
+import { FollowedPostsProvider } from '../src/context/FollowedPostsContext';
+import { PostsProvider } from '../src/context/PostsContext';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -46,15 +47,17 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <PostsProvider>
-        <CommentsProvider> {/* 👈 AQUI RESOLVE SEU ERRO */}
-          <SafeAreaProvider>
-            <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
-              <Stack screenOptions={{ headerShown: false }} />
-            </SafeAreaView>
+        <FollowedPostsProvider>
+          <CommentsProvider> {/* 👈 AQUI RESOLVE SEU ERRO */}
+            <SafeAreaProvider>
+              <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
+                <Stack screenOptions={{ headerShown: false }} />
+              </SafeAreaView>
 
-            <StatusBar style="light" />
-          </SafeAreaProvider>
-        </CommentsProvider>
+              <StatusBar style="light" />
+            </SafeAreaProvider>
+          </CommentsProvider>
+        </FollowedPostsProvider>
       </PostsProvider>
     </ThemeProvider>
   );

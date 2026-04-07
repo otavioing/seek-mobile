@@ -1,3 +1,5 @@
+import Breadcrumb from '@/components/Breadcrumb';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -95,9 +97,19 @@ export default function Config() {
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Text style={[styles.backIcon, { color: theme.textPrimary }]}>←</Text>
+            <Ionicons name="arrow-back-outline" size={24} color={theme.textPrimary} style={styles.backIcon} />
             <Text style={[styles.backText, { color: theme.textPrimary }]}>Voltar</Text>
           </TouchableOpacity>
+
+          <Breadcrumb
+            items={[
+              { label: 'Menu', href: '/configuracoes/menuUser' },
+              { label: 'Configurações' },
+            ]}
+            textColor={theme.textPrimary}
+            separatorColor={theme.arrow}
+            containerStyle={{ marginBottom: 0, marginLeft: 8, flex: 1 }}
+          />
         </View>
 
         <Text style={[styles.title, { color: theme.textPrimary }]}>Configurações</Text>
@@ -111,7 +123,7 @@ export default function Config() {
 
         <TouchableOpacity
           style={styles.itemRow}
-          onPress={() => router.push('/configuracoes/notificacoes')}
+          onPress={() => router.push('/configuracoes/config_notificacoes')}
         >
           <Text style={[styles.itemText, { color: theme.textPrimary }]}>Notificações</Text>
           <Text style={[styles.arrowText, { color: theme.arrow }]}>➔</Text>
@@ -210,16 +222,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginRight: 12,
-    paddingVertical: 4,
-    paddingRight: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
   },
   backIcon: {
-    fontSize: 20,
-    marginRight: 4,
+    marginRight: 0,
   },
   backText: {
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 16,
+    marginLeft: 6,
+    fontWeight: "700",
   },
   title: {
     fontSize: 24,

@@ -1,17 +1,19 @@
-import React, { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useIsFocused } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    FlatList,
-    Image,
-    ImageSourcePropType,
-    Linking,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  Image,
+  ImageSourcePropType,
+  Linking,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 // Importe o ícone para o botão "Voltar"
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -25,6 +27,18 @@ interface Vaga {
   timestamp: string;
   description: string;
 }
+
+type Theme = {
+  background: string;
+  card: string;
+  textPrimary: string;
+  textSecondary: string;
+  textMuted: string;
+  link: string;
+  border: string;
+  imagePlaceholder: string;
+  modalBackground: string;
+};
 
 // --- 2. Dados Fictícios (Mock Data) ---
 // (Usei o 'require' para as imagens locais, como no seu perfil)
@@ -56,10 +70,10 @@ const VAGAS_DATA: Vaga[] = [
 ];
 
 // --- 3. Componente de Header do Modal (Reutilizado) ---
-const ModalHeader = ({ onClose }: { onClose: () => void }) => (
+const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: Theme }) => (
   <TouchableOpacity style={styles.modalGoBack} onPress={onClose}>
-    <Icon name="arrow-back-outline" size={28} color="white" />
-    <Text style={styles.modalGoBackText}>Voltar</Text>
+    <Icon name="arrow-back-outline" size={28} color={theme.textPrimary} />
+    <Text style={[styles.modalGoBackText, { color: theme.textPrimary }]}>Voltar</Text>
   </TouchableOpacity>
 );
 
@@ -67,18 +81,19 @@ const ModalHeader = ({ onClose }: { onClose: () => void }) => (
 interface JobCardProps {
   item: Vaga;
   onPressInfo: (item: Vaga) => void; // Função para abrir o modal
+  theme: Theme;
 }
 
-const JobCard: React.FC<JobCardProps> = ({ item, onPressInfo }) => (
-  <View style={styles.cardContainer}>
+const JobCard: React.FC<JobCardProps> = ({ item, onPressInfo, theme }) => (
+  <View style={[styles.cardContainer, { backgroundColor: theme.card }] }>
     {/* Imagem (Banner com Logo) */}
-    <Image source={item.logoBannerUrl} style={styles.cardImage} />
+    <Image source={item.logoBannerUrl} style={[styles.cardImage, { backgroundColor: theme.imagePlaceholder }]} />
 
     {/* Conteúdo de texto */}
     <View style={styles.contentContainer}>
       {/* Linha 1: Título e Botão */}
       <View style={styles.row}>
-        <Text style={styles.title}>{item.title}</Text>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>{item.title}</Text>
         <TouchableOpacity
           style={styles.propostaButton}
           onPress={async () => {
@@ -100,11 +115,11 @@ const JobCard: React.FC<JobCardProps> = ({ item, onPressInfo }) => (
       </View>
 
       {/* Linha 2: Timestamp */}
-      <Text style={styles.timestamp}>{item.timestamp}</Text>
+      <Text style={[styles.timestamp, { color: theme.textMuted }]}>{item.timestamp}</Text>
 
       {/* Linha 3: Link "mais informações" */}
       <TouchableOpacity style={styles.infoButton} onPress={() => onPressInfo(item)}>
-        <Text style={styles.link}>mais informações</Text>
+        <Text style={[styles.link, { color: theme.link }]}>mais informações</Text>
       </TouchableOpacity>
     </View>
   </View>
@@ -115,9 +130,10 @@ interface JobDetailModalProps {
   visible: boolean;
   onClose: () => void;
   vaga: Vaga | null;
+  theme: Theme;
 }
 
-const JobDetailModal: React.FC<JobDetailModalProps> = ({ visible, onClose, vaga }) => {
+const JobDetailModal: React.FC<JobDetailModalProps> = ({ visible, onClose, vaga, theme }) => {
   if (!vaga) return null;
 
   return (
@@ -126,14 +142,14 @@ const JobDetailModal: React.FC<JobDetailModalProps> = ({ visible, onClose, vaga 
       visible={visible}
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.modalContainer}>
+      <SafeAreaView style={[styles.modalContainer, { backgroundColor: theme.modalBackground }]}>
         {/* Botão "Voltar" */}
-        <ModalHeader onClose={onClose} />
+        <ModalHeader onClose={onClose} theme={theme} />
         <ScrollView>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{vaga.title}</Text>
-            <Text style={styles.modalCompany}>Publicado por: {vaga.companyName}</Text>
-            <Text style={styles.modalDescription}>{vaga.description}</Text>
+            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>{vaga.title}</Text>
+            <Text style={[styles.modalCompany, { color: theme.textMuted, borderBottomColor: theme.border }]}>Publicado por: {vaga.companyName}</Text>
+            <Text style={[styles.modalDescription, { color: theme.textPrimary }]}>{vaga.description}</Text>
             {/* Sem seção de comentários, como pedido */}
           </View>
         </ScrollView>
@@ -148,6 +164,47 @@ const TrabalhoScreen = () => {
   // Estado para controlar o modal
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedVaga, setSelectedVaga] = useState<Vaga | null>(null);
+  const [darkMode, setDarkMode] = useState(false);
+  const isFocused = useIsFocused();
+
+  const theme: Theme = darkMode
+    ? {
+        background: '#000000',
+        card: '#1a1a1a',
+        textPrimary: '#FFFFFF',
+        textSecondary: '#CCCCCC',
+        textMuted: '#AAAAAA',
+        link: '#A78BFA',
+        border: '#333333',
+        imagePlaceholder: '#333333',
+        modalBackground: '#000000',
+      }
+    : {
+        background: '#E6E6E6',
+        card: '#FFFFFF',
+        textPrimary: '#111111',
+        textSecondary: '#333333',
+        textMuted: '#666666',
+        link: '#6D28D9',
+        border: '#D1D5DB',
+        imagePlaceholder: '#D1D5DB',
+        modalBackground: '#E6E6E6',
+      };
+
+  useEffect(() => {
+    const loadTheme = async () => {
+      try {
+        const savedTheme = await AsyncStorage.getItem('tema');
+        setDarkMode(savedTheme === 'escuro');
+      } catch (error) {
+        console.log('Erro ao carregar tema:', error);
+      }
+    };
+
+    if (isFocused) {
+      loadTheme();
+    }
+  }, [isFocused]);
 
   // Funções para abrir/fechar o modal
   const handleOpenModal = (vaga: Vaga) => {
@@ -161,15 +218,16 @@ const TrabalhoScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <FlatList
         data={VAGAS_DATA}
-        renderItem={({ item }) => <JobCard item={item} onPressInfo={handleOpenModal} />}
+        renderItem={({ item }) => <JobCard item={item} onPressInfo={handleOpenModal} theme={theme} />}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContainer}
+        style={{ backgroundColor: theme.background }}
         // Adiciona um título no topo da lista
         ListHeaderComponent={
-          <Text style={styles.pageTitle}>Vagas</Text>
+          <Text style={[styles.pageTitle, { color: theme.textPrimary }]}>Vagas</Text>
         }
       />
 
@@ -178,6 +236,7 @@ const TrabalhoScreen = () => {
         visible={isModalVisible}
         onClose={handleCloseModal}
         vaga={selectedVaga}
+        theme={theme}
       />
     </SafeAreaView>
   );
@@ -187,7 +246,6 @@ const TrabalhoScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#000',
   },
   listContainer: {
     paddingHorizontal: 16,
@@ -197,11 +255,9 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#fff',
     marginBottom: 24,
   },
   cardContainer: {
-    backgroundColor: '#1a1a1a',
     borderRadius: 16,
     marginBottom: 20,
     overflow: 'hidden',
@@ -209,7 +265,7 @@ const styles = StyleSheet.create({
   cardImage: {
     width: '100%',
     height: 180,
-    backgroundColor: '#333' // Placeholder
+    backgroundColor: '#333333' // Placeholder
   },
   contentContainer: {
     padding: 16,
@@ -223,7 +279,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#fff',
   },
   propostaButton: {
     backgroundColor: '#007BFF', // Azul
@@ -238,21 +293,18 @@ const styles = StyleSheet.create({
   },
   timestamp: {
     fontSize: 14,
-    color: '#aaa',
   },
   infoButton: {
     marginTop: 16,
   },
   link: {
     fontSize: 14,
-    color: '#A78BFA', // Roxo (do seu tema)
     fontWeight: 'bold',
   },
   
   // --- Estilos do Modal ---
   modalContainer: {
     flex: 1,
-    backgroundColor: '#000',
   },
   modalGoBack: {
     flexDirection: 'row',
@@ -261,7 +313,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   modalGoBackText: {
-    color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 8,
@@ -272,20 +323,16 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: '#fff',
   },
   modalCompany: {
     fontSize: 16,
-    color: '#aaa',
     marginTop: 8,
     marginBottom: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
   },
   modalDescription: {
     fontSize: 16,
-    color: '#fff',
     lineHeight: 24,
   },
 });

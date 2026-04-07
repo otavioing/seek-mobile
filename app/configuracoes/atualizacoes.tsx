@@ -4,9 +4,22 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-export default function Notificacoes() {
+const updates = [
+	{
+		date: '10/02/26',
+		description:
+			'Melhora nas interfaces e telas para melhor compreendimento e retorno de feedback para os usuários',
+	},
+	{
+		date: '10/02/26',
+		description:
+			'Melhora nas interfaces e telas para melhor compreendimento e retorno de feedback para os usuários',
+	},
+];
+
+export default function Atualizacoes() {
 	const router = useRouter();
 	const isFocused = useIsFocused();
 	const [darkMode, setDarkMode] = useState(false);
@@ -15,20 +28,14 @@ export default function Notificacoes() {
 		? {
 			background: '#090B0E',
 			textPrimary: '#F5F5F7',
-			textSecondary: '#B8BBC2',
-			iconOuter: '#101318',
-			iconInner: '#0B0E12',
-			iconBorder: '#14181E',
-			iconColor: '#191B1F',
+			textSecondary: '#9FA4AC',
+			breadcrumb: '#B8BBC2',
 		}
 		: {
 			background: '#D9D9D9',
 			textPrimary: '#111111',
 			textSecondary: '#4F4F4F',
-			iconOuter: '#CFCFCF',
-			iconInner: '#EFEFEF',
-			iconBorder: '#BDBDBD',
-			iconColor: '#333333',
+			breadcrumb: '#5E5E5E',
 		};
 
 	useEffect(() => {
@@ -48,7 +55,7 @@ export default function Notificacoes() {
 
 	return (
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-			<View style={[styles.container, { backgroundColor: theme.background }]}>
+			<ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={styles.content}>
 				<View style={styles.headerRow}>
 					<TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
 						<Ionicons name="arrow-back-outline" size={24} color={theme.textPrimary} style={styles.backIcon} />
@@ -59,28 +66,24 @@ export default function Notificacoes() {
 						items={[
 							{ label: 'Menu', href: '/configuracoes/menuUser' },
 							{ label: 'Configurações', href: '/configuracoes/config' },
-							{ label: 'Notificações' },
+							{ label: 'Atualizações' },
 						]}
-						textColor={theme.textSecondary}
+						textColor={theme.breadcrumb}
 						containerStyle={{ marginBottom: 0, marginLeft: 8, flex: 1 }}
 					/>
 				</View>
 
-				<Text style={[styles.title, { color: theme.textPrimary }]}>Notificações</Text>
+				<Text style={[styles.title, { color: theme.textPrimary }]}>Atualizações</Text>
 
-				<View style={styles.emptyStateContainer}>
-					<View style={[styles.iconOuterCircle, { backgroundColor: theme.iconOuter }]}>
-						<View style={[styles.iconInnerCircle, { backgroundColor: theme.iconInner, borderColor: theme.iconBorder }]}>
-							<Ionicons name="notifications-outline" size={88} color={theme.iconColor} />
+				<View style={styles.listContainer}>
+					{updates.map((update, index) => (
+						<View key={`${update.date}-${index}`} style={styles.updateItem}>
+							<Text style={[styles.date, { color: theme.textPrimary }]}>{update.date}</Text>
+							<Text style={[styles.description, { color: theme.textSecondary }]}>{update.description}</Text>
 						</View>
-					</View>
-
-					<Text style={[styles.emptyTitle, { color: theme.textPrimary }]}>Nenhuma notificação</Text>
-					<Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
-						Ao receber notificações elas apareceram aqui
-					</Text>
+					))}
 				</View>
-			</View>
+			</ScrollView>
 		</SafeAreaView>
 	);
 }
@@ -91,8 +94,11 @@ const styles = StyleSheet.create({
 	},
 	container: {
 		flex: 1,
+	},
+	content: {
 		paddingHorizontal: 14,
 		paddingTop: 8,
+		paddingBottom: 32,
 	},
 	headerRow: {
 		flexDirection: 'row',
@@ -114,43 +120,25 @@ const styles = StyleSheet.create({
 		fontWeight: '700',
 	},
 	title: {
-		fontSize: 36,
+		fontSize: 32,
 		fontWeight: '700',
 		letterSpacing: -0.6,
+		marginBottom: 14,
 	},
-	emptyStateContainer: {
-		flex: 1,
-		alignItems: 'center',
-		justifyContent: 'center',
-		paddingBottom: 70,
+	listContainer: {
+		gap: 14,
 	},
-	iconOuterCircle: {
-		width: 206,
-		height: 206,
-		borderRadius: 103,
-		alignItems: 'center',
-		justifyContent: 'center',
-		marginBottom: 26,
+	updateItem: {
+		gap: 2,
 	},
-	iconInnerCircle: {
-		width: 152,
-		height: 152,
-		borderRadius: 76,
-		alignItems: 'center',
-		justifyContent: 'center',
-		borderWidth: 1,
+	date: {
+		fontSize: 24,
+		fontWeight: '700',
+		letterSpacing: -0.4,
 	},
-	emptyTitle: {
-		fontSize: 38,
-		fontWeight: '500',
-		marginBottom: 8,
-		letterSpacing: -0.3,
-		textAlign: 'center',
-		width: '100%',
-	},
-	emptySubtitle: {
-		fontSize: 20,
-		textAlign: 'center',
-		lineHeight: 26,
+	description: {
+		fontSize: 18,
+		lineHeight: 23,
+		maxWidth: '98%',
 	},
 });

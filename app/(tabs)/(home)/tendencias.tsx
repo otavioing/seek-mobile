@@ -1,23 +1,25 @@
+import { useComments } from '@/src/context/CommentsContext';
 import { api } from '@/src/services/api';
 import { MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from "@react-navigation/native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Dimensions,
-    Image,
-    ImageSourcePropType,
-    Keyboard,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+  Alert,
+  Dimensions,
+  Image,
+  ImageSourcePropType,
+  Keyboard,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 
@@ -35,11 +37,13 @@ interface Post {
   id: string;
   imageUrl: ImageSourcePropType;
   author: string;
+  userId?: string;
   followers: string;
   likes: number;
   comments: Comment[];
   userImage: ImageSourcePropType;
   title?: string;
+  description?: string;
 }
 
 type Theme = {
@@ -70,8 +74,79 @@ const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: Theme }) 
   </TouchableOpacity>
 );
 
-const PostDetailModal = ({ visible, onClose, post, theme }: any) => {
+interface PostDetailModalProps {
+  visible: boolean;
+  onClose: () => void;
+  post: Post | null;
+  theme: Theme;
+  onPressAuthor?: (post: Post) => void;
+  onPressCommentAuthor?: (comment: any) => void;
+}
+
+const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPressCommentAuthor }: PostDetailModalProps) => {
+  const [commentText, setCommentText] = useState('');
+  const [liked, setLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const { commentsByPost, fetchComments, addComment } = useComments();
+
+  useEffect(() => {
+    if (!post?.id || !visible) return;
+
+    const carregarLikes = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userId');
+        if (!userId) return;
+
+        const resLike = await api.get(`/posts/verifica-like/${userId}/${post.id}`);
+        setLiked(resLike.data === true);
+
+        const resCount = await api.get(`/posts/likes/${post.id}`);
+        setLikesCount(resCount.data[0]?.total_likes || 0);
+      } catch (err) {
+        console.log('Erro ao carregar likes:', err);
+      }
+    };
+
+    fetchComments(post.id);
+    carregarLikes();
+    setCommentText('');
+  }, [post, visible]);
+
   if (!post) return null;
+  const comments = commentsByPost[post.id] || [];
+
+  const handleToggleLike = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) return;
+
+      const response = await api.post('/posts/like', {
+        userId: Number(userId),
+        postId: post.id,
+      });
+
+      const isLiked = response.data?.liked === true;
+      setLiked(isLiked);
+      setLikesCount((prev) => (isLiked ? prev + 1 : Math.max(0, prev - 1)));
+    } catch (err) {
+      console.log('Erro ao dar like:', err);
+    }
+  };
+
+  const handleAddComment = async () => {
+    const trimmed = commentText.trim();
+    if (!trimmed || !post?.id) return;
+
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) return;
+
+      await addComment(post.id, userId, trimmed);
+      setCommentText('');
+    } catch (err) {
+      console.log('Erro ao comentar:', err);
+    }
+  };
 
   return (
     <Modal animationType="slide" visible={visible} onRequestClose={onClose}>
@@ -79,27 +154,55 @@ const PostDetailModal = ({ visible, onClose, post, theme }: any) => {
         <ScrollView>
           <ModalHeader onClose={onClose} theme={theme} />
 
-          <View style={styles.modalHeader}>
+          <TouchableOpacity
+            style={styles.modalHeader}
+            disabled={!onPressAuthor || !post.userId}
+            onPress={() => onPressAuthor?.(post)}
+          >
             <Image source={post.userImage} style={styles.authorLogo} />
             <Text style={[styles.modalUserName, { color: theme.textPrimary }]}>{post.author}</Text>
-          </View>
+          </TouchableOpacity>
 
           {post.title ? <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>{post.title}</Text> : null}
           <Image source={post.imageUrl} style={styles.modalImage} />
 
           <View style={styles.modalContent}>
             <View style={[styles.likesContainer, { borderBottomColor: theme.border }]}>
-              <Icon name="thumbs-up-outline" size={22} color={theme.textPrimary} />
-              <Text style={[styles.likesText, { color: theme.textPrimary }]}>{post.likes} curtidas</Text>
+              <TouchableOpacity style={styles.likesButton} onPress={handleToggleLike} activeOpacity={0.7}>
+                <Icon name={liked ? 'thumbs-up' : 'thumbs-up-outline'} size={22} color={liked ? '#2563EB' : theme.textPrimary} />
+                <Text style={[styles.likesText, { color: theme.textPrimary }, liked && { color: '#2563EB' }]}>{likesCount} curtidas</Text>
+              </TouchableOpacity>
             </View>
 
             <Text style={[styles.commentsTitle, { color: theme.textPrimary }]}>Comentários</Text>
 
-            {post.comments.length > 0 ? (
-              post.comments.map((c: any) => (
-                <View key={c.id} style={[styles.commentContainer, { backgroundColor: theme.card }]}>
-                  <Text style={[styles.commentUser, { color: theme.textPrimary }]}>{c.user}</Text>
-                  <Text style={[styles.commentText, { color: theme.textSecondary }]}>{c.text}</Text>
+            <View style={styles.commentInputRow}>
+              <TextInput
+                style={[styles.commentInput, { backgroundColor: theme.inputBg, color: theme.inputText }]}
+                placeholder="Escreva um comentário"
+                placeholderTextColor={theme.textMuted}
+                value={commentText}
+                onChangeText={setCommentText}
+              />
+              <TouchableOpacity style={styles.commentSendButton} onPress={handleAddComment}>
+                <Text style={styles.commentSendText}>Enviar</Text>
+              </TouchableOpacity>
+            </View>
+
+            {comments.length > 0 ? (
+              comments.map((comment) => (
+                <View key={comment.id} style={[styles.commentContainer, { backgroundColor: theme.card }]}>
+                  <TouchableOpacity
+                    style={styles.commentHeader}
+                    disabled={!onPressCommentAuthor || !comment.userId}
+                    onPress={() => onPressCommentAuthor?.(comment)}
+                  >
+                    {comment.avatar && (
+                      <Image source={comment.avatar} style={styles.commentAvatar} />
+                    )}
+                    <Text style={[styles.commentUser, { color: theme.textPrimary }]}>{comment.user}</Text>
+                  </TouchableOpacity>
+                  <Text style={[styles.commentText, { color: theme.textSecondary }]}>{comment.text}</Text>
                 </View>
               ))
             ) : (
@@ -120,25 +223,49 @@ const AuthorInfo = ({
   author,
   userImage,
   theme,
+  onPressAuthor,
 }: {
   author: string;
   userImage: ImageSourcePropType;
   theme: Theme;
+  onPressAuthor: () => void;
 }) => (
   <View style={styles.authorInfo}>
     <Text style={[styles.authorName, { color: theme.textPrimary }]}>{author}</Text>
-    <Image source={userImage} style={styles.authorLogo} />
+    <TouchableOpacity onPress={onPressAuthor} activeOpacity={0.7}>
+      <Image source={userImage} style={styles.authorLogo} />
+    </TouchableOpacity>
   </View>
 );
 
-const PostCard = ({ post, onPress, style, theme }: any) => (
-  <TouchableOpacity onPress={() => onPress(post)}>
-    <View style={[styles.card, style, { backgroundColor: theme.card }]}>
-      {post.title ? <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>{post.title}</Text> : null}
+const PostCard = ({ post, onPress, onPressAuthor, style, theme }: any) => (
+  <View style={[styles.card, style, { backgroundColor: theme.card }]}>
+    {post.title ? (
+      <Text
+        style={[styles.cardTitle, { color: theme.textPrimary }]}
+        numberOfLines={1}
+        ellipsizeMode="tail"
+      >
+        {post.title}
+      </Text>
+    ) : null}
+
+    <TouchableOpacity onPress={() => onPress(post)} activeOpacity={0.9}>
       <Image source={post.imageUrl} style={styles.cardImage} />
-      <AuthorInfo author={post.author} userImage={post.userImage} theme={theme} />
-    </View>
-  </TouchableOpacity>
+    </TouchableOpacity>
+
+    <AuthorInfo author={post.author} userImage={post.userImage} theme={theme} onPressAuthor={() => onPressAuthor(post)} />
+
+    {post.description ? (
+      <Text
+        style={[styles.cardDescription, { color: theme.textSecondary }]}
+        numberOfLines={1}
+        ellipsizeMode="tail"
+      >
+        {post.description}
+      </Text>
+    ) : null}
+  </View>
 );
 
 const SectionCarousel = ({ title, children, theme }: any) => (
@@ -156,6 +283,7 @@ const SectionCarousel = ({ title, children, theme }: any) => (
 ============================================================ */
 
 const TendenciasScreen = () => {
+  const router = useRouter();
   const [categorias, setCategorias] = useState<any[]>([]);
   const [postsPorCategoria, setPostsPorCategoria] = useState<any>({});
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -231,6 +359,7 @@ const TendenciasScreen = () => {
           },
 
           author: item.user?.nome || 'Usuário',
+          userId: item.user?.id ? String(item.user.id) : undefined,
 
           followers: "",
 
@@ -239,6 +368,7 @@ const TendenciasScreen = () => {
           comments: [],
 
           title: item.titulo || '',
+          description: item.legenda || '',
 
           userImage: item.user?.foto
             ? { uri: item.user.foto }
@@ -260,6 +390,22 @@ const TendenciasScreen = () => {
   const handleCloseModal = () => {
     setIsModalVisible(false);
     setSelectedPost(null);
+  };
+
+  const handleOpenAuthorProfile = (post: Post) => {
+    if (!post?.userId) {
+      Alert.alert('Perfil indisponível', 'Este post não retornou o id do usuário na API.');
+      return;
+    }
+
+    setIsModalVisible(false);
+    router.push(`/usuario/${post.userId}` as any);
+  };
+
+  const handleOpenCommentAuthorProfile = (comment: any) => {
+    if (!comment?.userId) return;
+    setIsModalVisible(false);
+    router.push(`/usuario/${comment.userId}` as any);
   };
 
   useEffect(() => {
@@ -305,6 +451,7 @@ const TendenciasScreen = () => {
                     key={post.id}
                     post={post}
                     onPress={handleOpenModal}
+                    onPressAuthor={handleOpenAuthorProfile}
                     style={styles.largeCard}
                     theme={theme}
                   />
@@ -321,6 +468,8 @@ const TendenciasScreen = () => {
         onClose={handleCloseModal}
         post={selectedPost}
         theme={theme}
+        onPressAuthor={handleOpenAuthorProfile}
+        onPressCommentAuthor={handleOpenCommentAuthorProfile}
       />
     </SafeAreaView>
   );
@@ -415,6 +564,12 @@ const styles = StyleSheet.create({
     height: 250,
   },
 
+  cardDescription: {
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+    fontSize: 14,
+  },
+
   authorInfo: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -504,6 +659,12 @@ const styles = StyleSheet.create({
     borderBottomColor: "#333",
   },
 
+  likesButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
   likesText: {
     color: "#fff",
     fontSize: 16,
@@ -514,7 +675,36 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     color: "#fff",
-    marginBottom: 16,
+    marginBottom: 8,
+  },
+
+  commentInputRow: {
+    marginTop: 4,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  commentInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#333',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+
+  commentSendButton: {
+    backgroundColor: '#2563EB',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+  },
+
+  commentSendText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
 
   commentContainer: {
@@ -522,6 +712,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
+  },
+
+  commentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+
+  commentAvatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
   },
 
   commentUser: {

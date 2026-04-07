@@ -1,5 +1,6 @@
 import { api } from '@/src/services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useIsFocused } from '@react-navigation/native';
 import { router, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -18,6 +19,13 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Post, usePosts } from '../../src/context/PostsContext';
+
+const fotoseguindomodoescuro = require('../../assets/images/seguindoescuro.png');
+const papeldobradomodoescuro = require('../../assets/images/papel_dobradoescuro.png');
+const likesmodoescuro = require('../../assets/images/likesescuro.png');
+const fotoseguindomodoclaro = require('../../assets/images/seguindoclaro.png');
+const papeldobradomodoclaro = require('../../assets/images/papel_dobradoclaro.png');
+const likesmodoclaro = require('../../assets/images/likesclaro.png');
 
 
 const formatRelativeTime = (timestamp: number) => {
@@ -197,6 +205,11 @@ const ProfileScreen = () => {
   const [showInlineMenu, setShowInlineMenu] = useState(false);
   const [remoteUserPosts, setRemoteUserPosts] = useState<Post[]>([]);
   const [darkMode, setDarkMode] = useState(false);
+  const isFocused = useIsFocused();
+
+  const seguidoresIcon = darkMode ? fotoseguindomodoescuro : fotoseguindomodoclaro;
+  const postsIcon = darkMode ? papeldobradomodoescuro : papeldobradomodoclaro;
+  const likesIcon = darkMode ? likesmodoescuro : likesmodoclaro;
 
   const theme: Theme = darkMode
     ? {
@@ -288,8 +301,10 @@ const ProfileScreen = () => {
       }
     };
 
-    loadTheme();
-  }, []);
+    if (isFocused) {
+      loadTheme();
+    }
+  }, [isFocused]);
 
   const fetchFollowers = async () => {
     if (!currentUserId) return;
@@ -458,7 +473,7 @@ const ProfileScreen = () => {
                 <View style={styles.statRow}>
                   <Text style={[styles.statNumber, { color: theme.textPrimary }]}>{userStats.seguidores}</Text>
                   <Image
-                    source={require('@/assets/images/seguindo.png')}
+                      source={seguidoresIcon}
                     style={styles.statIcon}
                   />
                 </View>
@@ -471,7 +486,7 @@ const ProfileScreen = () => {
               <View style={styles.statRow}>
                 <Text style={[styles.statNumber, { color: theme.textPrimary }]}>{userStats.posts}</Text>
                 <Image
-                  source={require('@/assets/images/papel_dobrado.png')}
+                  source={postsIcon}
                   style={styles.statIcon}
                 />
               </View>
@@ -482,7 +497,7 @@ const ProfileScreen = () => {
               <View style={styles.statRow}>
                 <Text style={[styles.statNumber, { color: theme.textPrimary }]}>{userStats.likes}</Text>
                 <Image
-                  source={require('@/assets/images/likes.png')}
+                  source={likesIcon}
                   style={styles.statIcon}
                 />
               </View>
@@ -490,15 +505,6 @@ const ProfileScreen = () => {
 
             </View>
           </View>
-
-        </View>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={[styles.button, { backgroundColor: theme.buttonPrimary }]}>
-            <Text style={styles.buttonText}>Seguir</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.button, { backgroundColor: theme.buttonSecondary }]}>
-            <Text style={styles.buttonText}>Contratar</Text>
-          </TouchableOpacity>
         </View>
         <View style={[styles.tabBar, { borderBottomColor: theme.border }]}>
           {renderTabButton('Postagens')}

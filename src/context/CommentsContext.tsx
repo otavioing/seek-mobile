@@ -1,11 +1,12 @@
-import React, { createContext, useContext, useState } from 'react';
 import { api } from '@/src/services/api';
+import React, { createContext, useContext, useState } from 'react';
 
 export interface Comment {
   id: string;
   user: string;
   text: string;
   avatar?: any;
+  userId?: string;
   createdAt?: string;
 }
 
@@ -32,6 +33,19 @@ export const CommentsProvider = ({ children }: { children: React.ReactNode }) =>
         avatar: c.foto
           ? { uri: `${api.defaults.baseURL}${c.foto}` }
           : require('@/assets/images/default-avatar.png'), // opcional
+        userId: c.idusuario
+          ? String(c.idusuario)
+          : c.id_usuario
+            ? String(c.id_usuario)
+            : c.idUsuario
+              ? String(c.idUsuario)
+              : c.user_id
+                ? String(c.user_id)
+                : c.usuario_id
+                  ? String(c.usuario_id)
+              : c.usuario?.id
+                ? String(c.usuario.id)
+                : undefined,
         createdAt: c.criado_em
       }));
 
@@ -57,6 +71,7 @@ export const CommentsProvider = ({ children }: { children: React.ReactNode }) =>
         id: String(Date.now()),
         user: 'Você',
         text,
+        userId,
         createdAt: new Date().toISOString()
       };
 

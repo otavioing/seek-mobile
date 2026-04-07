@@ -19,13 +19,43 @@ function FormEtapa2({
   const [verSenha1, setVerSenha1] = useState(false);
   const [verSenha2, setVerSenha2] = useState(false);
   const [tentouEnviar, setTentouEnviar] = useState(false); // Controla o feedback visual
+  const [nomeErro, setNomeErro] = useState('');
+  const [emailErro, setEmailErro] = useState('');
 
   const aoConfirmar = () => {
     setTentouEnviar(true);
+    setNomeErro('');
+    setEmailErro('');
+
+    const nomeLimpo = nome.trim();
+    const emailLimpo = email.trim();
+
+    let possuiErro = false;
+
+    if (!nomeLimpo) {
+      setNomeErro("O campo 'Nome' é obrigatório.");
+      possuiErro = true;
+    } else if (nomeLimpo.length < 2) {
+      setNomeErro('Digite pelo menos 2 letras no nome.');
+      possuiErro = true;
+    } else if (/\d/.test(nomeLimpo)) {
+      setNomeErro('O nome não pode conter números.');
+      possuiErro = true;
+    }
+
+    if (!emailLimpo) {
+      setEmailErro("O campo 'Email' é obrigatório.");
+      possuiErro = true;
+    } else if (!emailLimpo.includes('@')) {
+      setEmailErro('Digite um email válido com @.');
+      possuiErro = true;
+    }
+
+    if (possuiErro) {
+      return;
+    }
 
     // Alertas específicos por campo
-    if (!nome.trim()) return Alert.alert("Campo Vazio", "O campo 'Nome' é obrigatório.");
-    if (!email.trim()) return Alert.alert("Campo Vazio", "O campo 'Email' é obrigatório.");
     if (!senha) return Alert.alert("Campo Vazio", "O campo 'Senha' é obrigatório.");
     if (!confirmarSenha) return Alert.alert("Campo Vazio", "A confirmação de senha é obrigatória.");
 
@@ -35,23 +65,39 @@ function FormEtapa2({
   return (
     <>
       <TextInput
-        style={[styles.input, tentouEnviar && !nome && styles.inputErro]}
+        style={[styles.input, tentouEnviar && !nome && styles.inputErro, !!nomeErro && styles.inputErro]}
         placeholderTextColor={theme.placeholder}
         selectionColor={theme.selection}
         cursorColor={theme.selection}
         color={theme.inputText}
-        placeholder="Nome" value={nome} onChangeText={setNome}
+        placeholder="Nome"
+        value={nome}
+        onChangeText={(value) => {
+          setNome(value);
+          if (nomeErro) {
+            setNomeErro('');
+          }
+        }}
       />
+      {!!nomeErro && <Text style={styles.errorText}>{nomeErro}</Text>}
       <TextInput
-        style={[styles.input, tentouEnviar && !email && styles.inputErro]}
+        style={[styles.input, tentouEnviar && !email && styles.inputErro, !!emailErro && styles.inputErro]}
         placeholderTextColor={theme.placeholder}
         selectionColor={theme.selection}
         cursorColor={theme.selection}
         color={theme.inputText}
-        placeholder="Email" value={email} onChangeText={setEmail}
+        placeholder="Email"
+        value={email}
+        onChangeText={(value) => {
+          setEmail(value);
+          if (emailErro) {
+            setEmailErro('');
+          }
+        }}
         autoCapitalize="none"
         keyboardType="email-address"
       />
+      {!!emailErro && <Text style={styles.errorText}>{emailErro}</Text>}
 
       <View
         style={[
@@ -364,6 +410,13 @@ const styles = StyleSheet.create({
   },
   inputErro: {
     borderColor: '#EF4444',
+  },
+  errorText: {
+    width: '100%',
+    color: '#EF4444',
+    fontSize: 12,
+    marginTop: -8,
+    marginBottom: 8,
   },
   button: {
     backgroundColor: '#322BF0',

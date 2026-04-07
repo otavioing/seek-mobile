@@ -5,20 +5,20 @@ import { useIsFocused } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Dimensions,
-    Image,
-    ImageStyle,
-    Modal,
-    RefreshControl,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleProp,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Dimensions,
+  Image,
+  ImageStyle,
+  Modal,
+  RefreshControl,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleProp,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Post, usePosts } from '../../../src/context/PostsContext';
@@ -69,9 +69,10 @@ interface PostDetailModalProps {
   post: Post | null;
   theme: Theme;
   onPressAuthor?: (post: Post) => void;
+  onPressCommentAuthor?: (comment: any) => void;
 }
 
-const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor }: PostDetailModalProps) => {
+const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPressCommentAuthor }: PostDetailModalProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const pagerRef = useRef<ScrollView>(null);
   const [commentText, setCommentText] = useState('');
@@ -233,15 +234,19 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor }: PostD
             {comments.length > 0 ? (
               comments.map(comment => (
                 <View key={comment.id} style={[styles.commentContainer, { backgroundColor: theme.card }]}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <TouchableOpacity
+                    style={styles.commentHeader}
+                    disabled={!onPressCommentAuthor || !comment.userId}
+                    onPress={() => onPressCommentAuthor?.(comment)}
+                  >
                     {comment.avatar && (
                       <Image
                         source={comment.avatar}
-                        style={{ width: 30, height: 30, borderRadius: 15, marginRight: 8 }}
+                        style={styles.commentAvatar}
                       />
                     )}
                     <Text style={[styles.commentUser, { color: theme.textPrimary }]}>{comment.user}</Text>
-                  </View>
+                  </TouchableOpacity>
                   <Text style={[styles.commentText, { color: theme.textSecondary }]}>{comment.text}</Text>
                 </View>
               ))
@@ -319,6 +324,12 @@ export default function HomeScreen() {
     router.push(`/usuario/${post.userId}` as any);
   };
 
+  const handleOpenCommentAuthorProfile = (comment: any) => {
+    if (!comment?.userId) return;
+    setIsModalVisible(false);
+    router.push(`/usuario/${comment.userId}` as any);
+  };
+
   const closeImageModal = () => {
     setIsModalVisible(false);
     setSelectedPost(null);
@@ -368,7 +379,11 @@ export default function HomeScreen() {
               </View>
 
               {post.description && (
-                <Text style={[styles.cardDescription, { color: theme.textSecondary }]} numberOfLines={2}>
+                <Text
+                  style={[styles.cardDescription, { color: theme.textSecondary }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
                   {post.description}
                 </Text>
               )}
@@ -383,6 +398,7 @@ export default function HomeScreen() {
         post={selectedPost}
         theme={theme}
         onPressAuthor={handleOpenAuthorProfile}
+        onPressCommentAuthor={handleOpenCommentAuthorProfile}
       />
     </View>
   );
@@ -558,6 +574,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
+  },
+  commentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  commentAvatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
   },
   commentUser: {
     fontSize: 14,

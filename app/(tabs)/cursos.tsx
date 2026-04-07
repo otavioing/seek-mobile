@@ -52,33 +52,33 @@ type Theme = {
 };
 
 const CourseCard = ({ item, onPressInfo, theme }: CourseCardProps) => (
-  <View style={[styles.cardContainer, { backgroundColor: theme.card }]}>
-    <View style={styles.imageContainer}>
-      <Image source={item.imageUrl} style={styles.cardImage} />
-      <View style={[styles.durationTag, { backgroundColor: theme.accent }]}>
-        <Text style={styles.durationText}>{item.duration}</Text>
-      </View>
-    </View>
-
-    <View style={styles.contentContainer}>
-      <View style={styles.row}>
-        <Text style={[styles.title, { color: theme.textPrimary }]}>{item.title}</Text>
-        <Text style={[styles.price, { color: theme.textPrimary }]}>{item.price}</Text>
+  <TouchableOpacity onPress={() => onPressInfo(item)} activeOpacity={0.9}>
+    <View style={[styles.cardContainer, { backgroundColor: theme.card }]}>
+      <View style={styles.imageContainer}>
+        <Image source={item.imageUrl} style={styles.cardImage} />
+        <View style={[styles.durationTag, { backgroundColor: theme.accent }]}>
+          <Text style={styles.durationText}>{item.duration}</Text>
+        </View>
       </View>
 
-      <Text style={[styles.author, { color: theme.textSecondary }]}>{item.author}</Text>
+      <View style={styles.contentContainer}>
+        <View style={styles.row}>
+          <Text style={[styles.title, { color: theme.textPrimary }]}>{item.title}</Text>
+          <Text style={[styles.price, { color: theme.textPrimary }]}>{item.price}</Text>
+        </View>
 
-      <View style={[styles.row, { marginTop: 16 }]}>
-        <TouchableOpacity onPress={() => onPressInfo(item)}>
+        <Text style={[styles.author, { color: theme.textSecondary }]}>{item.author}</Text>
+
+        <View style={[styles.row, { marginTop: 16 }]}>
           <Text style={[styles.link, { color: theme.accent }]}>mais informações</Text>
-        </TouchableOpacity>
 
-        <TouchableOpacity>
-          <Icon name="heart-outline" size={24} color={theme.accent} />
-        </TouchableOpacity>
+          <TouchableOpacity>
+            <Icon name="heart-outline" size={24} color={theme.accent} />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
-  </View>
+  </TouchableOpacity>
 );
 
 const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: Theme }) => (

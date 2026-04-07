@@ -21,6 +21,7 @@ export default function Login() {
     const [forgotNewPassword, setForgotNewPassword] = useState('');
     const [darkMode, setDarkMode] = useState(false);
     const [isLoadingTheme, setIsLoadingTheme] = useState(true);
+    const [loginError, setLoginError] = useState('');
 
     const theme = darkMode
         ? {
@@ -84,11 +85,24 @@ export default function Login() {
 
 
     const handleLogin = async () => {
+        const trimmedEmail = email.trim();
+
+        if (!trimmedEmail || !senha) {
+            setLoginError('Preencha email e senha');
+            return;
+        }
+
+        if (!trimmedEmail.includes('@')) {
+            setLoginError('Digite um email válido com @');
+            return;
+        }
+
         try {
+            setLoginError('');
             setLoading(true); // ativa loading
 
             const response = await api.post('/usuarios/login', {
-                email,
+                email: trimmedEmail,
                 senha
             });
 
@@ -101,9 +115,9 @@ export default function Login() {
 
         } catch (error: any) {
             if (error.response?.status === 401) {
-                Alert.alert("Erro", "Email ou senha inválidos");
+                setLoginError('Email ou senha inválidos');
             } else {
-                Alert.alert("Erro", "Erro ao conectar com servidor");
+                setLoginError('Erro ao conectar com servidor');
                 console.log(error);
             }
         } finally {
@@ -194,7 +208,12 @@ export default function Login() {
                     placeholder="Email"
                     placeholderTextColor={theme.textSecondary}
                     value={email}
-                    onChangeText={setEmail}
+                    onChangeText={(value) => {
+                        setEmail(value);
+                        if (loginError) {
+                            setLoginError('');
+                        }
+                    }}
                 />
 
                 <View style={styles.passwordContainer}>
@@ -204,7 +223,12 @@ export default function Login() {
                         placeholderTextColor={theme.textSecondary}
                         secureTextEntry={!showPassword}
                         value={senha}
-                        onChangeText={setSenha}
+                        onChangeText={(value) => {
+                            setSenha(value);
+                            if (loginError) {
+                                setLoginError('');
+                            }
+                        }}
                     />
                     <TouchableOpacity
                         style={styles.eyeButton}
@@ -217,6 +241,10 @@ export default function Login() {
                         />
                     </TouchableOpacity>
                 </View>
+
+                {!!loginError && (
+                    <Text style={styles.loginErrorText}>{loginError}</Text>
+                )}
 
                 <TouchableOpacity
                     style={[styles.button, loading && { opacity: 0.6 }]}
@@ -378,6 +406,14 @@ const styles = StyleSheet.create({
         position: 'absolute',
         right: 15,
         padding: 5,
+    },
+    loginErrorText: {
+        width: '100%',
+        marginTop: -4,
+        marginBottom: 10,
+        color: '#DC2626',
+        fontSize: 13,
+        fontWeight: '500',
     },
     button: {
         backgroundColor: '#322BF0',

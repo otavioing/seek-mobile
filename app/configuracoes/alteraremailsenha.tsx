@@ -1,3 +1,4 @@
+import Breadcrumb from '@/components/Breadcrumb';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -65,9 +66,19 @@ export default function AlterarEmailSenha() {
 			<View style={[styles.container, { backgroundColor: theme.background }]}>
 				<View style={styles.headerRow}>
 					<TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-						<Text style={[styles.backIcon, { color: theme.textPrimary }]}>←</Text>
+						<Ionicons name="arrow-back-outline" size={24} color={theme.textPrimary} style={styles.backIcon} />
 						<Text style={[styles.backText, { color: theme.textPrimary }]}>Voltar</Text>
 					</TouchableOpacity>
+
+					<Breadcrumb
+						items={[
+							{ label: 'Menu', href: '/configuracoes/menuUser' },
+							{ label: 'Configurações', href: '/configuracoes/config' },
+							{ label: 'Email e Senha' },
+						]}
+						textColor={theme.textPrimary}
+						containerStyle={{ marginBottom: 0, marginLeft: 8, flex: 1 }}
+					/>
 				</View>
 
 				<Text style={[styles.title, { color: theme.textPrimary }]}>Email e Senha</Text>
@@ -174,15 +185,15 @@ const styles = StyleSheet.create({
 	backButton: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		paddingVertical: 4,
-		paddingRight: 8,
+		paddingVertical: 6,
+		paddingHorizontal: 4,
 	},
 	backIcon: {
-		fontSize: 20,
-		marginRight: 4,
+		marginRight: 0,
 	},
 	backText: {
-		fontSize: 18,
+		fontSize: 16,
+		marginLeft: 6,
 		fontWeight: '700',
 	},
 	title: {
