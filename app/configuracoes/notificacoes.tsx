@@ -2,10 +2,10 @@ import Breadcrumb from '@/components/Breadcrumb';
 import { api } from '@/src/services/api';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useIsFocused } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type NotificacaoApi = {
 	id: number;
@@ -49,11 +49,12 @@ const getNotificationMessage = (n: NotificacaoApi) => {
 
 export default function Notificacoes() {
 	const router = useRouter();
-	const isFocused = useIsFocused();
 	const [darkMode, setDarkMode] = useState(false);
 	const [notificacoes, setNotificacoes] = useState<NotificacaoApi[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [refreshing, setRefreshing] = useState(false);
+	const notificacoesRef = useRef<NotificacaoApi[]>([]);
+	const userIdRef = useRef<number | null>(null);
 
 	const theme = darkMode
 		? {
@@ -83,45 +84,49 @@ export default function Notificacoes() {
 			iconColor: '#333333',
 		};
 
-	const carregarNotificacoes = async (showLoading = true) => {
+	const carregarNotificacoes = async (showLoading = true): Promise<NotificacaoApi[]> => {
 		try {
 			if (showLoading) setLoading(true);
 
 			const userId = await AsyncStorage.getItem('userId');
 			if (!userId) {
 				setNotificacoes([]);
-				return;
+				return [];
 			}
 
 			const { data } = await api.get(`/notificacoes/${userId}`);
-			setNotificacoes(Array.isArray(data) ? data : []);
+			const notificacoesCarregadas = Array.isArray(data) ? data : [];
+			setNotificacoes(notificacoesCarregadas);
+			return notificacoesCarregadas;
 		} catch (error) {
 			console.log('Erro ao buscar notificações:', error);
+			return [];
 		} finally {
 			if (showLoading) setLoading(false);
 			setRefreshing(false);
 		}
 	};
 
-	const marcarComoLida = async (idNotificacao: number) => {
+	const marcarTodasComoLidas = async (listaNotificacoes: NotificacaoApi[], destinatarioId: number) => {
 		try {
-			await api.put(`/notificacoes/${idNotificacao}/lida`);
+			const naoLidas = listaNotificacoes.filter((n) => n.lida === 0 || String(n.lida) === '0');
+			if (naoLidas.length === 0) return;
+
+			await Promise.all(
+				naoLidas
+					.filter((n) => Number.isFinite(Number(n.id)))
+					.map((n) =>
+						api.put(`/notificacoes/${Number(n.id)}/lida`, {
+							destinatario_id: destinatarioId,
+						})
+					)
+			);
 
 			setNotificacoes((prev) =>
-				prev.map((n) =>
-					n.id === idNotificacao
-						? { ...n, lida: 1 }
-						: n
-				)
+				prev.map((n) => (n.lida === 0 ? { ...n, lida: 1 } : n))
 			);
 		} catch (error) {
-			console.log('Erro ao marcar notificação como lida:', error);
-		}
-	};
-
-	const handlePressNotificacao = async (item: NotificacaoApi) => {
-		if (item.lida === 0) {
-			await marcarComoLida(item.id);
+			console.log('Erro ao marcar notificações como lidas:', error);
 		}
 	};
 
@@ -130,26 +135,111 @@ export default function Notificacoes() {
 		await carregarNotificacoes(false);
 	};
 
-	useEffect(() => {
-		const loadTheme = async () => {
-			try {
-				const savedTheme = await AsyncStorage.getItem('tema');
-				setDarkMode(savedTheme === 'escuro');
-			} catch (error) {
-				console.log('Erro ao carregar tema:', error);
-			}
-		};
+	const excluirNotificacao = async (idNotificacao: number) => {
+		try {
+			const destinatarioId = userIdRef.current;
+			if (!destinatarioId) return;
 
-		if (isFocused) {
-			loadTheme();
-			carregarNotificacoes();
+			await api.delete(`/notificacoes/${idNotificacao}`, {
+				data: {
+					destinatario_id: destinatarioId,
+				},
+			});
+
+			setNotificacoes((prev) => prev.filter((n) => n.id !== idNotificacao));
+		} catch (error) {
+			console.log('Erro ao excluir notificação:', error);
 		}
-	}, [isFocused]);
+	};
+
+	const confirmarExclusaoNotificacao = (idNotificacao: number) => {
+		Alert.alert(
+			'Notificação',
+			'Deseja excluir esta notificação?',
+			[
+				{ text: 'Cancelar', style: 'cancel' },
+				{
+					text: 'Excluir notificação',
+					style: 'destructive',
+					onPress: () => {
+						void excluirNotificacao(idNotificacao);
+					},
+				},
+			],
+			{ cancelable: true }
+		);
+	};
+
+	const excluirTodasNotificacoes = async () => {
+		try {
+			const destinatarioId = userIdRef.current;
+			if (!destinatarioId) return;
+
+			await api.delete(`/notificacoes/usuario/${destinatarioId}`);
+			setNotificacoes([]);
+		} catch (error) {
+			console.log('Erro ao excluir todas as notificações:', error);
+		}
+	};
+
+	const confirmarExclusaoTodas = () => {
+		Alert.alert(
+			'Excluir todas',
+			'Deseja excluir todas as notificações?',
+			[
+				{ text: 'Cancelar', style: 'cancel' },
+				{
+					text: 'Excluir todas',
+					style: 'destructive',
+					onPress: () => {
+						void excluirTodasNotificacoes();
+					},
+				},
+			],
+			{ cancelable: true }
+		);
+	};
+
+	useEffect(() => {
+		notificacoesRef.current = notificacoes;
+	}, [notificacoes]);
+
+	useFocusEffect(
+		useCallback(() => {
+			const loadInitialData = async () => {
+				try {
+					const savedTheme = await AsyncStorage.getItem('tema');
+					setDarkMode(savedTheme === 'escuro');
+
+					const userId = await AsyncStorage.getItem('userId');
+					if (!userId) {
+						userIdRef.current = null;
+						setNotificacoes([]);
+						return;
+					}
+
+					userIdRef.current = Number(userId);
+					await carregarNotificacoes();
+				} catch (error) {
+					console.log('Erro ao carregar notificações:', error);
+				}
+			};
+
+			loadInitialData();
+
+			return () => {
+				const destinatarioId = userIdRef.current;
+				if (!destinatarioId) return;
+
+				void marcarTodasComoLidas(notificacoesRef.current, destinatarioId);
+			};
+		}, [])
+	);
 
 	const renderNotificacao = ({ item }: { item: NotificacaoApi }) => (
 		<TouchableOpacity
 			activeOpacity={0.8}
-			onPress={() => handlePressNotificacao(item)}
+			onLongPress={() => confirmarExclusaoNotificacao(item.id)}
 			style={[
 				styles.notificationCard,
 				{
@@ -197,6 +287,16 @@ export default function Notificacoes() {
 				</View>
 
 				<Text style={[styles.title, { color: theme.textPrimary }]}>Notificações</Text>
+
+				{notificacoes.length > 0 ? (
+					<TouchableOpacity
+						style={[styles.deleteAllButton, { borderColor: theme.border, backgroundColor: theme.card }]}
+						onPress={confirmarExclusaoTodas}
+					>
+						<Ionicons name="trash-outline" size={16} color={theme.textPrimary} />
+						<Text style={[styles.deleteAllText, { color: theme.textPrimary }]}>Excluir todas</Text>
+					</TouchableOpacity>
+				) : null}
 
 				{loading ? (
 					<View style={styles.loadingContainer}>
@@ -262,7 +362,22 @@ const styles = StyleSheet.create({
 		fontSize: 36,
 		fontWeight: '700',
 		letterSpacing: -0.6,
+		marginBottom: 4,
+	},
+	deleteAllButton: {
+		alignSelf: 'flex-end',
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 6,
+		paddingVertical: 8,
+		paddingHorizontal: 12,
+		borderRadius: 10,
+		borderWidth: 1,
 		marginBottom: 8,
+	},
+	deleteAllText: {
+		fontSize: 14,
+		fontWeight: '700',
 	},
 	loadingContainer: {
 		flex: 1,

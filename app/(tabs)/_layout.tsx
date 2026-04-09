@@ -1,8 +1,8 @@
 // app/(tabs)/_layout.tsx
 import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { Tabs, useRouter, useSegments } from "expo-router";
-import React from "react";
-import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
+import React, { useState } from "react";
+import { Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // >> AJUSTE AQUI o caminho da sua logo <<
@@ -13,6 +13,7 @@ function CustomTabBar() {
   const router = useRouter();
   const segments = useSegments();
   const current = "/" + segments.join("/");
+  const [showCreateMenu, setShowCreateMenu] = useState(false);
 
   const isActive = (path: string) => current.includes(path);
   const go = (path: string) => router.push(path as any);
@@ -22,55 +23,94 @@ function CustomTabBar() {
   };
 
   return (
-    <View style={[styles.tabbar, { paddingBottom: insets.bottom || 10 }]}>
-      
-      {/* HOME / EXPLORAR */}
-      <TouchableOpacity 
-        onPress={refreshHome} 
-        style={styles.item}
-      >
-        <MaterialIcons
-          name={isActive("/(home)/principal") ? "home" : "home"}
-          size={30}
-          color={isActive("/(home)/principal") ? "#fff" : "#777"}
-        />
-      </TouchableOpacity>
+    <View style={styles.wrapper}>
+      {showCreateMenu ? (
+        <Pressable style={styles.backdrop} onPress={() => setShowCreateMenu(false)}>
+          <Pressable style={[styles.createMenu, { bottom: (insets.bottom || 10) + 76 }]}>
+            <TouchableOpacity
+              style={styles.createOption}
+              onPress={() => {
+                setShowCreateMenu(false);
+                go("/postarProjeto");
+              }}
+            >
+              <MaterialIcons name="brush" size={18} color="#fff" />
+              <Text style={styles.createOptionText}>Postar um projeto</Text>
+            </TouchableOpacity>
 
-      {/* CURSOS */}
-      <TouchableOpacity onPress={() => go("/(tabs)/cursos")} style={styles.item}>
-        <MaterialCommunityIcons
-          name={isActive("/cursos") ? "school" : "school-outline"}
-          size={30}
-          color={isActive("/cursos") ? "#fff" : "#777"}
-        />
-      </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.createOption}
+              onPress={() => {
+                setShowCreateMenu(false);
+                go("/postarCurso");
+              }}
+            >
+              <MaterialCommunityIcons name="school-outline" size={18} color="#fff" />
+              <Text style={styles.createOptionText}>Postar um curso</Text>
+            </TouchableOpacity>
 
-      {/* LOGO CENTRAL */}
-      <TouchableOpacity
-        onPress={() => go("/upload")}
-        style={isActive("/(home)/principal") ? styles.logoWrapperOn : styles.logoWrapperOff}
-      >
-        <Image source={seekLogo} style={styles.logo} />
-      </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.createOption}
+              onPress={() => {
+                setShowCreateMenu(false);
+                go("/postarVaga");
+              }}
+            >
+              <MaterialIcons name="work-outline" size={18} color="#fff" />
+              <Text style={styles.createOptionText}>Postar uma vaga</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      ) : null}
 
-      {/* VAGAS */}
-      <TouchableOpacity onPress={() => go("/(tabs)/vagas")} style={styles.item}>
-        <MaterialIcons
-          name={isActive("/vagas") ? "work" : "work-outline"}
-          size={30}
-          color={isActive("/vagas") ? "#fff" : "#777"}
-        />
-      </TouchableOpacity>
+      <View style={[styles.tabbar, { paddingBottom: insets.bottom || 10 }]}>
+        {/* HOME / EXPLORAR */}
+        <TouchableOpacity
+          onPress={refreshHome}
+          style={styles.item}
+        >
+          <MaterialIcons
+            name={isActive("/(home)/principal") ? "home" : "home"}
+            size={30}
+            color={isActive("/(home)/principal") ? "#fff" : "#777"}
+          />
+        </TouchableOpacity>
 
-      {/* PERFIL / CONFIGURAÇÕES */}
-      <TouchableOpacity onPress={() => go("/configuracoes/menuUser")} style={styles.item}>
-        <MaterialIcons
-          name={isActive("/configuracoes/menuUser") ? "person" : "person-outline"}
-          size={30}
-          color={isActive("/configuracoes/menuUser") ? "#fff" : "#777"}
-        />
-      </TouchableOpacity>
+        {/* CURSOS */}
+        <TouchableOpacity onPress={() => go("/(tabs)/cursos")} style={styles.item}>
+          <MaterialCommunityIcons
+            name={isActive("/cursos") ? "school" : "school-outline"}
+            size={30}
+            color={isActive("/cursos") ? "#fff" : "#777"}
+          />
+        </TouchableOpacity>
 
+        {/* LOGO CENTRAL */}
+        <TouchableOpacity
+          onPress={() => setShowCreateMenu((prev) => !prev)}
+          style={showCreateMenu ? styles.logoWrapperOn : styles.logoWrapperOff}
+        >
+          <Image source={seekLogo} style={styles.logo} />
+        </TouchableOpacity>
+
+        {/* VAGAS */}
+        <TouchableOpacity onPress={() => go("/(tabs)/vagas")} style={styles.item}>
+          <MaterialIcons
+            name={isActive("/vagas") ? "work" : "work-outline"}
+            size={30}
+            color={isActive("/vagas") ? "#fff" : "#777"}
+          />
+        </TouchableOpacity>
+
+        {/* PERFIL / CONFIGURAÇÕES */}
+        <TouchableOpacity onPress={() => go("/configuracoes/menuUser")} style={styles.item}>
+          <MaterialIcons
+            name={isActive("/configuracoes/menuUser") ? "person" : "person-outline"}
+            size={30}
+            color={isActive("/configuracoes/menuUser") ? "#fff" : "#777"}
+          />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -100,6 +140,37 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "flex-end",
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.3)",
+  },
+  createMenu: {
+    position: "absolute",
+    alignSelf: "center",
+    backgroundColor: "#111216",
+    borderRadius: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    minWidth: 220,
+    borderWidth: 1,
+    borderColor: "#272B33",
+  },
+  createOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+  },
+  createOptionText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "700",
+  },
   tabbar: {
     position: "absolute",
     bottom: 0,
