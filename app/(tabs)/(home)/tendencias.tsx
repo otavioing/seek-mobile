@@ -1,4 +1,4 @@
-import { useComments } from '@/src/context/CommentsContext';
+import { Comment, useComments } from '@/src/context/CommentsContext';
 import { api } from '@/src/services/api';
 import { MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -6,32 +6,26 @@ import { useIsFocused } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Alert,
-  Dimensions,
-  Image,
-  ImageSourcePropType,
-  Keyboard,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
+    Alert,
+    Dimensions,
+    Image,
+    ImageSourcePropType,
+    Keyboard,
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 
 /* ============================================================
    TYPES
 ============================================================ */
-
-interface Comment {
-  id: string;
-  user: string;
-  text: string;
-}
 
 interface Post {
   id: string;
@@ -80,14 +74,16 @@ interface PostDetailModalProps {
   post: Post | null;
   theme: Theme;
   onPressAuthor?: (post: Post) => void;
-  onPressCommentAuthor?: (comment: any) => void;
+  onPressCommentAuthor?: (comment: Comment) => void;
 }
 
 const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPressCommentAuthor }: PostDetailModalProps) => {
   const [commentText, setCommentText] = useState('');
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
-  const { commentsByPost, fetchComments, addComment } = useComments();
+  const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null);
+  const [replyToUserName, setReplyToUserName] = useState('');
+  const { commentsByPost, fetchComments, addComment, addReply } = useComments();
 
   useEffect(() => {
     if (!post?.id || !visible) return;
@@ -110,6 +106,8 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
     fetchComments(post.id);
     carregarLikes();
     setCommentText('');
+    setReplyToCommentId(null);
+    setReplyToUserName('');
   }, [post, visible]);
 
   if (!post) return null;
@@ -141,11 +139,63 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
       const userId = await AsyncStorage.getItem('userId');
       if (!userId) return;
 
-      await addComment(post.id, userId, trimmed);
+      if (replyToCommentId) {
+        await addReply(post.id, replyToCommentId, userId, trimmed);
+      } else {
+        await addComment(post.id, userId, trimmed);
+      }
+
       setCommentText('');
+      setReplyToCommentId(null);
+      setReplyToUserName('');
     } catch (err) {
       console.log('Erro ao comentar:', err);
     }
+  };
+
+  const handleStartReply = (comment: Comment) => {
+    setReplyToCommentId(comment.id);
+    setReplyToUserName(comment.user);
+  };
+
+  const handleCancelReply = () => {
+    setReplyToCommentId(null);
+    setReplyToUserName('');
+  };
+
+  const renderCommentItem = (comment: Comment, depth = 0): React.ReactNode => {
+    const isReplyLevel = depth === 1;
+
+    return (
+      <View key={`${comment.id}-${depth}`} style={[styles.commentWrapper, isReplyLevel && styles.replyWrapper]}>
+        <View style={[styles.commentContainer, { backgroundColor: theme.card }]}>
+          <TouchableOpacity
+            style={styles.commentHeader}
+            disabled={!onPressCommentAuthor || !comment.userId}
+            onPress={() => onPressCommentAuthor?.(comment)}
+          >
+            {comment.avatar && (
+              <Image source={comment.avatar} style={styles.commentAvatar} />
+            )}
+            <Text style={[styles.commentUser, { color: theme.textPrimary }]}>{comment.user}</Text>
+          </TouchableOpacity>
+
+          <Text style={[styles.commentText, { color: theme.textSecondary }]}>{comment.text}</Text>
+
+          <View style={styles.commentActionsRow}>
+            <TouchableOpacity onPress={() => handleStartReply(comment)}>
+              <Text style={styles.replyButtonText}>Responder</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {comment.replies.length > 0 && (
+          <View style={styles.repliesContainer}>
+            {comment.replies.map((reply) => renderCommentItem(reply, depth + 1))}
+          </View>
+        )}
+      </View>
+    );
   };
 
   return (
@@ -176,10 +226,19 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
 
             <Text style={[styles.commentsTitle, { color: theme.textPrimary }]}>Comentários</Text>
 
+            {replyToCommentId && (
+              <View style={[styles.replyContextRow, { borderColor: theme.border }]}>
+                <Text style={[styles.replyContextText, { color: theme.textSecondary }]}>Respondendo {replyToUserName}</Text>
+                <TouchableOpacity onPress={handleCancelReply}>
+                  <Text style={styles.cancelReplyText}>Cancelar</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             <View style={styles.commentInputRow}>
               <TextInput
                 style={[styles.commentInput, { backgroundColor: theme.inputBg, color: theme.inputText }]}
-                placeholder="Escreva um comentário"
+                placeholder={replyToCommentId ? 'Escreva sua resposta' : 'Escreva um comentário'}
                 placeholderTextColor={theme.textMuted}
                 value={commentText}
                 onChangeText={setCommentText}
@@ -190,21 +249,7 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
             </View>
 
             {comments.length > 0 ? (
-              comments.map((comment) => (
-                <View key={comment.id} style={[styles.commentContainer, { backgroundColor: theme.card }]}>
-                  <TouchableOpacity
-                    style={styles.commentHeader}
-                    disabled={!onPressCommentAuthor || !comment.userId}
-                    onPress={() => onPressCommentAuthor?.(comment)}
-                  >
-                    {comment.avatar && (
-                      <Image source={comment.avatar} style={styles.commentAvatar} />
-                    )}
-                    <Text style={[styles.commentUser, { color: theme.textPrimary }]}>{comment.user}</Text>
-                  </TouchableOpacity>
-                  <Text style={[styles.commentText, { color: theme.textSecondary }]}>{comment.text}</Text>
-                </View>
-              ))
+              comments.map((comment) => renderCommentItem(comment))
             ) : (
               <Text style={[styles.commentText, { color: theme.textSecondary }]}>Nenhum comentário ainda.</Text>
             )}
@@ -402,7 +447,7 @@ const TendenciasScreen = () => {
     router.push(`/usuario/${post.userId}` as any);
   };
 
-  const handleOpenCommentAuthorProfile = (comment: any) => {
+  const handleOpenCommentAuthorProfile = (comment: Comment) => {
     if (!comment?.userId) return;
     setIsModalVisible(false);
     router.push(`/usuario/${comment.userId}` as any);
@@ -713,6 +758,12 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
   },
+  commentWrapper: {
+    marginBottom: 4,
+  },
+  replyWrapper: {
+    marginLeft: 18,
+  },
 
   commentHeader: {
     flexDirection: 'row',
@@ -737,6 +788,35 @@ const styles = StyleSheet.create({
   commentText: {
     fontSize: 14,
     color: "#ddd",
+  },
+  commentActionsRow: {
+    marginTop: 8,
+  },
+  replyButtonText: {
+    color: '#2563EB',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  repliesContainer: {
+    marginTop: 2,
+  },
+  replyContextRow: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  replyContextText: {
+    fontSize: 13,
+  },
+  cancelReplyText: {
+    color: '#dc2626',
+    fontWeight: '700',
+    fontSize: 13,
   },
 });
 

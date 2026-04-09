@@ -8,12 +8,14 @@ export interface Comment {
   avatar?: any;
   userId?: string;
   createdAt?: string;
+  replies: Comment[];
 }
 
 interface CommentsContextType {
   commentsByPost: Record<string, Comment[]>;
   fetchComments: (postId: string) => Promise<void>;
   addComment: (postId: string, userId: string, text: string) => Promise<void>;
+  addReply: (postId: string, parentCommentId: string, userId: string, text: string) => Promise<void>;
 }
 
 const CommentsContext = createContext<CommentsContextType>({} as CommentsContextType);
@@ -21,33 +23,46 @@ const CommentsContext = createContext<CommentsContextType>({} as CommentsContext
 export const CommentsProvider = ({ children }: { children: React.ReactNode }) => {
   const [commentsByPost, setCommentsByPost] = useState<Record<string, Comment[]>>({});
 
+  const toAvatarSource = (foto: string | null | undefined) => {
+    if (!foto) {
+      return require('../../assets/images/default-avatar.png');
+    }
+
+    if (foto.startsWith('http://') || foto.startsWith('https://')) {
+      return { uri: foto };
+    }
+
+    return { uri: `${api.defaults.baseURL}${foto}` };
+  };
+
+  const extractUserId = (comment: any) => {
+    if (comment.idusuario) return String(comment.idusuario);
+    if (comment.id_usuario) return String(comment.id_usuario);
+    if (comment.idUsuario) return String(comment.idUsuario);
+    if (comment.user_id) return String(comment.user_id);
+    if (comment.usuario_id) return String(comment.usuario_id);
+    if (comment.usuario?.id) return String(comment.usuario.id);
+    return undefined;
+  };
+
+  const formatComment = (comment: any): Comment => ({
+    id: String(comment.id),
+    user: comment.nome_de_usuario || comment.nome || 'Usuário',
+    text: comment.comentario,
+    avatar: toAvatarSource(comment.foto),
+    userId: extractUserId(comment),
+    createdAt: comment.criado_em,
+    replies: Array.isArray(comment.respostas)
+      ? comment.respostas.map((reply: any) => formatComment(reply))
+      : []
+  });
+
   // 🔽 Buscar comentários
   const fetchComments = async (postId: string) => {
     try {
       const response = await api.get(`/comentarios/${postId}`);
 
-      const formatted: Comment[] = response.data.map((c: any) => ({
-        id: String(c.id),
-        user: c.nome_de_usuario || c.nome || 'Usuário',
-        text: c.comentario,
-        avatar: c.foto
-          ? { uri: `${api.defaults.baseURL}${c.foto}` }
-          : require('@/assets/images/default-avatar.png'), // opcional
-        userId: c.idusuario
-          ? String(c.idusuario)
-          : c.id_usuario
-            ? String(c.id_usuario)
-            : c.idUsuario
-              ? String(c.idUsuario)
-              : c.user_id
-                ? String(c.user_id)
-                : c.usuario_id
-                  ? String(c.usuario_id)
-              : c.usuario?.id
-                ? String(c.usuario.id)
-                : undefined,
-        createdAt: c.criado_em
-      }));
+      const formatted: Comment[] = response.data.map((c: any) => formatComment(c));
 
       setCommentsByPost(prev => ({
         ...prev,
@@ -67,18 +82,7 @@ export const CommentsProvider = ({ children }: { children: React.ReactNode }) =>
         conteudo: text
       });
 
-      const newComment: Comment = {
-        id: String(Date.now()),
-        user: 'Você',
-        text,
-        userId,
-        createdAt: new Date().toISOString()
-      };
-
-      setCommentsByPost(prev => ({
-        ...prev,
-        [postId]: [...(prev[postId] || []), newComment]
-      }));
+      await fetchComments(postId);
 
     } catch (error) {
       console.log('❌ Erro ao comentar:', error);
@@ -86,8 +90,23 @@ export const CommentsProvider = ({ children }: { children: React.ReactNode }) =>
     }
   };
 
+  const addReply = async (postId: string, parentCommentId: string, userId: string, text: string) => {
+    try {
+      await api.post(`/comentarios/${postId}/responder/${parentCommentId}`, {
+        idusuario: userId,
+        conteudo: text
+      });
+
+      await fetchComments(postId);
+
+    } catch (error) {
+      console.log('❌ Erro ao responder comentário:', error);
+      throw error;
+    }
+  };
+
   return (
-    <CommentsContext.Provider value={{ commentsByPost, fetchComments, addComment }}>
+    <CommentsContext.Provider value={{ commentsByPost, fetchComments, addComment, addReply }}>
       {children}
     </CommentsContext.Provider>
   );

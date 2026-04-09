@@ -1,21 +1,69 @@
 import Breadcrumb from '@/components/Breadcrumb';
+import { api } from '@/src/services/api';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+type NotificacaoApi = {
+	id: number;
+	destinatario_id: number;
+	remetente_id: number;
+	tipo: 'like' | 'comentario' | 'seguindo' | string;
+	post_id: number | null;
+	comentario_id: number | null;
+	lida: 0 | 1;
+	criada_em: string;
+	remetente_nome: string | null;
+	remetente_foto: string | null;
+};
+
+const formatRelativeTime = (dateIso: string) => {
+	const created = new Date(dateIso).getTime();
+	if (Number.isNaN(created)) return '';
+
+	const diff = Date.now() - created;
+	const minutes = Math.floor(diff / (1000 * 60));
+
+	if (minutes < 1) return 'agora';
+	if (minutes < 60) return `${minutes}min atrás`;
+
+	const hours = Math.floor(minutes / 60);
+	if (hours < 24) return `${hours}h atrás`;
+
+	const days = Math.floor(hours / 24);
+	return `${days}d atrás`;
+};
+
+const getNotificationMessage = (n: NotificacaoApi) => {
+	const sender = n.remetente_nome || 'Alguém';
+
+	if (n.tipo === 'like') return `${sender} curtiu seu post`;
+	if (n.tipo === 'comentario') return `${sender} comentou no seu post`;
+	if (n.tipo === 'seguindo') return `${sender} começou a seguir você`;
+
+	return `${sender} interagiu com você`;
+};
 
 export default function Notificacoes() {
 	const router = useRouter();
 	const isFocused = useIsFocused();
 	const [darkMode, setDarkMode] = useState(false);
+	const [notificacoes, setNotificacoes] = useState<NotificacaoApi[]>([]);
+	const [loading, setLoading] = useState(false);
+	const [refreshing, setRefreshing] = useState(false);
 
 	const theme = darkMode
 		? {
 			background: '#090B0E',
 			textPrimary: '#F5F5F7',
 			textSecondary: '#B8BBC2',
+			card: '#12161C',
+			cardUnread: '#1C2635',
+			border: '#252B35',
+			badgeUnread: '#3B82F6',
 			iconOuter: '#101318',
 			iconInner: '#0B0E12',
 			iconBorder: '#14181E',
@@ -25,11 +73,62 @@ export default function Notificacoes() {
 			background: '#D9D9D9',
 			textPrimary: '#111111',
 			textSecondary: '#4F4F4F',
+			card: '#EFEFEF',
+			cardUnread: '#DCEBFF',
+			border: '#C2C7CF',
+			badgeUnread: '#1D4ED8',
 			iconOuter: '#CFCFCF',
 			iconInner: '#EFEFEF',
 			iconBorder: '#BDBDBD',
 			iconColor: '#333333',
 		};
+
+	const carregarNotificacoes = async (showLoading = true) => {
+		try {
+			if (showLoading) setLoading(true);
+
+			const userId = await AsyncStorage.getItem('userId');
+			if (!userId) {
+				setNotificacoes([]);
+				return;
+			}
+
+			const { data } = await api.get(`/notificacoes/${userId}`);
+			setNotificacoes(Array.isArray(data) ? data : []);
+		} catch (error) {
+			console.log('Erro ao buscar notificações:', error);
+		} finally {
+			if (showLoading) setLoading(false);
+			setRefreshing(false);
+		}
+	};
+
+	const marcarComoLida = async (idNotificacao: number) => {
+		try {
+			await api.put(`/notificacoes/${idNotificacao}/lida`);
+
+			setNotificacoes((prev) =>
+				prev.map((n) =>
+					n.id === idNotificacao
+						? { ...n, lida: 1 }
+						: n
+				)
+			);
+		} catch (error) {
+			console.log('Erro ao marcar notificação como lida:', error);
+		}
+	};
+
+	const handlePressNotificacao = async (item: NotificacaoApi) => {
+		if (item.lida === 0) {
+			await marcarComoLida(item.id);
+		}
+	};
+
+	const onRefresh = async () => {
+		setRefreshing(true);
+		await carregarNotificacoes(false);
+	};
 
 	useEffect(() => {
 		const loadTheme = async () => {
@@ -43,8 +142,39 @@ export default function Notificacoes() {
 
 		if (isFocused) {
 			loadTheme();
+			carregarNotificacoes();
 		}
 	}, [isFocused]);
+
+	const renderNotificacao = ({ item }: { item: NotificacaoApi }) => (
+		<TouchableOpacity
+			activeOpacity={0.8}
+			onPress={() => handlePressNotificacao(item)}
+			style={[
+				styles.notificationCard,
+				{
+					backgroundColor: item.lida === 0 ? theme.cardUnread : theme.card,
+					borderColor: theme.border,
+				},
+			]}
+		>
+			<Image
+				source={
+					item.remetente_foto
+						? { uri: item.remetente_foto }
+						: require('../../assets/images/default-avatar.png')
+				}
+				style={styles.avatar}
+			/>
+
+			<View style={styles.notificationContent}>
+				<Text style={[styles.notificationText, { color: theme.textPrimary }]}>{getNotificationMessage(item)}</Text>
+				<Text style={[styles.notificationTime, { color: theme.textSecondary }]}>{formatRelativeTime(item.criada_em)}</Text>
+			</View>
+
+			{item.lida === 0 ? <View style={[styles.unreadDot, { backgroundColor: theme.badgeUnread }]} /> : null}
+		</TouchableOpacity>
+	);
 
 	return (
 		<SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -68,18 +198,33 @@ export default function Notificacoes() {
 
 				<Text style={[styles.title, { color: theme.textPrimary }]}>Notificações</Text>
 
-				<View style={styles.emptyStateContainer}>
-					<View style={[styles.iconOuterCircle, { backgroundColor: theme.iconOuter }]}>
-						<View style={[styles.iconInnerCircle, { backgroundColor: theme.iconInner, borderColor: theme.iconBorder }]}>
-							<Ionicons name="notifications-outline" size={88} color={theme.iconColor} />
-						</View>
+				{loading ? (
+					<View style={styles.loadingContainer}>
+						<ActivityIndicator size="large" color={theme.textPrimary} />
 					</View>
+				) : notificacoes.length > 0 ? (
+					<FlatList
+						data={notificacoes}
+						renderItem={renderNotificacao}
+						keyExtractor={(item) => String(item.id)}
+						contentContainerStyle={styles.listContent}
+						refreshing={refreshing}
+						onRefresh={onRefresh}
+					/>
+				) : (
+					<View style={styles.emptyStateContainer}>
+						<View style={[styles.iconOuterCircle, { backgroundColor: theme.iconOuter }]}>
+							<View style={[styles.iconInnerCircle, { backgroundColor: theme.iconInner, borderColor: theme.iconBorder }]}>
+								<Ionicons name="notifications-outline" size={88} color={theme.iconColor} />
+							</View>
+						</View>
 
-					<Text style={[styles.emptyTitle, { color: theme.textPrimary }]}>Nenhuma notificação</Text>
-					<Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
-						Ao receber notificações elas apareceram aqui
-					</Text>
-				</View>
+						<Text style={[styles.emptyTitle, { color: theme.textPrimary }]}>Nenhuma notificação</Text>
+						<Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
+							Ao receber notificações elas apareceram aqui
+						</Text>
+					</View>
+				)}
 			</View>
 		</SafeAreaView>
 	);
@@ -117,6 +262,45 @@ const styles = StyleSheet.create({
 		fontSize: 36,
 		fontWeight: '700',
 		letterSpacing: -0.6,
+		marginBottom: 8,
+	},
+	loadingContainer: {
+		flex: 1,
+		justifyContent: 'center',
+		alignItems: 'center',
+	},
+	listContent: {
+		paddingBottom: 20,
+	},
+	notificationCard: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		padding: 12,
+		borderRadius: 12,
+		borderWidth: 1,
+		marginBottom: 10,
+	},
+	avatar: {
+		width: 48,
+		height: 48,
+		borderRadius: 24,
+		marginRight: 12,
+	},
+	notificationContent: {
+		flex: 1,
+	},
+	notificationText: {
+		fontSize: 15,
+		fontWeight: '600',
+		marginBottom: 4,
+	},
+	notificationTime: {
+		fontSize: 13,
+	},
+	unreadDot: {
+		width: 10,
+		height: 10,
+		borderRadius: 5,
 	},
 	emptyStateContainer: {
 		flex: 1,

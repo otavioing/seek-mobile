@@ -84,6 +84,20 @@ interface JobCardProps {
   theme: Theme;
 }
 
+const openApplicationLink = async () => {
+  const url = 'https://www.linkedin.com/';
+  try {
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      Alert.alert('Não foi possível abrir o link', url);
+    }
+  } catch (e) {
+    Alert.alert('Erro ao abrir o link', 'Tente novamente.');
+  }
+};
+
 const JobCard: React.FC<JobCardProps> = ({ item, onPressInfo, theme }) => (
   <View style={[styles.cardContainer, { backgroundColor: theme.card }] }>
     {/* Imagem (Banner com Logo) */}
@@ -96,19 +110,7 @@ const JobCard: React.FC<JobCardProps> = ({ item, onPressInfo, theme }) => (
         <Text style={[styles.title, { color: theme.textPrimary }]}>{item.title}</Text>
         <TouchableOpacity
           style={styles.propostaButton}
-          onPress={async () => {
-            const url = 'https://www.linkedin.com/';
-            try {
-              const supported = await Linking.canOpenURL(url);
-              if (supported) {
-                await Linking.openURL(url);
-              } else {
-                Alert.alert('Não foi possível abrir o link', url);
-              }
-            } catch (e) {
-              Alert.alert('Erro ao abrir o link', 'Tente novamente.');
-            }
-          }}
+          onPress={openApplicationLink}
         >
           <Text style={styles.propostaButtonText}>Candidatar-se</Text>
         </TouchableOpacity>
@@ -150,7 +152,9 @@ const JobDetailModal: React.FC<JobDetailModalProps> = ({ visible, onClose, vaga,
             <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>{vaga.title}</Text>
             <Text style={[styles.modalCompany, { color: theme.textMuted, borderBottomColor: theme.border }]}>Publicado por: {vaga.companyName}</Text>
             <Text style={[styles.modalDescription, { color: theme.textPrimary }]}>{vaga.description}</Text>
-            {/* Sem seção de comentários, como pedido */}
+            <TouchableOpacity style={[styles.propostaButton, styles.modalApplyButton]} onPress={openApplicationLink}>
+              <Text style={styles.propostaButtonText}>Cadastrar-se</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -334,6 +338,10 @@ const styles = StyleSheet.create({
   modalDescription: {
     fontSize: 16,
     lineHeight: 24,
+  },
+  modalApplyButton: {
+    alignSelf: 'flex-start',
+    marginTop: 20,
   },
 });
 
