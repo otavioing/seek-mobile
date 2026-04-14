@@ -82,24 +82,24 @@ export default function menuUser() {
 
   const theme = darkMode
     ? {
-        background: "#121212",
-        textPrimary: "#FFFFFF",
-        textSecondary: "#B0B0B0",
-        icon: "#FFFFFF",
-        divider: "#FFFFFF",
-      }
+      background: "#121212",
+      textPrimary: "#FFFFFF",
+      textSecondary: "#B0B0B0",
+      icon: "#FFFFFF",
+      divider: "#FFFFFF",
+    }
     : {
-        background: "#F2F2F2",
-        textPrimary: "#111111",
-        textSecondary: "#5C5C5C",
-        icon: "#111111",
-        divider: "#BDBDBD",
-      };
+      background: "#F2F2F2",
+      textPrimary: "#111111",
+      textSecondary: "#5C5C5C",
+      icon: "#111111",
+      divider: "#BDBDBD",
+    };
 
   const color = theme.icon;
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}> 
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
 
       <View style={styles.topBar}>
         <View style={styles.topRow}>
@@ -181,7 +181,13 @@ export default function menuUser() {
         </Svg>
         <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Notificação</Text>
       </TouchableOpacity>
-  <TouchableOpacity style={styles.fbtContainer} onPress={() => router.push('/configuracoes/atualizacoes')}>
+      <TouchableOpacity style={styles.fbtContainer} onPress={() => router.push('/configuracoes/mensagens')}>
+        <Svg width={size} height={size} viewBox="0 -960 960 960" fill="#FFFFFF">
+          <Path d="M240-400h320v-80H240v80Zm0-120h480v-80H240v80Zm0-120h480v-80H240v80ZM80-80v-720q0-33 23.5-56.5T160-880h640q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H240L80-80Zm126-240h594v-480H160v525l46-45Zm-46 0v-480 480Z" fill={color} />
+        </Svg>
+        <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Mensagens</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.fbtContainer} onPress={() => router.push('/configuracoes/atualizacoes')}>
         <Svg width={size} height={size} viewBox="0 0 60 60" fill="none">
           <Path
             d="M30 52.5C26.875 52.5 23.9479 51.9062 21.2188 50.7188C18.4896 49.5312 16.1146 47.9271 14.0938 45.9062C12.0729 43.8854 10.4688 41.5104 9.28125 38.7812C8.09375 36.0521 7.5 33.125 7.5 30C7.5 26.875 8.09375 23.9479 9.28125 21.2188C10.4688 18.4896 12.0729 16.1146 14.0938 14.0938C16.1146 12.0729 18.4896 10.4688 21.2188 9.28125C23.9479 8.09375 26.875 7.5 30 7.5C33.4167 7.5 36.6562 8.22917 39.7188 9.6875C42.7812 11.1458 45.375 13.2083 47.5 15.875V10H52.5V25H37.5V20H44.375C42.6667 17.6667 40.5625 15.8333 38.0625 14.5C35.5625 13.1667 32.875 12.5 30 12.5C25.125 12.5 20.9896 14.1979 17.5938 17.5938C14.1979 20.9896 12.5 25.125 12.5 30C12.5 34.875 14.1979 39.0104 17.5938 42.4062C20.9896 45.8021 25.125 47.5 30 47.5C34.375 47.5 38.1979 46.0833 41.4688 43.25C44.7396 40.4167 46.6667 36.8333 47.25 32.5H52.375C51.75 38.2083 49.3021 42.9688 45.0312 46.7812C40.7604 50.5938 35.75 52.5 30 52.5ZM37 40.5L27.5 31V17.5H32.5V29L40.5 37L37 40.5Z"
@@ -190,7 +196,7 @@ export default function menuUser() {
         </Svg>
         <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Atualizações</Text>
       </TouchableOpacity>
-  <TouchableOpacity style={styles.fbtContainer}>
+      <TouchableOpacity style={styles.fbtContainer}>
         <Svg
           width={size}
           height={size}
@@ -204,7 +210,7 @@ export default function menuUser() {
         </Svg>
         <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Modificar Projetos</Text>
       </TouchableOpacity>
-  <TouchableOpacity style={styles.fbtContainer}>
+      <TouchableOpacity style={styles.fbtContainer}>
         <Svg width={size} height={size} viewBox="0 0 60 60" fill="none">
           <Path
             d="M15 53V48L17.5 45.5H10C8.625 45.5 7.44792 45.0104 6.46875 44.0312C5.48958 43.0521 5 41.875 5 40.5V13C5 11.625 5.48958 10.4479 6.46875 9.46875C7.44792 8.48958 8.625 8 10 8H30V13H10V40.5H50V33H55V40.5C55 41.875 54.5104 43.0521 53.5312 44.0312C52.5521 45.0104 51.375 45.5 50 45.5H42.5L45 48V53H15ZM37.5 38L25 25.5L28.5 22L35 28.4375V8H40V28.4375L46.5 22L50 25.5L37.5 38Z"
@@ -214,7 +220,7 @@ export default function menuUser() {
         <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Modificar Cursos</Text>
       </TouchableOpacity>
       <Link href="/configuracoes/config" asChild>
-  <TouchableOpacity style={styles.fbtContainer}>
+        <TouchableOpacity style={styles.fbtContainer}>
           <Svg
             width={size}
             height={size}
@@ -229,7 +235,7 @@ export default function menuUser() {
           <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Configurações</Text>
         </TouchableOpacity>
       </Link>
-  <TouchableOpacity style={styles.fbtContainer}>
+      <TouchableOpacity style={styles.fbtContainer}>
         <Svg width={size} height={size} viewBox="0 0 60 60" fill="none">
           <Path
             d="M17.2083 41.7917H22.125V29.5H17.2083V41.7917ZM36.875 41.7917H41.7917V17.2083H36.875V41.7917ZM27.0417 41.7917H31.9583V34.4167H27.0417V41.7917ZM27.0417 29.5H31.9583V24.5833H27.0417V29.5ZM12.2917 51.625C10.9396 51.625 9.78212 51.1436 8.81927 50.1807C7.85642 49.2179 7.375 48.0604 7.375 46.7083V12.2917C7.375 10.9396 7.85642 9.78212 8.81927 8.81927C9.78212 7.85642 10.9396 7.375 12.2917 7.375H46.7083C48.0604 7.375 49.2179 7.85642 50.1807 8.81927C51.1436 9.78212 51.625 10.9396 51.625 12.2917V46.7083C51.625 48.0604 51.1436 49.2179 50.1807 50.1807C49.2179 51.1436 48.0604 51.625 46.7083 51.625H12.2917ZM12.2917 46.7083H46.7083V12.2917H12.2917V46.7083Z"
@@ -238,7 +244,7 @@ export default function menuUser() {
         </Svg>
         <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Analytics</Text>
       </TouchableOpacity>
-  <TouchableOpacity style={styles.fbtContainer} onPress={handleLogout}>
+      <TouchableOpacity style={styles.fbtContainer} onPress={handleLogout}>
         <Svg width={size} height={size} viewBox="0 0 60 60" fill="none">
           <Path
             d="M12 52C10.625 52 9.44792 51.5104 8.46875 50.5312C7.48958 49.5521 7 48.375 7 47V12C7 10.625 7.48958 9.44792 8.46875 8.46875C9.44792 7.48958 10.625 7 12 7H29.5V12H12V47H29.5V52H12ZM39.5 42L36.0625 38.375L42.4375 32H22V27H42.4375L36.0625 20.625L39.5 17L52 29.5L39.5 42Z"
