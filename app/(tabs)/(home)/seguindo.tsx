@@ -274,7 +274,7 @@ const AuthorAvatar: React.FC<AuthorAvatarProps> = ({ source, style, isStory }) =
 
 const PostCard = ({ post }: { post: PostData }) => (
   <View style={styles.cardContainer}>
-    {post.title ? <Text style={styles.cardTitle}>{post.title}</Text> : null}
+    {/* Title intentionally omitted here to match prototype; title is shown in the modal when the post is opened */}
     <Image source={post.imageUrl} style={styles.galleryImage} />
 
     <View style={styles.cardInfo}>
@@ -393,8 +393,8 @@ const SeguindoScreen = () => {
         <View style={styles.feedContainer}>
           {posts.map((post) => (
             <View key={post.id} style={[styles.cardContainer, { backgroundColor: theme.card }] }>
-              {post.title ? <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>{post.title}</Text> : null}
-              <TouchableOpacity onPress={() => handleOpenPostModal(post)} activeOpacity={0.9}>
+              {/* Title intentionally omitted here to match prototype; title is shown in the modal when the post is opened */}
+              <TouchableOpacity onPress={() => handleOpenPostModal(post as any)} activeOpacity={0.9}>
                 <Image source={post.imageUrl} style={styles.galleryImage} />
               </TouchableOpacity>
               <View style={styles.cardInfo}>
@@ -403,7 +403,7 @@ const SeguindoScreen = () => {
                   <Text style={[styles.cardFollowers, { color: theme.textSecondary }]}>{post.followers}</Text>
                 </View>
                 <TouchableOpacity
-                  onPress={() => handleOpenPostAuthorProfile(post)}
+                  onPress={() => handleOpenPostAuthorProfile(post as any)}
                   activeOpacity={0.7}
                 >
                   <AuthorAvatar source={post.avatar} />

@@ -410,7 +410,7 @@ export default function HomeScreen() {
 
           return (
             <View key={post.id} style={[styles.cardContainer, { backgroundColor: theme.card }]}>
-              {post.title && <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>{post.title}</Text>}
+              {/* Title intentionally omitted here to match prototype; title is shown in the modal when the post is opened */}
 
               <TouchableOpacity onPress={() => openImageModal(post)}>
                 <Image style={styles.galleryImage} source={cover} />

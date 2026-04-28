@@ -285,16 +285,7 @@ const AuthorInfo = ({
 
 const PostCard = ({ post, onPress, onPressAuthor, style, theme }: any) => (
   <View style={[styles.card, style, { backgroundColor: theme.card }]}>
-    {post.title ? (
-      <Text
-        style={[styles.cardTitle, { color: theme.textPrimary }]}
-        numberOfLines={1}
-        ellipsizeMode="tail"
-      >
-        {post.title}
-      </Text>
-    ) : null}
-
+    {/* Title intentionally omitted here to match prototype; title is shown in the modal when the post is opened */}
     <TouchableOpacity onPress={() => onPress(post)} activeOpacity={0.9}>
       <Image source={post.imageUrl} style={styles.cardImage} />
     </TouchableOpacity>

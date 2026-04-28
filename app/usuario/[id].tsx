@@ -5,6 +5,7 @@ import { useIsFocused } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  Alert,
   Dimensions,
   Image,
   ImageBackground,
@@ -109,6 +110,9 @@ const UserProfileScreen = () => {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const theme: Theme = darkMode
     ? {
@@ -138,6 +142,27 @@ const UserProfileScreen = () => {
 
   useEffect(() => {
     if (!userId) return;
+    const loadCurrent = async () => {
+      try {
+        const uid = await AsyncStorage.getItem('userId');
+        setCurrentUserId(uid);
+        if (uid && uid !== userId) {
+          try {
+            const resp = await api.get(`/usuarios/esta-seguindo/${userId}`);
+            if (resp?.data && typeof resp.data.seguindo !== 'undefined') {
+              setIsFollowing(!!resp.data.seguindo);
+            } else if (resp?.data === true || resp?.data === false) {
+              setIsFollowing(!!resp.data);
+            }
+          } catch (e) {
+            console.log('Erro ao verificar seguimento:', e);
+          }
+        }
+      } catch (e) {
+        console.log('Erro ao carregar userId', e);
+      }
+    };
+    loadCurrent();
     const fetchUser = async () => {
       try {
         const { data } = await api.get(`/usuarios/foto-perfil/${userId}`);
@@ -254,6 +279,36 @@ const UserProfileScreen = () => {
           <Image source={avatar} style={[styles.profileImage, { borderColor: theme.card }]} />
           <Text style={[styles.userName, { color: theme.textPrimary }]}>{userName || 'Perfil'}</Text>
           <Text style={[styles.userHandle, { color: theme.textMuted }]}>@usuario_{userId}</Text>
+          {currentUserId !== userId && (
+            <TouchableOpacity
+              style={[styles.followButton, isFollowing ? styles.following : styles.follow]}
+              onPress={async () => {
+                if (!currentUserId) {
+                  Alert.alert('Atenção', 'Faça login para seguir usuários.');
+                  return;
+                }
+                if (isProcessing) return;
+                setIsProcessing(true);
+                const next = !isFollowing;
+                setIsFollowing(next);
+                setStats((s) => ({ ...s, seguidores: next ? s.seguidores + 1 : Math.max(0, s.seguidores - 1) }));
+                try {
+                  if (next) await api.post(`/usuarios/seguir/${userId}`);
+                  else await api.delete(`/usuarios/seguir/${userId}`);
+                } catch (e) {
+                  console.log('Erro ao (un)follow:', e);
+                  // revert
+                  setIsFollowing(!next);
+                  setStats((s) => ({ ...s, seguidores: next ? Math.max(0, s.seguidores - 1) : s.seguidores + 1 }));
+                } finally {
+                  setIsProcessing(false);
+                }
+              }}
+              disabled={isProcessing}
+            >
+              <Text style={styles.followText}>{isFollowing ? 'Seguindo' : 'Seguir'}</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.statsContainer}>
@@ -347,6 +402,10 @@ const styles = StyleSheet.create({
   profileImage: { width: 140, height: 140, borderRadius: 70, borderWidth: 3 },
   userName: { fontSize: 22, fontWeight: 'bold', color: '#fff', marginTop: 12 },
   userHandle: { fontSize: 14, color: '#888', marginTop: 4 },
+  followButton: { marginTop: 10, paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20 },
+  follow: { backgroundColor: '#007bff' },
+  following: { backgroundColor: '#4f4f4f' },
+  followText: { color: '#fff', fontWeight: '700' },
   statsContainer: { flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 32, marginTop: 20 },
   statItem: { alignItems: 'center', flex: 1 },
   statNumber: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
