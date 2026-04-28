@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Post, usePosts } from '../../src/context/PostsContext';
+import { AppTheme, getAppTheme } from '../../src/theme/appTheme';
 
 const fotoseguindomodoescuro = require('../../assets/images/seguindoescuro.png');
 const papeldobradomodoescuro = require('../../assets/images/papel_dobradoescuro.png');
@@ -40,26 +41,11 @@ const formatRelativeTime = (timestamp: number) => {
 };
 
 type TabName = 'Postagens' | 'Cursos';
-type Theme = {
-  background: string;
-  backgroundAlt: string;
-  textPrimary: string;
-  textSecondary: string;
-  textMuted: string;
-  border: string;
-  card: string;
-  danger: string;
-  tabInactive: string;
-  tabActive: string;
-  buttonPrimary: string;
-  buttonSecondary: string;
-  statusBar: 'light-content' | 'dark-content';
-};
 
 const { width } = Dimensions.get('window');
 const photoSize = (width - 32 - 8) / 2;
 
-const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: Theme }) => (
+const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: AppTheme }) => (
   <TouchableOpacity style={styles.modalGoBack} onPress={onClose}>
     <Icon name="arrow-back-outline" size={28} color={theme.textPrimary} />
     <Text style={[styles.modalGoBackText, { color: theme.textPrimary }]}>Voltar</Text>
@@ -70,7 +56,7 @@ interface PostDetailModalProps {
   visible: boolean;
   onClose: () => void;
   post: Post | null;
-  theme: Theme;
+  theme: AppTheme;
   currentUserId?: string | null;
   currentUserName?: string;
   onOptions: (post: Post) => void;
@@ -146,7 +132,7 @@ interface SimpleImageModalProps {
   visible: boolean;
   onClose: () => void;
   image: ImageSourcePropType | null;
-  theme: Theme;
+  theme: AppTheme;
 }
 
 const SimpleImageModal = ({ visible, onClose, image, theme }: SimpleImageModalProps) => {
@@ -211,37 +197,7 @@ const ProfileScreen = () => {
   const postsIcon = darkMode ? papeldobradomodoescuro : papeldobradomodoclaro;
   const likesIcon = darkMode ? likesmodoescuro : likesmodoclaro;
 
-  const theme: Theme = darkMode
-    ? {
-        background: '#000000',
-        backgroundAlt: '#1a1a1a',
-        textPrimary: '#FFFFFF',
-        textSecondary: '#DDDDDD',
-        textMuted: '#AAAAAA',
-        border: '#333333',
-        card: '#111111',
-        danger: '#ff5c5c',
-        tabInactive: '#888888',
-        tabActive: '#FFFFFF',
-        buttonPrimary: '#007BFF',
-        buttonSecondary: '#4F46E5',
-        statusBar: 'light-content',
-      }
-    : {
-        background: '#E6E6E6',
-        backgroundAlt: '#F6F6F6',
-        textPrimary: '#111111',
-        textSecondary: '#333333',
-        textMuted: '#666666',
-        border: '#CFCFCF',
-        card: '#FFFFFF',
-        danger: '#D32F2F',
-        tabInactive: '#666666',
-        tabActive: '#111111',
-        buttonPrimary: '#007BFF',
-        buttonSecondary: '#4F46E5',
-        statusBar: 'dark-content',
-      };
+  const theme = getAppTheme(darkMode);
 
   useEffect(() => {
     const loadUser = async () => {

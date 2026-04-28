@@ -4,6 +4,7 @@ import { Link } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Path, Svg } from 'react-native-svg';
+import { FilterTheme, getFilterCTheme } from '../src/theme/appTheme';
 
 export default function FilterC() {
   const isFocused = useIsFocused();
@@ -11,31 +12,7 @@ export default function FilterC() {
   const [isConfirmed, setIsConfirmed] = useState<Record<string, boolean>>({});
   const [selectedRadios, setSelectedRadios] = useState<{ tempo: string }>({ tempo: '' });
 
-  const theme = darkMode
-    ? {
-        background: '#000000',
-        header: '#0F0F0F',
-        sectionCard: '#0F0F0F',
-        textPrimary: '#FFFFFF',
-        textSecondary: '#D1D5DB',
-        control: '#313131',
-        controlActive: '#E3E3E3',
-        border: '#1F1F1F',
-        svg: '#FFFFFF',
-        svgSoft: '#E3E3E3',
-      }
-    : {
-        background: '#D9D9D9',
-        header: '#E6E6E6',
-        sectionCard: '#FFFFFF',
-        textPrimary: '#111111',
-        textSecondary: '#4B5563',
-        control: '#E5E7EB',
-        controlActive: '#111111',
-        border: '#D1D5DB',
-        svg: '#111111',
-        svgSoft: '#D1D5DB',
-      };
+  const theme: FilterTheme = getFilterCTheme(darkMode);
 
   useEffect(() => {
     const loadTheme = async () => {

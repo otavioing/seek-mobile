@@ -22,19 +22,7 @@ import {
 } from "react-native";
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Post, usePosts } from '../../../src/context/PostsContext';
-
-type Theme = {
-  background: string;
-  card: string;
-  textPrimary: string;
-  textSecondary: string;
-  textMuted: string;
-  border: string;
-  inputBg: string;
-  inputBorder: string;
-  inputText: string;
-  statusBar: 'light-content' | 'dark-content';
-};
+import { FeedTheme, getFeedTheme } from '../../../src/theme/appTheme';
 
 const formatRelativeTime = (timestamp: number) => {
   const diff = Date.now() - timestamp;
@@ -56,7 +44,7 @@ const AuthorAvatar: React.FC<AuthorAvatarProps> = ({ source, style }) => (
   <Image source={source} style={[styles.avatar, style]} />
 );
 
-const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: Theme }) => (
+const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: FeedTheme }) => (
   <TouchableOpacity style={styles.modalGoBack} onPress={onClose}>
     <Icon name="arrow-back-outline" size={28} color={theme.textPrimary} />
     <Text style={[styles.modalGoBackText, { color: theme.textPrimary }]}>Voltar</Text>
@@ -67,7 +55,7 @@ interface PostDetailModalProps {
   visible: boolean;
   onClose: () => void;
   post: Post | null;
-  theme: Theme;
+  theme: FeedTheme;
   onPressAuthor?: (post: Post) => void;
   onPressCommentAuthor?: (comment: Comment) => void;
 }
@@ -323,31 +311,7 @@ export default function HomeScreen() {
   const [darkMode, setDarkMode] = useState(false);
   const isFocused = useIsFocused();
 
-  const theme: Theme = darkMode
-    ? {
-        background: '#090909',
-        card: '#1a1a1a',
-        textPrimary: '#FFFFFF',
-        textSecondary: '#DDDDDD',
-        textMuted: '#888888',
-        border: '#333333',
-        inputBg: '#0f0f0f',
-        inputBorder: '#333333',
-        inputText: '#FFFFFF',
-        statusBar: 'light-content',
-      }
-    : {
-        background: '#E6E6E6',
-        card: '#FFFFFF',
-        textPrimary: '#111111',
-        textSecondary: '#333333',
-        textMuted: '#666666',
-        border: '#CCCCCC',
-        inputBg: '#FFFFFF',
-        inputBorder: '#C7C7C7',
-        inputText: '#111111',
-        statusBar: 'dark-content',
-      };
+  const theme = getFeedTheme(darkMode);
 
   useEffect(() => {
     const loadTheme = async () => {

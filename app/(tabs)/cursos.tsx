@@ -3,20 +3,21 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
-  FlatList,
-  Image,
-  ImageSourcePropType,
-  Linking,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    FlatList,
+    Image,
+    ImageSourcePropType,
+    Linking,
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { CourseTheme, getCourseTheme } from '../../src/theme/appTheme';
 
 interface Comment {
   id: string;
@@ -38,18 +39,8 @@ interface Course {
 interface CourseCardProps {
   item: Course;
   onPressInfo: (item: Course) => void;
-  theme: Theme;
+  theme: CourseTheme;
 }
-
-type Theme = {
-  background: string;
-  card: string;
-  textPrimary: string;
-  textSecondary: string;
-  accent: string;
-  border: string;
-  commentCard: string;
-};
 
 const CourseCard = ({ item, onPressInfo, theme }: CourseCardProps) => (
   <TouchableOpacity onPress={() => onPressInfo(item)} activeOpacity={0.9}>
@@ -81,7 +72,7 @@ const CourseCard = ({ item, onPressInfo, theme }: CourseCardProps) => (
   </TouchableOpacity>
 );
 
-const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: Theme }) => (
+const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: CourseTheme }) => (
   <TouchableOpacity style={styles.modalGoBack} onPress={onClose}>
     <Icon name="arrow-back-outline" size={28} color={theme.textPrimary} />
     <Text style={[styles.modalGoBackText, { color: theme.textPrimary }]}>Voltar</Text>
@@ -92,7 +83,7 @@ interface CourseDetailModalProps {
   visible: boolean;
   onClose: () => void;
   course: Course | null;
-  theme: Theme;
+  theme: CourseTheme;
 }
 
 const CourseDetailModal = ({ visible, onClose, course, theme }: CourseDetailModalProps) => {
@@ -154,26 +145,7 @@ const CursosScreen = () => {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [darkMode, setDarkMode] = useState(false);
   const isFocused = useIsFocused();
-
-  const theme: Theme = darkMode
-    ? {
-        background: '#000000',
-        card: '#1a1a1a',
-        textPrimary: '#FFFFFF',
-        textSecondary: '#AAAAAA',
-        accent: '#A78BFA',
-        border: '#333333',
-        commentCard: '#1a1a1a',
-      }
-    : {
-        background: '#E6E6E6',
-        card: '#FFFFFF',
-        textPrimary: '#111111',
-        textSecondary: '#4A4A4A',
-        accent: '#6D28D9',
-        border: '#CFCFCF',
-        commentCard: '#F3F3F3',
-      };
+  const theme = getCourseTheme(darkMode);
 
   useEffect(() => {
     fetchCourses();

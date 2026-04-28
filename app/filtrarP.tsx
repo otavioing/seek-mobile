@@ -4,6 +4,7 @@ import { Link, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Path, Svg } from 'react-native-svg';
+import { FilterTheme, getFilterPTheme } from '../src/theme/appTheme';
 
 type ModalTarget = 'estilos' | 'ferramentas' | 'cores' | null;
 
@@ -21,37 +22,7 @@ export default function FilterP() {
   const [ferramentas, setFerramentas] = useState(['Figma', 'Photoshop', 'Illustrator', 'Canva', 'Outros']);
   const [cores, setCores] = useState(['Vermelho', 'Azul', 'Verde', 'Preto', 'Branco', 'Outros']);
 
-  const theme = darkMode
-    ? {
-        background: '#000000',
-        header: '#0F0F0F',
-        section: '#0F0F0F',
-        modal: '#111111',
-        textPrimary: '#FFFFFF',
-        textSecondary: '#D1D5DB',
-        border: '#1F1F1F',
-        control: '#313131',
-        controlActive: '#E3E3E3',
-        svg: '#FFFFFF',
-        svgSoft: '#E3E3E3',
-        inputBg: '#111111',
-        inputBorder: '#222222',
-      }
-    : {
-        background: '#D9D9D9',
-        header: '#E6E6E6',
-        section: '#FFFFFF',
-        modal: '#FFFFFF',
-        textPrimary: '#111111',
-        textSecondary: '#4B5563',
-        border: '#D1D5DB',
-        control: '#E5E7EB',
-        controlActive: '#111111',
-        svg: '#111111',
-        svgSoft: '#D1D5DB',
-        inputBg: '#FFFFFF',
-        inputBorder: '#D1D5DB',
-      };
+  const theme: FilterTheme = getFilterPTheme(darkMode);
 
   useEffect(() => {
     const loadTheme = async () => {
