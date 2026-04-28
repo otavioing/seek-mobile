@@ -5,20 +5,20 @@ import { useIsFocused } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Dimensions,
-  Image,
-  ImageStyle,
-  Modal,
-  RefreshControl,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleProp,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Dimensions,
+    Image,
+    ImageStyle,
+    Modal,
+    RefreshControl,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleProp,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from "react-native";
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Post, usePosts } from '../../../src/context/PostsContext';
