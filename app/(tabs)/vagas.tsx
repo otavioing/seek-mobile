@@ -104,22 +104,23 @@ const JobCard: React.FC<JobCardProps> = ({ item, onPressInfo, theme }) => (
     <Image source={item.logoBannerUrl} style={[styles.cardImage, { backgroundColor: theme.imagePlaceholder }]} />
 
     {/* Conteúdo de texto */}
-    <View style={styles.contentContainer}>
+    <View style={[styles.contentContainer, { borderTopColor: theme.border }]}>
       {/* Linha 1: Título e Botão */}
       <View style={styles.row}>
-        <Text style={[styles.title, { color: theme.textPrimary }]}>{item.title}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.title, { color: theme.textPrimary }]} numberOfLines={1}>{item.title}</Text>
+          <Text style={[styles.timestamp, { color: theme.textMuted }]}>{item.timestamp}</Text>
+        </View>
+
         <TouchableOpacity
-          style={styles.propostaButton}
+          style={[styles.propostaButton, { backgroundColor: '#1E90FF' }]}
           onPress={openApplicationLink}
         >
-          <Text style={styles.propostaButtonText}>Candidatar-se</Text>
+          <Text style={styles.propostaButtonText}>Inscrição</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Linha 2: Timestamp */}
-      <Text style={[styles.timestamp, { color: theme.textMuted }]}>{item.timestamp}</Text>
-
-      {/* Linha 3: Link "mais informações" */}
+      {/* "mais informações" centralizado */}
       <TouchableOpacity style={styles.infoButton} onPress={() => onPressInfo(item)}>
         <Text style={[styles.link, { color: theme.link }]}>mais informações</Text>
       </TouchableOpacity>
@@ -152,9 +153,15 @@ const JobDetailModal: React.FC<JobDetailModalProps> = ({ visible, onClose, vaga,
             <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>{vaga.title}</Text>
             <Text style={[styles.modalCompany, { color: theme.textMuted, borderBottomColor: theme.border }]}>Publicado por: {vaga.companyName}</Text>
             <Text style={[styles.modalDescription, { color: theme.textPrimary }]}>{vaga.description}</Text>
-            <TouchableOpacity style={[styles.propostaButton, styles.modalApplyButton]} onPress={openApplicationLink}>
-              <Text style={styles.propostaButtonText}>Cadastrar-se</Text>
+
+            {/* botão agora igual ao de Proposta */}
+            <TouchableOpacity
+              style={[styles.propostaButton, styles.modalApplyButton, { backgroundColor: '#1E90FF' }]}
+              onPress={openApplicationLink}
+            >
+              <Text style={styles.propostaButtonText}>Enviar proposta</Text>
             </TouchableOpacity>
+
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -261,51 +268,66 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 24,
   },
+
+  // card
   cardContainer: {
-    borderRadius: 16,
-    marginBottom: 20,
+    borderRadius: 14,
+    marginBottom: 18,
     overflow: 'hidden',
+    // sombra leve para Android/iOS
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
   },
   cardImage: {
     width: '100%',
-    height: 180,
-    backgroundColor: '#333333' // Placeholder
+    height: 140,
+    resizeMode: 'cover',
   },
   contentContainer: {
-    padding: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderTopWidth: 1,
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    gap: 8,
   },
   title: {
-    fontSize: 22,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 6,
   },
   propostaButton: {
-    backgroundColor: '#007BFF', // Azul
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    alignSelf: 'flex-start',
+    marginLeft: 12,
   },
   propostaButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 12,
+    fontWeight: '700',
+    fontSize: 13,
   },
   timestamp: {
-    fontSize: 14,
+    fontSize: 13,
+    color: '#999',
   },
+
   infoButton: {
-    marginTop: 16,
+    marginTop: 14,
+    width: '100%',
+    alignItems: 'center',
   },
   link: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
-  
+
   // --- Estilos do Modal ---
   modalContainer: {
     flex: 1,
@@ -340,8 +362,8 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   modalApplyButton: {
-    alignSelf: 'flex-start',
     marginTop: 20,
+    alignSelf: 'flex-end',
   },
 });
 

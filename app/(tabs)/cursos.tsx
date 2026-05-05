@@ -1,6 +1,4 @@
 import { api } from '@/src/services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useIsFocused } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
@@ -38,53 +36,42 @@ interface Course {
 interface CourseCardProps {
   item: Course;
   onPressInfo: (item: Course) => void;
-  theme: Theme;
 }
 
-type Theme = {
-  background: string;
-  card: string;
-  textPrimary: string;
-  textSecondary: string;
-  accent: string;
-  border: string;
-  commentCard: string;
-};
-
-const CourseCard = ({ item, onPressInfo, theme }: CourseCardProps) => (
-  <TouchableOpacity onPress={() => onPressInfo(item)} activeOpacity={0.9}>
-    <View style={[styles.cardContainer, { backgroundColor: theme.card }]}>
-      <View style={styles.imageContainer}>
-        <Image source={item.imageUrl} style={styles.cardImage} />
-        <View style={[styles.durationTag, { backgroundColor: theme.accent }]}>
-          <Text style={styles.durationText}>{item.duration}</Text>
-        </View>
-      </View>
-
-      <View style={styles.contentContainer}>
-        <View style={styles.row}>
-          <Text style={[styles.title, { color: theme.textPrimary }]}>{item.title}</Text>
-          <Text style={[styles.price, { color: theme.textPrimary }]}>{item.price}</Text>
-        </View>
-
-        <Text style={[styles.author, { color: theme.textSecondary }]}>{item.author}</Text>
-
-        <View style={[styles.row, { marginTop: 16 }]}>
-          <Text style={[styles.link, { color: theme.accent }]}>mais informações</Text>
-
-          <TouchableOpacity>
-            <Icon name="heart-outline" size={24} color={theme.accent} />
-          </TouchableOpacity>
-        </View>
+const CourseCard = ({ item, onPressInfo }: CourseCardProps) => (
+  <View style={styles.cardContainer}>
+    <View style={styles.imageContainer}>
+      <Image source={item.imageUrl} style={styles.cardImage} />
+      <View style={styles.durationTag}>
+        <Text style={styles.durationText}>{item.duration}</Text>
       </View>
     </View>
-  </TouchableOpacity>
+
+    <View style={styles.contentContainer}>
+      <View style={styles.row}>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.price}>{item.price}</Text>
+      </View>
+
+      <Text style={styles.author}>{item.author}</Text>
+
+      <View style={[styles.row, { marginTop: 16 }]}>
+        <TouchableOpacity onPress={() => onPressInfo(item)}>
+          <Text style={styles.link}>mais informações</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity>
+          <Icon name="heart-outline" size={24} color="#A78BFA" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  </View>
 );
 
-const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: Theme }) => (
+const ModalHeader = ({ onClose }: { onClose: () => void }) => (
   <TouchableOpacity style={styles.modalGoBack} onPress={onClose}>
-    <Icon name="arrow-back-outline" size={28} color={theme.textPrimary} />
-    <Text style={[styles.modalGoBackText, { color: theme.textPrimary }]}>Voltar</Text>
+    <Icon name="arrow-back-outline" size={28} color="white" />
+    <Text style={styles.modalGoBackText}>Voltar</Text>
   </TouchableOpacity>
 );
 
@@ -92,10 +79,9 @@ interface CourseDetailModalProps {
   visible: boolean;
   onClose: () => void;
   course: Course | null;
-  theme: Theme;
 }
 
-const CourseDetailModal = ({ visible, onClose, course, theme }: CourseDetailModalProps) => {
+const CourseDetailModal = ({ visible, onClose, course }: CourseDetailModalProps) => {
   if (!course) return null;
 
   const handleSubscribe = async () => {
@@ -114,30 +100,30 @@ const CourseDetailModal = ({ visible, onClose, course, theme }: CourseDetailModa
 
   return (
     <Modal animationType="slide" visible={visible} onRequestClose={onClose}>
-      <SafeAreaView style={[styles.modalContainer, { backgroundColor: theme.background }]}>
+      <SafeAreaView style={styles.modalContainer}>
         <ScrollView>
-          <ModalHeader onClose={onClose} theme={theme} />
+          <ModalHeader onClose={onClose} />
 
           <Image source={course.imageUrl} style={styles.modalImage} />
 
           <View style={styles.modalContent}>
-            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>{course.title}</Text>
-            <Text style={[styles.modalAuthor, { color: theme.textSecondary }]}>Por: {course.author}</Text>
-            <Text style={[styles.modalDescription, { color: theme.textPrimary }]}>{course.description}</Text>
+            <Text style={styles.modalTitle}>{course.title}</Text>
+            <Text style={styles.modalAuthor}>Por: {course.author}</Text>
+            <Text style={styles.modalDescription}>{course.description}</Text>
 
-            <TouchableOpacity style={[styles.subscribeButton, { backgroundColor: theme.accent }]} onPress={handleSubscribe}>
+            <TouchableOpacity style={styles.subscribeButton} onPress={handleSubscribe}>
               <Text style={styles.subscribeButtonText}>Assinar</Text>
             </TouchableOpacity>
 
-            <Text style={[styles.commentsTitle, { color: theme.textPrimary, borderTopColor: theme.border }]}>Comentários</Text>
+            <Text style={styles.commentsTitle}>Comentários</Text>
 
             {course.comments.length === 0 ? (
-              <Text style={{ color: theme.textSecondary }}>Sem comentários ainda</Text>
+              <Text style={{ color: '#999' }}>Sem comentários ainda</Text>
             ) : (
               course.comments.map(comment => (
-                <View key={comment.id} style={[styles.commentContainer, { backgroundColor: theme.commentCard }]}>
-                  <Text style={[styles.commentUser, { color: theme.textPrimary }]}>{comment.user}</Text>
-                  <Text style={[styles.commentText, { color: theme.textSecondary }]}>{comment.text}</Text>
+                <View key={comment.id} style={styles.commentContainer}>
+                  <Text style={styles.commentUser}>{comment.user}</Text>
+                  <Text style={styles.commentText}>{comment.text}</Text>
                 </View>
               ))
             )}
@@ -152,47 +138,10 @@ const CursosScreen = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [darkMode, setDarkMode] = useState(false);
-  const isFocused = useIsFocused();
-
-  const theme: Theme = darkMode
-    ? {
-        background: '#000000',
-        card: '#1a1a1a',
-        textPrimary: '#FFFFFF',
-        textSecondary: '#AAAAAA',
-        accent: '#A78BFA',
-        border: '#333333',
-        commentCard: '#1a1a1a',
-      }
-    : {
-        background: '#E6E6E6',
-        card: '#FFFFFF',
-        textPrimary: '#111111',
-        textSecondary: '#4A4A4A',
-        accent: '#6D28D9',
-        border: '#CFCFCF',
-        commentCard: '#F3F3F3',
-      };
 
   useEffect(() => {
     fetchCourses();
   }, []);
-
-  useEffect(() => {
-    const loadTheme = async () => {
-      try {
-        const savedTheme = await AsyncStorage.getItem('tema');
-        setDarkMode(savedTheme === 'escuro');
-      } catch (error) {
-        console.log('Erro ao carregar tema:', error);
-      }
-    };
-
-    if (isFocused) {
-      loadTheme();
-    }
-  }, [isFocused]);
 
   const fetchCourses = async () => {
     try {
@@ -226,22 +175,21 @@ const CursosScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={styles.safeArea}>
       <FlatList
         data={courses}
         renderItem={({ item }) => (
-          <CourseCard item={item} onPressInfo={handleOpenModal} theme={theme} />
+          <CourseCard item={item} onPressInfo={handleOpenModal} />
         )}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContainer}
-        ListHeaderComponent={<Text style={[styles.pageTitle, { color: theme.textPrimary }]}>Cursos</Text>}
+        ListHeaderComponent={<Text style={styles.pageTitle}>Cursos</Text>}
       />
 
       <CourseDetailModal
         visible={isModalVisible}
         onClose={handleCloseModal}
         course={selectedCourse}
-        theme={theme}
       />
     </SafeAreaView>
   );
