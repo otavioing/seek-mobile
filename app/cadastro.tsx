@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Animated, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { CadastroTheme, getCadastroTheme } from '../src/theme/appTheme';
 
 const logoapptemaescuro = require('@/assets/images/logo_seek_letrabranca.png');
 const logoapptemaclaro = require('@/assets/images/logo_seek_letrapreta.png');
@@ -65,11 +66,10 @@ function FormEtapa2({
   return (
     <>
       <TextInput
-        style={[styles.input, tentouEnviar && !nome && styles.inputErro, !!nomeErro && styles.inputErro]}
+        style={[styles.input, { color: theme.inputText }, tentouEnviar && !nome && styles.inputErro, !!nomeErro && styles.inputErro]}
         placeholderTextColor={theme.placeholder}
         selectionColor={theme.selection}
         cursorColor={theme.selection}
-        color={theme.inputText}
         placeholder="Nome"
         value={nome}
         onChangeText={(value) => {
@@ -81,11 +81,10 @@ function FormEtapa2({
       />
       {!!nomeErro && <Text style={styles.errorText}>{nomeErro}</Text>}
       <TextInput
-        style={[styles.input, tentouEnviar && !email && styles.inputErro, !!emailErro && styles.inputErro]}
+        style={[styles.input, { color: theme.inputText }, tentouEnviar && !email && styles.inputErro, !!emailErro && styles.inputErro]}
         placeholderTextColor={theme.placeholder}
         selectionColor={theme.selection}
         cursorColor={theme.selection}
-        color={theme.inputText}
         placeholder="Email"
         value={email}
         onChangeText={(value) => {
@@ -107,11 +106,10 @@ function FormEtapa2({
         ]}
       >
         <TextInput
-          style={styles.inputFlex}
+          style={[styles.inputFlex, { color: theme.inputText }]}
           placeholderTextColor={theme.placeholder}
           selectionColor={theme.selection}
           cursorColor={theme.selection}
-          color={theme.inputText}
           placeholder="Senha"
           value={senha}
           onChangeText={setSenha}
@@ -132,11 +130,10 @@ function FormEtapa2({
         ]}
       >
         <TextInput
-          style={styles.inputFlex}
+          style={[styles.inputFlex, { color: theme.inputText }]}
           placeholderTextColor={theme.placeholder}
           selectionColor={theme.selection}
           cursorColor={theme.selection}
-          color={theme.inputText}
           placeholder="Confirmar senha"
           value={confirmarSenha}
           onChangeText={setConfirmarSenha}
@@ -217,33 +214,7 @@ export default function Cadastro() {
   const [step, setStep] = useState(1);
   const [darkMode, setDarkMode] = useState(false);
 
-  const theme = darkMode
-    ? {
-        background: '#0F0F0F',
-        textPrimary: '#FFFFFF',
-        divider: 'rgba(255,255,255,0.5)',
-        inputBackground: '#FFFFFF',
-        inputBorder: '#000000',
-        inputText: '#111111',
-        placeholder: '#7A7A7A',
-        selection: '#322BF0',
-        icon: '#999999',
-        cardBackground: '#FFFFFF',
-        link: '#2563EB',
-      }
-    : {
-        background: '#D9D9D9',
-        textPrimary: '#111111',
-        divider: '#A6A6A6',
-        inputBackground: '#FFFFFF',
-      inputBorder: '#000000',
-        inputText: '#111111',
-        placeholder: '#7A7A7A',
-        selection: '#322BF0',
-        icon: '#666666',
-        cardBackground: '#FFFFFF',
-        link: '#2563EB',
-      };
+  const theme: CadastroTheme = getCadastroTheme(darkMode);
 
   const dot1 = useState(new Animated.Value(1))[0];
   const dot2 = useState(new Animated.Value(0))[0];

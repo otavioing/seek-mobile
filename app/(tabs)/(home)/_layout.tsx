@@ -6,49 +6,16 @@ import { useRouter, withLayoutContext } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { AppState, AppStateStatus, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Path, Svg } from "react-native-svg";
+import { getHomeLayoutTheme, HomeLayoutTheme } from '../../../src/theme/appTheme';
 
 const { Navigator } = createMaterialTopTabNavigator();
 const TopTabs = withLayoutContext(Navigator);
-
-type Theme = {
-  background: string;
-  header: string;
-  iconButton: string;
-  icon: string;
-  tabBar: string;
-  tabActive: string;
-  tabInactive: string;
-  indicator: string;
-  path: string;
-};
 
 export default function HomeTopLayout() {
   const router = useRouter();
   const [darkMode, setDarkMode] = useState(false);
 
-  const theme: Theme = darkMode
-    ? {
-        background: '#0F0F0F',
-        header: '#0F0F0F',
-        iconButton: '#313131',
-        icon: '#FFFFFF',
-        tabBar: '#0F0F0F',
-        tabActive: '#FFFFFF',
-        tabInactive: '#888888',
-        indicator: '#FFFFFF',
-        path: '#FFFFFF',
-      }
-    : {
-        background: '#E6E6E6',
-        header: '#E6E6E6',
-        iconButton: '#D0D0D0',
-        icon: '#111111',
-        tabBar: '#E6E6E6',
-        tabActive: '#111111',
-        tabInactive: '#666666',
-        indicator: '#111111',
-        path: '#111111',
-      };
+  const theme: HomeLayoutTheme = getHomeLayoutTheme(darkMode);
 
   const loadTheme = async () => {
     try {

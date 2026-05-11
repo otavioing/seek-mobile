@@ -1,20 +1,21 @@
 import { api } from '@/src/services/api';
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
-  FlatList,
-  Image,
-  ImageSourcePropType,
-  Linking,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    FlatList,
+    Image,
+    ImageSourcePropType,
+    Linking,
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { CourseTheme, getCourseTheme } from '../../src/theme/appTheme';
 
 interface Comment {
   id: string;

@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link, router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Image, Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { LoginTheme, getLoginTheme } from '../src/theme/appTheme';
 
 const logoapptemaescuro = require('@/assets/images/logo_seek_letrabranca.png');
 const logoapptemaclaro = require('@/assets/images/logo_seek_letrapreta.png');
@@ -23,49 +24,7 @@ export default function Login() {
     const [isLoadingTheme, setIsLoadingTheme] = useState(true);
     const [loginError, setLoginError] = useState('');
 
-    const theme = darkMode
-        ? {
-            background: "#000000",
-            textPrimary: "#FFFFFF",
-            textSecondary: "#aaa",
-            inputBackground: "#ffffff",
-            inputBorder: "#000000",
-            inputText: "#111111",
-            button: "#322BF0",
-            buttonText: "#FFFFFF",
-            link: "#2563EB",
-            separator: "#b5b5b5",
-            modalOverlay: "rgba(0,0,0,0.6)",
-            modalBackground: "#0F0F0F",
-            modalBorder: "#1f2937",
-            modalText: "#FFFFFF",
-            modalTextSecondary: "#E5E7EB",
-            iconColor: "#666",
-            modalBackButton: "#1f2937",
-            modalCancelButton: "#374151",
-            modalBorderColor: "#6b7280",
-        }
-        : {
-            background: "#FAFAFA",
-            textPrimary: "#111111",
-            textSecondary: "#666",
-            inputBackground: "#ffffff",
-            inputBorder: "#cccccc",
-            inputText: "#111111",
-            button: "#322BF0",
-            buttonText: "#FFFFFF",
-            link: "#2563EB",
-            separator: "#999999",
-            modalOverlay: "rgba(0,0,0,0.4)",
-            modalBackground: "#f5f5f5",
-            modalBorder: "#e5e5e5",
-            modalText: "#111111",
-            modalTextSecondary: "#666",
-            iconColor: "#999",
-            modalBackButton: "#e0e0e0",
-            modalCancelButton: "#f0f0f0",
-            modalBorderColor: "#bdbdbd",
-        };
+    const theme: LoginTheme = getLoginTheme(darkMode);
 
     useEffect(() => {
         const loadTheme = async () => {

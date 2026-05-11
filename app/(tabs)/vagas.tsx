@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 // Importe o ícone para o botão "Voltar"
 import Icon from 'react-native-vector-icons/Ionicons';
+import { AppTheme, getAppTheme } from '../../src/theme/appTheme';
 
 // --- 1. Definição do Tipo de Dados ---
 interface Vaga {
@@ -27,18 +28,6 @@ interface Vaga {
   timestamp: string;
   description: string;
 }
-
-type Theme = {
-  background: string;
-  card: string;
-  textPrimary: string;
-  textSecondary: string;
-  textMuted: string;
-  link: string;
-  border: string;
-  imagePlaceholder: string;
-  modalBackground: string;
-};
 
 // --- 2. Dados Fictícios (Mock Data) ---
 // (Usei o 'require' para as imagens locais, como no seu perfil)
@@ -70,7 +59,7 @@ const VAGAS_DATA: Vaga[] = [
 ];
 
 // --- 3. Componente de Header do Modal (Reutilizado) ---
-const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: Theme }) => (
+const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: AppTheme }) => (
   <TouchableOpacity style={styles.modalGoBack} onPress={onClose}>
     <Icon name="arrow-back-outline" size={28} color={theme.textPrimary} />
     <Text style={[styles.modalGoBackText, { color: theme.textPrimary }]}>Voltar</Text>
@@ -81,7 +70,7 @@ const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: Theme }) 
 interface JobCardProps {
   item: Vaga;
   onPressInfo: (item: Vaga) => void; // Função para abrir o modal
-  theme: Theme;
+  theme: AppTheme;
 }
 
 const openApplicationLink = async () => {
@@ -133,7 +122,7 @@ interface JobDetailModalProps {
   visible: boolean;
   onClose: () => void;
   vaga: Vaga | null;
-  theme: Theme;
+  theme: AppTheme;
 }
 
 const JobDetailModal: React.FC<JobDetailModalProps> = ({ visible, onClose, vaga, theme }) => {
@@ -178,29 +167,7 @@ const TrabalhoScreen = () => {
   const [darkMode, setDarkMode] = useState(false);
   const isFocused = useIsFocused();
 
-  const theme: Theme = darkMode
-    ? {
-        background: '#000000',
-        card: '#1a1a1a',
-        textPrimary: '#FFFFFF',
-        textSecondary: '#CCCCCC',
-        textMuted: '#AAAAAA',
-        link: '#A78BFA',
-        border: '#333333',
-        imagePlaceholder: '#333333',
-        modalBackground: '#000000',
-      }
-    : {
-        background: '#E6E6E6',
-        card: '#FFFFFF',
-        textPrimary: '#111111',
-        textSecondary: '#333333',
-        textMuted: '#666666',
-        link: '#6D28D9',
-        border: '#D1D5DB',
-        imagePlaceholder: '#D1D5DB',
-        modalBackground: '#E6E6E6',
-      };
+  const theme = getAppTheme(darkMode);
 
   useEffect(() => {
     const loadTheme = async () => {

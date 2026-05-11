@@ -21,6 +21,7 @@ import {
     View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { FollowingTheme, getFollowingTheme } from '../../../src/theme/appTheme';
 
 // ---------------- TYPES ----------------
 
@@ -37,17 +38,6 @@ interface PostData {
   comments: Comment[];
 }
 
-type Theme = {
-  background: string;
-  card: string;
-  textPrimary: string;
-  textSecondary: string;
-  textMuted: string;
-  inputBg: string;
-  inputBorder: string;
-  statusBarIcon: string;
-};
-
 // ---------------- STORY MOCK (mantido) ----------------
 
 const followingStories = [
@@ -59,7 +49,7 @@ const { width } = Dimensions.get('window');
 
 // ---------------- COMPONENTS ----------------
 
-const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: Theme }) => (
+const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: FollowingTheme }) => (
   <TouchableOpacity style={styles.modalGoBack} onPress={onClose}>
     <Icon name="arrow-back-outline" size={28} color={theme.textPrimary} />
     <Text style={[styles.modalGoBackText, { color: theme.textPrimary }]}>Voltar</Text>
@@ -298,27 +288,7 @@ const SeguindoScreen = () => {
   const [darkMode, setDarkMode] = useState(false);
   const isFocused = useIsFocused();
 
-  const theme: Theme = darkMode
-    ? {
-        background: '#000000',
-        card: '#1a1a1a',
-        textPrimary: '#FFFFFF',
-        textSecondary: '#CCCCCC',
-        textMuted: '#888888',
-        inputBg: '#0f0f0f',
-        inputBorder: '#333333',
-        statusBarIcon: '#FFFFFF',
-      }
-    : {
-        background: '#E6E6E6',
-        card: '#FFFFFF',
-        textPrimary: '#111111',
-        textSecondary: '#444444',
-        textMuted: '#666666',
-        inputBg: '#FFFFFF',
-        inputBorder: '#C7C7C7',
-        statusBarIcon: '#111111',
-      };
+  const theme = getFollowingTheme(darkMode);
 
   useEffect(() => {
     if (isFocused) {

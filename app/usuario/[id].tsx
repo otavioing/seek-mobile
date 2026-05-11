@@ -19,22 +19,10 @@ import {
     View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { AppTheme, getAppTheme } from '../../src/theme/appTheme';
 
 const { width } = Dimensions.get('window');
 const photoSize = (width - 32 - 8) / 2;
-
-type Theme = {
-  background: string;
-  backgroundAlt: string;
-  textPrimary: string;
-  textSecondary: string;
-  textMuted: string;
-  border: string;
-  card: string;
-  buttonPrimary: string;
-  buttonSecondary: string;
-  statusBar: 'light-content' | 'dark-content';
-};
 
 const formatRelativeTime = (timestamp: number) => {
   const diff = Date.now() - timestamp;
@@ -47,7 +35,7 @@ const formatRelativeTime = (timestamp: number) => {
   return `${days}d atrás`;
 };
 
-const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: Theme }) => (
+const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: AppTheme }) => (
   <TouchableOpacity style={styles.modalGoBack} onPress={onClose}>
     <Icon name="arrow-back-outline" size={28} color={theme.textPrimary} />
     <Text style={[styles.modalGoBackText, { color: theme.textPrimary }]}>Voltar</Text>
@@ -58,7 +46,7 @@ interface PostDetailModalProps {
   visible: boolean;
   onClose: () => void;
   post: Post | null;
-  theme: Theme;
+  theme: AppTheme;
 }
 
 const PostDetailModal = ({ visible, onClose, post, theme }: PostDetailModalProps) => {
@@ -114,31 +102,7 @@ const UserProfileScreen = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const theme: Theme = darkMode
-    ? {
-        background: '#000000',
-        backgroundAlt: '#0F0F0F',
-        textPrimary: '#FFFFFF',
-        textSecondary: '#DDDDDD',
-        textMuted: '#888888',
-        border: '#333333',
-        card: '#1a1a1a',
-        buttonPrimary: '#007BFF',
-        buttonSecondary: '#4F46E5',
-        statusBar: 'light-content',
-      }
-    : {
-        background: '#E6E6E6',
-        backgroundAlt: '#F6F6F6',
-        textPrimary: '#111111',
-        textSecondary: '#333333',
-        textMuted: '#666666',
-        border: '#CFCFCF',
-        card: '#FFFFFF',
-        buttonPrimary: '#007BFF',
-        buttonSecondary: '#4F46E5',
-        statusBar: 'dark-content',
-      };
+  const theme = getAppTheme(darkMode);
 
   useEffect(() => {
     if (!userId) return;

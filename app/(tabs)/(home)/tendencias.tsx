@@ -6,22 +6,23 @@ import { useIsFocused } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Alert,
-  Dimensions,
-  Image,
-  ImageSourcePropType,
-  Keyboard,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
+    Alert,
+    Dimensions,
+    Image,
+    ImageSourcePropType,
+    Keyboard,
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
+import { TrendingTheme, getTrendingTheme } from '../../../src/theme/appTheme';
 
 /* ============================================================
    TYPES
@@ -40,17 +41,6 @@ interface Post {
   description?: string;
 }
 
-type Theme = {
-  background: string;
-  card: string;
-  textPrimary: string;
-  textSecondary: string;
-  textMuted: string;
-  border: string;
-  inputBg: string;
-  inputText: string;
-};
-
 /* ============================================================
    VARIÁVEIS
 ============================================================ */
@@ -61,7 +51,7 @@ const { width } = Dimensions.get("window");
    MODAL
 ============================================================ */
 
-const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: Theme }) => (
+const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: TrendingTheme }) => (
   <TouchableOpacity style={styles.modalGoBack} onPress={onClose}>
     <Icon name="arrow-back-outline" size={28} color={theme.textPrimary} />
     <Text style={[styles.modalGoBackText, { color: theme.textPrimary }]}>Voltar</Text>
@@ -72,7 +62,7 @@ interface PostDetailModalProps {
   visible: boolean;
   onClose: () => void;
   post: Post | null;
-  theme: Theme;
+  theme: TrendingTheme;
   onPressAuthor?: (post: Post) => void;
   onPressCommentAuthor?: (comment: Comment) => void;
 }
@@ -272,7 +262,7 @@ const AuthorInfo = ({
 }: {
   author: string;
   userImage: ImageSourcePropType;
-  theme: Theme;
+  theme: TrendingTheme;
   onPressAuthor: () => void;
 }) => (
   <View style={styles.authorInfo}>
@@ -325,28 +315,7 @@ const TendenciasScreen = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [darkMode, setDarkMode] = useState(false);
-
-  const theme: Theme = darkMode
-    ? {
-        background: '#000000',
-        card: '#1a1a1a',
-        textPrimary: '#FFFFFF',
-        textSecondary: '#DDDDDD',
-        textMuted: '#666666',
-        border: '#333333',
-        inputBg: '#f0f0f0',
-        inputText: '#000000',
-      }
-    : {
-        background: '#E6E6E6',
-        card: '#FFFFFF',
-        textPrimary: '#111111',
-        textSecondary: '#333333',
-        textMuted: '#666666',
-        border: '#CCCCCC',
-        inputBg: '#FFFFFF',
-        inputText: '#111111',
-      };
+  const theme = getTrendingTheme(darkMode);
 
   const inputRef = useRef<TextInput>(null);
   const params = useLocalSearchParams();
