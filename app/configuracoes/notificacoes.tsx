@@ -1,4 +1,4 @@
-import Breadcrumb from '@/components/Breadcrumb';
+// import Breadcrumb from '@/components/Breadcrumb';
 import { api } from '@/src/services/api';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -275,7 +275,7 @@ export default function Notificacoes() {
 						<Text style={[styles.backText, { color: theme.textPrimary }]}>Voltar</Text>
 					</TouchableOpacity>
 
-					<Breadcrumb
+					{/* <Breadcrumb
 						items={[
 							{ label: 'Menu', href: '/configuracoes/menuUser' },
 							{ label: 'Configurações', href: '/configuracoes/config' },
@@ -283,7 +283,7 @@ export default function Notificacoes() {
 						]}
 						textColor={theme.textSecondary}
 						containerStyle={{ marginBottom: 0, marginLeft: 8, flex: 1 }}
-					/>
+					/> */}
 				</View>
 
 				<Text style={[styles.title, { color: theme.textPrimary }]}>Notificações</Text>
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
 	backText: {
 		fontSize: 16,
 		marginLeft: 6,
-		fontWeight: '700',
+		// fontWeight: '700',
 	},
 	title: {
 		fontSize: 36,

@@ -1,4 +1,4 @@
-import Breadcrumb from '@/components/Breadcrumb';
+// import Breadcrumb from '@/components/Breadcrumb';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -176,14 +176,14 @@ export default function Mensagens() {
 						<Text style={[styles.backText, { color: theme.textPrimary }]}>Voltar</Text>
 					</TouchableOpacity>
 
-					<Breadcrumb
+					{/* <Breadcrumb
 						items={[
 							{ label: 'Menu', href: '/configuracoes/menuUser' },
 							{ label: 'Mensagens' },
 						]}
 						textColor={theme.textSecondary}
 						containerStyle={{ marginBottom: 0, marginLeft: 8, flex: 1 }}
-					/>
+					/> */}
 				</View>
 
 				<Text style={[styles.title, { color: theme.textPrimary }]}>Mensagens</Text>
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
 	},
 	container: {
 		flex: 1,
-		paddingHorizontal: 14,
+		paddingHorizontal: 16,
 		paddingTop: 8,
 	},
 	headerRow: {
@@ -273,10 +273,10 @@ const styles = StyleSheet.create({
 	backText: {
 		fontSize: 16,
 		marginLeft: 6,
-		fontWeight: '700',
+		// fontWeight: '700',
 	},
 	title: {
-		fontSize: 34,
+		fontSize: 36,
 		fontWeight: '700',
 		letterSpacing: -0.6,
 		marginBottom: 10,

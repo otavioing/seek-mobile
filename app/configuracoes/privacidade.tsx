@@ -1,4 +1,3 @@
-import Breadcrumb from "@/components/Breadcrumb";
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
@@ -28,10 +27,6 @@ export default function Privacidade() {
       const temaSalvo = await AsyncStorage.getItem("tema");
       const isDark = temaSalvo !== "claro";
       setDarkMode(isDark);
-
-      if (!temaSalvo) {
-        await AsyncStorage.setItem("tema", "escuro");
-      }
     } catch (error) {
       console.log("Erro ao carregar tema:", error);
     }
@@ -49,41 +44,29 @@ export default function Privacidade() {
 
   const theme = darkMode
     ? {
-        background: "#000000",
+        background: "#121212",
         textPrimary: "#FFFFFF",
         pillBackground: "#1F1F1F",
         dropdownBackground: "#111111",
       }
     : {
-        background: "#D9D9D9",
-        textPrimary: "#111111",
-        pillBackground: "#FFFFFF",
-        dropdownBackground: "#EFEFEF",
+        background: "#FFFFFF",
+        textPrimary: "#000000",
+        pillBackground: "#EFEFEF",
+        dropdownBackground: "#F5F5F5",
       };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}> 
-      <ScrollView
-        style={[styles.container, { backgroundColor: theme.background }]}
-        contentContainerStyle={styles.content}
-      >
-        <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back-outline" size={24} color={theme.textPrimary} style={styles.backIcon} />
-            <Text style={[styles.backText, { color: theme.textPrimary }]}>Voltar</Text>
-          </TouchableOpacity>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      {/* Botão Voltar alinhado ao padrão das outras telas */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={theme.textPrimary} />
+          <Text style={[styles.backText, { color: theme.textPrimary }]}>Voltar</Text>
+        </TouchableOpacity>
+      </View>
 
-          <Breadcrumb
-            items={[
-              { label: "Menu", href: "/configuracoes/menuUser" },
-              { label: "Configurações", href: "/configuracoes/config" },
-              { label: "Privacidade" },
-            ]}
-            textColor={theme.textPrimary}
-            containerStyle={{ marginBottom: 0, marginLeft: 8, flex: 1 }}
-          />
-        </View>
-
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <Text style={[styles.title, { color: theme.textPrimary }]}>Privacidade</Text>
 
         {/* Perfil */}
@@ -91,15 +74,13 @@ export default function Privacidade() {
           <Text style={[styles.label, { color: theme.textPrimary }]}>Perfil</Text>
           <TouchableOpacity
             style={[styles.pill, { backgroundColor: theme.pillBackground }]}
-            onPress={() =>
-              setPerfilVisibilidade((prev) => (prev === "Público" ? "Privado" : "Público"))
-            }
+            onPress={() => setPerfilVisibilidade((prev) => (prev === "Público" ? "Privado" : "Público"))}
           >
             <Text style={[styles.pillText, { color: theme.textPrimary }]}>{perfilVisibilidade}</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Quem pode ver meus posts */}
+        {/* Quem pode ver meus posts? */}
         <View style={styles.row}>
           <Text style={[styles.label, { color: theme.textPrimary }]}>Quem pode ver meus posts?</Text>
           <TouchableOpacity
@@ -159,7 +140,11 @@ export default function Privacidade() {
           onPress={() => setUsuariosBloqueadosAberto((prev) => !prev)}
         >
           <Text style={[styles.label, styles.boldLabel, { color: theme.textPrimary }]}>Usuários bloqueados</Text>
-          <Text style={[styles.chevron, { color: theme.textPrimary }]}>{usuariosBloqueadosAberto ? "˄" : "˅"}</Text>
+          <Ionicons 
+            name={usuariosBloqueadosAberto ? "chevron-up" : "chevron-down"} 
+            size={20} 
+            color={theme.textPrimary} 
+          />
         </TouchableOpacity>
         {usuariosBloqueadosAberto && (
           <View style={[styles.dropdown, { backgroundColor: theme.dropdownBackground }]}>
@@ -173,7 +158,11 @@ export default function Privacidade() {
           onPress={() => setPalavrasBloqueadasAberto((prev) => !prev)}
         >
           <Text style={[styles.label, styles.boldLabel, { color: theme.textPrimary }]}>Palavras bloqueadas</Text>
-          <Text style={[styles.chevron, { color: theme.textPrimary }]}>{palavrasBloqueadasAberto ? "˄" : "˅"}</Text>
+          <Ionicons 
+            name={palavrasBloqueadasAberto ? "chevron-up" : "chevron-down"} 
+            size={20} 
+            color={theme.textPrimary} 
+          />
         </TouchableOpacity>
         {palavrasBloqueadasAberto && (
           <View style={[styles.dropdown, { backgroundColor: theme.dropdownBackground }]}>
@@ -188,80 +177,67 @@ export default function Privacidade() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#000",
+  },
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 20,
+  },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  backText: {
+    fontSize: 18,
+    // fontWeight: "bold",
+    marginLeft: 8,
   },
   container: {
     flex: 1,
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 90, // espaço para a barra inferior
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 12,
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-  },
-  backIcon: {
-    marginRight: 0,
-  },
-  backText: {
-    fontSize: 16,
-    marginLeft: 6,
-    fontWeight: "700",
+    paddingTop: 20,
+    paddingBottom: 40,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "700",
-    marginTop: 8,
-    marginBottom: 32,
+    fontSize: 32,
+    fontWeight: "bold",
+    marginBottom: 30,
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 20,
+    marginBottom: 25,
   },
   label: {
-    fontSize: 15,
+    fontSize: 16,
+    flex: 1,
+    marginRight: 10,
   },
   boldLabel: {
     fontWeight: "600",
   },
   pill: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: "#1F1F1F",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
   pillText: {
-    fontSize: 13,
+    fontSize: 14,
+    fontWeight: "500",
   },
   dropdown: {
-    backgroundColor: "#111",
-    borderRadius: 8,
-    paddingVertical: 6,
-    marginBottom: 16,
-    marginLeft: 4,
+    borderRadius: 12,
+    paddingVertical: 8,
+    marginBottom: 20,
+    marginTop: -10,
   },
   dropdownItem: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
   },
   dropdownText: {
-    fontSize: 13,
-    paddingHorizontal: 10,
-  },
-  chevron: {
-    fontSize: 16,
+    fontSize: 14,
   },
 });
-

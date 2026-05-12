@@ -1,4 +1,4 @@
-import Breadcrumb from "@/components/Breadcrumb";
+// import Breadcrumb from "@/components/Breadcrumb";
 import { api } from '@/src/services/api';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -108,14 +108,14 @@ export default function menuUser() {
             <Text style={[styles.backText, { color: theme.textPrimary }]}>Voltar</Text>
           </TouchableOpacity>
 
-          <Breadcrumb
+          {/* <Breadcrumb
             items={[
               { label: "Perfil", href: "/(tabs)/perfil" },
               { label: "Menu" },
             ]}
             textColor={theme.textSecondary}
             containerStyle={{ marginBottom: 0, marginLeft: 8, flex: 1 }}
-          />
+          /> */}
         </View>
       </View>
 
@@ -281,14 +281,14 @@ const styles = StyleSheet.create({
   backText: {
     fontSize: 16,
     marginLeft: 6,
-    fontWeight: "700",
+    // fontWeight: "700",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
     paddingHorizontal: 16,
-    paddingTop: 18,
+    paddingTop: 20,
   },
   headerRow: {
     flexDirection: "row",
