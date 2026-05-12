@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BlurView } from 'expo-blur';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Easing, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Easing, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal, Pressable } from 'react-native';
 
 type ToggleSwitchProps = {
     value: boolean;
@@ -22,11 +23,11 @@ function ToggleSwitch({ value, onToggle, trackColor, thumbColor }: ToggleSwitchP
             easing: Easing.out(Easing.cubic),
             useNativeDriver: true,
         }).start();
-    }, [progress, value]);
+    }, [value]);
 
     const translateX = progress.interpolate({
         inputRange: [0, 1],
-        outputRange: [3, 27], // Ajuste para o tamanho do track de 52px
+        outputRange: [3, 27],
     });
 
     return (
@@ -47,47 +48,39 @@ function ToggleSwitch({ value, onToggle, trackColor, thumbColor }: ToggleSwitchP
 
 export default function Notificacoes() {
     const router = useRouter();
+    const [darkMode, setDarkMode] = useState(true);
+    const [modalVisible, setModalVisible] = useState(false);
+
+    // Estados dos Toggles Originais
     const [curtidas, setCurtidas] = useState(true);
     const [novosSeguidores, setNovosSeguidores] = useState(true);
     const [comentou, setComentou] = useState(false);
-    const [geral, setGeral] = useState(false);
     const [emailLogin, setEmailLogin] = useState(false);
-    const [darkMode, setDarkMode] = useState(true);
+    const [geral, setGeral] = useState(false);
 
     const carregarTema = useCallback(async () => {
         try {
             const temaSalvo = await AsyncStorage.getItem('tema');
             setDarkMode(temaSalvo !== 'claro');
-        } catch (error) {
-            console.log('Erro ao carregar tema:', error);
-        }
+        } catch (error) { console.log('Erro ao carregar tema:', error); }
     }, []);
 
-    useEffect(() => {
-        carregarTema();
-    }, [carregarTema]);
-
-    useFocusEffect(
-        useCallback(() => {
-            carregarTema();
-        }, [carregarTema])
-    );
+    useEffect(() => { carregarTema(); }, [carregarTema]);
+    useFocusEffect(useCallback(() => { carregarTema(); }, [carregarTema]));
 
     const theme = darkMode
-        ? {
-                background: '#121212', // Padronizado com sua tela Config
-                textPrimary: '#FFFFFF',
-                textSecondary: '#B0B0B0',
-                switchTrack: '#333333',
-                switchThumb: '#FFFFFF',
-            }
-        : {
-                background: '#F2F2F2',
-                textPrimary: '#111111',
-                textSecondary: '#5C5C5C',
-                switchTrack: '#BDBDBD',
-                switchThumb: '#111111',
-            };
+        ? { background: '#121212', textPrimary: '#FFFFFF', textSecondary: '#B0B0B0', switchTrack: '#333333', switchThumb: '#FFFFFF', card: '#1E1E1E', divider: '#333' }
+        : { background: '#F2F2F2', textPrimary: '#111111', textSecondary: '#5C5C5C', switchTrack: '#BDBDBD', switchThumb: '#111111', card: '#FFFFFF', divider: '#E0E0E0' };
+
+    const opcoesSilenciar = [
+        { label: 'Ligar notificações', icon: 'notifications-outline', color: '#3B82F6' },
+        { label: 'Silenciar por 10 minutos', icon: 'timer-outline' },
+        { label: 'Silenciar por 1 hora', icon: 'time-outline' },
+        { label: 'Silenciar por 12 horas', icon: 'sunny-outline' },
+        { label: 'Silenciar por 1 dia', icon: 'calendar-outline' },
+        { label: 'Silenciar por 1 semana', icon: 'briefcase-outline' },
+        { label: 'Até eu ligar novamente', icon: 'infinite-outline', color: '#EF4444' },
+    ];
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -102,125 +95,95 @@ export default function Notificacoes() {
                 <Text style={[styles.title, { color: theme.textPrimary }]}>Notificações</Text>
 
                 <View style={styles.list}>
-                    {/* Item Curtidas */}
+                    {/* Lista de Toggles Reais */}
                     <View style={styles.fbtContainer}>
                         <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Curtidas</Text>
-                        <ToggleSwitch
-                            value={curtidas}
-                            onToggle={() => setCurtidas((prev) => !prev)}
-                            trackColor={curtidas ? '#3B82F6' : theme.switchTrack}
-                            thumbColor={theme.switchThumb}
-                        />
+                        <ToggleSwitch value={curtidas} onToggle={() => setCurtidas(!curtidas)} trackColor={curtidas ? '#3B82F6' : theme.switchTrack} thumbColor={theme.switchThumb} />
                     </View>
 
-                    {/* Item Novos Seguidores */}
                     <View style={styles.fbtContainer}>
                         <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Novos Seguidores</Text>
-                        <ToggleSwitch
-                            value={novosSeguidores}
-                            onToggle={() => setNovosSeguidores((prev) => !prev)}
-                            trackColor={novosSeguidores ? '#3B82F6' : theme.switchTrack}
-                            thumbColor={theme.switchThumb}
-                        />
+                        <ToggleSwitch value={novosSeguidores} onToggle={() => setNovosSeguidores(!novosSeguidores)} trackColor={novosSeguidores ? '#3B82F6' : theme.switchTrack} thumbColor={theme.switchThumb} />
                     </View>
 
-                    {/* Item Comentou */}
                     <View style={styles.fbtContainer}>
                         <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Comentou</Text>
-                        <ToggleSwitch
-                            value={comentou}
-                            onToggle={() => setComentou((prev) => !prev)}
-                            trackColor={comentou ? '#3B82F6' : theme.switchTrack}
-                            thumbColor={theme.switchThumb}
-                        />
+                        <ToggleSwitch value={comentou} onToggle={() => setComentou(!comentou)} trackColor={comentou ? '#3B82F6' : theme.switchTrack} thumbColor={theme.switchThumb} />
                     </View>
 
-                    {/* Item Login */}
                     <View style={styles.fbtContainer}>
                         <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Receber e-mail no login</Text>
-                        <ToggleSwitch
-                            value={emailLogin}
-                            onToggle={() => setEmailLogin((prev) => !prev)}
-                            trackColor={emailLogin ? '#3B82F6' : theme.switchTrack}
-                            thumbColor={theme.switchThumb}
-                        />
-                    </View>
-                    
-                    {/* Item Geral */}
-                    <View style={styles.fbtContainer}>
-                        <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Ativar/desativar geral</Text>
-                        <ToggleSwitch
-                            value={geral}
-                            onToggle={() => setGeral((prev) => !prev)}
-                            trackColor={geral ? '#3B82F6' : theme.switchTrack}
-                            thumbColor={theme.switchThumb}
-                        />
+                        <ToggleSwitch value={emailLogin} onToggle={() => setEmailLogin(!emailLogin)} trackColor={emailLogin ? '#3B82F6' : theme.switchTrack} thumbColor={theme.switchThumb} />
                     </View>
 
-                    {/* Item Silenciar */}
-                    <TouchableOpacity activeOpacity={0.7} style={styles.fbtContainer}>
-                        <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Silenciar por um tempo</Text>
+
+                    {/* Botão do Modal */}
+                    <TouchableOpacity activeOpacity={0.7} style={styles.fbtContainer} onPress={() => setModalVisible(true)}>
+                        <Text style={[styles.textoFiltro, { color: theme.textPrimary, fontWeight: '700' }]}>Silenciar notificações</Text>
                         <Ionicons name="chevron-down" size={20} color={theme.textPrimary} />
                     </TouchableOpacity>
                 </View>
             </ScrollView>
+
+            {/* Modal Centralizado com Blur */}
+            <Modal visible={modalVisible} transparent animationType="fade">
+                <View style={styles.modalWrapper}>
+                    <Pressable style={StyleSheet.absoluteFill} onPress={() => setModalVisible(false)}>
+                        <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                        <View style={styles.overlay} />
+                    </Pressable>
+
+                    <View style={[styles.modalCard, { backgroundColor: theme.card }]}>
+                        <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Silenciar por...</Text>
+                        
+                        <View style={styles.optionsList}>
+                            {opcoesSilenciar.map((opt, index) => (
+                                <TouchableOpacity 
+                                    key={index} 
+                                    style={[styles.optionItem, { borderBottomColor: theme.divider, borderBottomWidth: index === opcoesSilenciar.length - 1 ? 0 : 1 }]}
+                                    onPress={() => setModalVisible(false)}
+                                >
+                                    <View style={styles.optionContent}>
+                                        <Ionicons name={opt.icon as any} size={22} color={opt.color || theme.textPrimary} />
+                                        <Text style={[styles.optionLabel, { color: opt.color || theme.textPrimary }]}>{opt.label}</Text>
+                                    </View>
+                                    <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+
+                        <TouchableOpacity style={styles.closeBtn} onPress={() => setModalVisible(false)}>
+                            <Text style={[styles.closeBtnText, { color: theme.textSecondary }]}>Cancelar</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    safeArea: {
-        flex: 1,
-    },
-    topBar: {
-        paddingTop: 20,
-        paddingHorizontal: 16,
-    },
-    backRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        paddingVertical: 6,
-    },
-    backText: {
-        fontSize: 16,
-        marginLeft: 6,
-        // fontWeight: "500",
-    },
-    content: {
-        paddingBottom: 90,
-    },
-    title: {
-        fontSize: 32,
-        fontWeight: "700",
-        paddingHorizontal: 16,
-        marginTop: 10,
-        marginBottom: 20,
-    },
-    list: {
-        width: '100%',
-    },
-    fbtContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingVertical: 18,
-        paddingHorizontal: 16,
-        width: "100%",
-    },
-    textoFiltro: {
-        fontSize: 16,
-        fontWeight: "500",
-        flex: 1,
-    },
-    switchTrack: {
-        width: 52,
-        height: 28,
-        borderRadius: 16,
-        justifyContent: 'center',
-    },
-    switchThumb: {
-        width: 22,
-        height: 22,
-        borderRadius: 11,
-    },
+    safeArea: { flex: 1 },
+    topBar: { paddingTop: 20, paddingHorizontal: 16 },
+    backRow: { flexDirection: "row", alignItems: "center", paddingVertical: 6 },
+    backText: { fontSize: 16, marginLeft: 6 },
+    content: { paddingBottom: 90 },
+    title: { fontSize: 32, fontWeight: "700", paddingHorizontal: 16, marginTop: 10, marginBottom: 20 },
+    list: { width: '100%' },
+    fbtContainer: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 18, paddingHorizontal: 16 },
+    textoFiltro: { fontSize: 16, fontWeight: "500", flex: 1 },
+    switchTrack: { width: 52, height: 28, borderRadius: 16, justifyContent: 'center' },
+    switchThumb: { width: 22, height: 22, borderRadius: 11 },
+    
+    // Modal Styles
+    modalWrapper: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
+    overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
+    modalCard: { width: '100%', borderRadius: 28, padding: 20, elevation: 20 },
+    modalTitle: { fontSize: 20, fontWeight: '700', marginBottom: 20, textAlign: 'center' },
+    optionsList: { width: '100%' },
+    optionItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 15 },
+    optionContent: { flexDirection: 'row', alignItems: 'center' },
+    optionLabel: { fontSize: 16, marginLeft: 12, fontWeight: '500' },
+    closeBtn: { marginTop: 15, padding: 10, alignItems: 'center' },
+    closeBtnText: { fontSize: 14, fontWeight: '600' }
 });

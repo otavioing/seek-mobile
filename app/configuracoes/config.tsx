@@ -18,7 +18,7 @@ export default function Config() {
   const router = useRouter();
   const [darkMode, setDarkMode] = useState(true);
   const [isLoadingTheme, setIsLoadingTheme] = useState(true);
-  const translateX = useRef(new Animated.Value(darkMode ? 42 : 2)).current;
+  const translateX = useRef(new Animated.Value(darkMode ? 44 : 2)).current;
 
   const theme = darkMode
     ? {
@@ -58,7 +58,7 @@ export default function Config() {
 
   useEffect(() => {
     Animated.timing(translateX, {
-      toValue: darkMode ? 42 : 2,
+      toValue: darkMode ? 44 : 2,
       duration: 200,
       useNativeDriver: true,
     }).start();
