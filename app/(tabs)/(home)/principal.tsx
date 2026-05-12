@@ -5,20 +5,20 @@ import { useIsFocused } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Dimensions,
-    Image,
-    ImageStyle,
-    Modal,
-    RefreshControl,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleProp,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Dimensions,
+  Image,
+  ImageStyle,
+  RefreshControl,
+  SafeAreaView,
+  ScrollView,
+  Share,
+  StatusBar,
+  StyleProp,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Post, usePosts } from '../../../src/context/PostsContext';
@@ -68,6 +68,7 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
   const [likesCount, setLikesCount] = useState(0);
   const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null);
   const [replyToUserName, setReplyToUserName] = useState('');
+  const [isCommentsVisible, setIsCommentsVisible] = useState(false);
 
   const { commentsByPost, fetchComments, addComment, addReply } = useComments();
 
@@ -100,9 +101,10 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
     setCommentText('');
     setReplyToCommentId(null);
     setReplyToUserName('');
+    setIsCommentsVisible(false);
   }, [post]);
 
-  if (!post) return null;
+  if (!post || !visible) return null;
 
   const imageSize = Dimensions.get('window').width;
   const comments = commentsByPost[post.id] || [];
@@ -197,8 +199,18 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
     );
   };
 
+  const handleShare = async () => {
+    try {
+      // ajuste se você tiver uma URL real do post; aqui fica fallback pro título/descrição
+      const message = [post?.title, post?.description].filter(Boolean).join("\n\n") || "Confira este post!";
+      await Share.share({ message });
+    } catch {
+      // no-op
+    }
+  };
+
   return (
-    <Modal animationType="slide" visible={visible} onRequestClose={onClose}>
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background, zIndex: 100 }]}>
       <SafeAreaView style={[styles.modalContainer, { backgroundColor: theme.background }]}>
         <ScrollView>
           <ModalHeader onClose={onClose} theme={theme} />
@@ -215,89 +227,106 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
             <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>{post.title}</Text>
           )}
 
-          <ScrollView
-            ref={pagerRef}
-            pagingEnabled
-            showsVerticalScrollIndicator={false}
-            onMomentumScrollEnd={(e) => {
-              const idx = Math.round(e.nativeEvent.contentOffset.y / imageSize);
-              setActiveIndex(idx);
-            }}
-          >
-            {post.images.map((img, idx) => {
-              const source = typeof img === 'string' ? { uri: img } : img;
+          <View style={styles.imageWrapper}>
+            <ScrollView
+              ref={pagerRef}
+              pagingEnabled
+              showsVerticalScrollIndicator={false}
+              onMomentumScrollEnd={(e) => {
+                const idx = Math.round(e.nativeEvent.contentOffset.y / imageSize);
+                setActiveIndex(idx);
+              }}
+            >
+              {post.images.map((img, idx) => {
+                const source = typeof img === 'string' ? { uri: img } : img;
 
-              return (
-                <Image
-                  key={idx}
-                  source={source}
-                  style={[styles.modalImage, { height: imageSize }]}
+                return (
+                  <Image
+                    key={idx}
+                    source={source}
+                    style={[styles.modalImage, { height: imageSize }]}
+                  />
+                );
+              })}
+            </ScrollView>
+
+            <View style={styles.modalToolbarOverlay}>
+              <TouchableOpacity style={styles.iconBtn} onPress={handleShare} activeOpacity={0.75}>
+                <Icon name="share-social-outline" size={22} color="#fff" />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.iconBtn} onPress={onClose} activeOpacity={0.75}>
+                <Icon name="settings-outline" size={24} color="#fff" />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.iconBtn} onPress={() => setIsCommentsVisible(true)} activeOpacity={0.75}>
+                <Icon name="chatbubble-outline" size={22} color="#fff" />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.iconBtn} onPress={handleToggleLike} activeOpacity={0.75}>
+                <Icon
+                  name={liked ? "thumbs-up" : "thumbs-up-outline"}
+                  size={22}
+                  color={liked ? "#2563EB" : "#fff"}
                 />
-              );
-            })}
-          </ScrollView>
+              </TouchableOpacity>
+            </View>
+          </View>
 
           <View style={styles.modalContent}>
             {post.description && (
               <Text style={[styles.modalDescription, { color: theme.textSecondary }]}>{post.description}</Text>
             )}
-
-            <View style={[styles.likesContainer, { borderBottomColor: theme.border }]}>
-              <TouchableOpacity
-                style={styles.likesButton}
-                onPress={handleToggleLike}
-                activeOpacity={0.7}
-              >
-                <Icon
-                  name={liked ? 'thumbs-up' : 'thumbs-up-outline'}
-                  size={22}
-                  color={liked ? '#2563EB' : theme.textPrimary}
-                />
-                <Text style={[styles.likesText, { color: theme.textPrimary }, liked && { color: '#2563EB' }]}>
-                  {likesCount} curtidas
-                </Text>
-              </TouchableOpacity>
-
-              <Text style={[styles.timeText, { color: theme.textMuted }]}>
-                {formatRelativeTime(post.postedAt)}
-              </Text>
-            </View>
-
-            <Text style={[styles.commentsTitle, { color: theme.textPrimary }]}>Comentários</Text>
-
-            {replyToCommentId && (
-              <View style={[styles.replyContextRow, { borderColor: theme.inputBorder }]}>
-                <Text style={[styles.replyContextText, { color: theme.textSecondary }]}>Respondendo {replyToUserName}</Text>
-                <TouchableOpacity onPress={handleCancelReply}>
-                  <Text style={styles.cancelReplyText}>Cancelar</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            <View style={styles.commentInputRow}>
-              <TextInput
-                style={[styles.commentInput, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.inputText }]}
-                placeholder={replyToCommentId ? 'Escreva sua resposta' : 'Escreva um comentário'}
-                placeholderTextColor={theme.textMuted}
-                value={commentText}
-                onChangeText={setCommentText}
-              />
-              <TouchableOpacity style={styles.commentSendButton} onPress={handleAddComment}>
-                <Text style={styles.commentSendText}>Enviar</Text>
-              </TouchableOpacity>
-            </View>
-
-            {comments.length > 0 ? (
-              comments.map((comment) => renderCommentItem(comment))
-            ) : (
-              <Text style={[styles.commentText, styles.commentEmpty, { color: theme.textSecondary }]}>
-                Nenhum comentário ainda.
-              </Text>
-            )}
+            {/* REMOVIDO: bloco antigo de likes/tempo/comentários dentro do modal principal */}
           </View>
         </ScrollView>
+
+        {/* COMMENTS FULLSCREEN MODAL */}
+        {isCommentsVisible && (
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background, zIndex: 101 }]}>
+            <SafeAreaView style={[styles.commentsModalContainer, { backgroundColor: theme.background }]}>
+              <View style={styles.commentsModalHeader}>
+                <TouchableOpacity onPress={() => setIsCommentsVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                  <Icon name="close" size={26} color={theme.textPrimary} />
+                </TouchableOpacity>
+                <Text style={[styles.commentsModalTitle, { color: theme.textPrimary }]}>Comentários</Text>
+                <View style={{ width: 26 }} />
+              </View>
+
+              <ScrollView contentContainerStyle={styles.commentsModalContent}>
+                {replyToCommentId && (
+                  <View style={[styles.replyContextRow, { borderColor: theme.inputBorder }]}>
+                    <Text style={[styles.replyContextText, { color: theme.textSecondary }]}>Respondendo {replyToUserName}</Text>
+                    <TouchableOpacity onPress={handleCancelReply}>
+                      <Text style={styles.cancelReplyText}>Cancelar</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                <View style={styles.commentInputRow}>
+                  <TextInput
+                    style={[styles.commentInput, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.inputText }]}
+                    placeholder={replyToCommentId ? 'Escreva sua resposta' : 'Escreva um comentário'}
+                    placeholderTextColor={theme.textMuted}
+                    value={commentText}
+                    onChangeText={setCommentText}
+                  />
+                  <TouchableOpacity style={styles.commentSendButton} onPress={handleAddComment}>
+                    <Text style={styles.commentSendText}>Enviar</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {comments.length > 0 ? (
+                  comments.map((comment) => renderCommentItem(comment))
+                ) : (
+                  <Text style={[styles.commentText, styles.commentEmpty, { color: theme.textSecondary }]}>Nenhum comentário ainda.</Text>
+                )}
+              </ScrollView>
+            </SafeAreaView>
+          </View>
+        )}
       </SafeAreaView>
-    </Modal>
+    </View>
   );
 };
 
@@ -765,5 +794,54 @@ const styles = StyleSheet.create({
     fontSize: 24,
     marginHorizontal: 10,
     color: 'white',
+  },
+  imageWrapper: {
+    position: 'relative',
+  },
+  modalToolbarOverlay: {
+    position: "absolute",
+    bottom: 12,
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: "rgba(0,0,0,0.75)",
+  },
+  iconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  toolbarButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  toolbarText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  commentsModalContainer: {
+    flex: 1,
+  },
+  commentsModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  commentsModalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  commentsModalContent: {
+    padding: 20,
+    paddingBottom: 40,
   },
 });

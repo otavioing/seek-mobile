@@ -6,20 +6,20 @@ import { useIsFocused } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    Dimensions,
-    Image,
-    ImageSourcePropType,
-    Keyboard,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+  Alert,
+  Dimensions,
+  Image,
+  ImageSourcePropType,
+  Keyboard,
+  SafeAreaView,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { TrendingTheme, getTrendingTheme } from '../../../src/theme/appTheme';
@@ -73,6 +73,7 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
   const [likesCount, setLikesCount] = useState(0);
   const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null);
   const [replyToUserName, setReplyToUserName] = useState('');
+  const [isCommentsVisible, setIsCommentsVisible] = useState(false);
   const { commentsByPost, fetchComments, addComment, addReply } = useComments();
 
   useEffect(() => {
@@ -98,10 +99,8 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
     setCommentText('');
     setReplyToCommentId(null);
     setReplyToUserName('');
+    setIsCommentsVisible(false);
   }, [post, visible]);
-
-  if (!post) return null;
-  const comments = commentsByPost[post.id] || [];
 
   const handleToggleLike = async () => {
     try {
@@ -153,6 +152,15 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
     setReplyToUserName('');
   };
 
+  const handleShare = async () => {
+    try {
+      const message = [post?.title, post?.description].filter(Boolean).join("\n\n") || "Confira este post!";
+      await Share.share({ message });
+    } catch {
+      // no-op
+    }
+  };
+
   const renderCommentItem = (comment: Comment, depth = 0): React.ReactNode => {
     const isReplyLevel = depth === 1;
 
@@ -188,8 +196,13 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
     );
   };
 
+  if (!post || !visible) return null;
+
+  const comments = commentsByPost[post.id] || [];
+  const postImages = Array.isArray((post as any).imageUrl) ? (post as any).imageUrl : [post.imageUrl];
+
   return (
-    <Modal animationType="slide" visible={visible} onRequestClose={onClose}>
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background, zIndex: 100 }]}>
       <SafeAreaView style={[styles.modalContainer, { backgroundColor: theme.background }]}>
         <ScrollView>
           <ModalHeader onClose={onClose} theme={theme} />
@@ -204,16 +217,38 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
           </TouchableOpacity>
 
           {post.title ? <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>{post.title}</Text> : null}
-          <Image source={post.imageUrl} style={styles.modalImage} />
 
-          <View style={styles.modalContent}>
-            <View style={[styles.likesContainer, { borderBottomColor: theme.border }]}>
-              <TouchableOpacity style={styles.likesButton} onPress={handleToggleLike} activeOpacity={0.7}>
-                <Icon name={liked ? 'thumbs-up' : 'thumbs-up-outline'} size={22} color={liked ? '#2563EB' : theme.textPrimary} />
-                <Text style={[styles.likesText, { color: theme.textPrimary }, liked && { color: '#2563EB' }]}>{likesCount} curtidas</Text>
+          <View style={styles.imageWrapper}>
+            <ScrollView pagingEnabled showsVerticalScrollIndicator={false}>
+              {postImages.map((img: any, idx: number) => (
+                <Image key={idx} source={img} style={styles.modalImage} />
+              ))}
+            </ScrollView>
+
+            <View style={styles.modalToolbarOverlay}>
+              <TouchableOpacity style={styles.iconBtn} onPress={handleShare} activeOpacity={0.75}>
+                <Icon name="share-social-outline" size={22} color="#fff" />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.iconBtn} onPress={onClose} activeOpacity={0.75}>
+                <Icon name="settings-outline" size={24} color="#fff" />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.iconBtn} onPress={() => setIsCommentsVisible(true)} activeOpacity={0.75}>
+                <Icon name="chatbubble-outline" size={22} color="#fff" />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.iconBtn} onPress={handleToggleLike} activeOpacity={0.75}>
+                <Icon
+                  name={liked ? "thumbs-up" : "thumbs-up-outline"}
+                  size={22}
+                  color={liked ? "#2563EB" : "#fff"}
+                />
               </TouchableOpacity>
             </View>
+          </View>
 
+          <View style={styles.modalContent}>
             <Text style={[styles.commentsTitle, { color: theme.textPrimary }]}>Comentários</Text>
 
             {replyToCommentId && (
@@ -245,8 +280,52 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
             )}
           </View>
         </ScrollView>
+
+        {isCommentsVisible && (
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background, zIndex: 101 }]}>
+            <SafeAreaView style={[styles.commentsModalContainer, { backgroundColor: theme.background }]}>
+              <View style={styles.commentsModalHeader}>
+                <TouchableOpacity onPress={() => setIsCommentsVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                  <Icon name="close" size={26} color={theme.textPrimary} />
+                </TouchableOpacity>
+                <Text style={[styles.commentsModalTitle, { color: theme.textPrimary }]}>Comentários</Text>
+                <View style={{ width: 26 }} />
+              </View>
+
+              <ScrollView contentContainerStyle={styles.commentsModalContent}>
+                {replyToCommentId && (
+                  <View style={[styles.replyContextRow, { borderColor: theme.border }]}>
+                    <Text style={[styles.replyContextText, { color: theme.textSecondary }]}>Respondendo {replyToUserName}</Text>
+                    <TouchableOpacity onPress={handleCancelReply}>
+                      <Text style={styles.cancelReplyText}>Cancelar</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                <View style={styles.commentInputRow}>
+                  <TextInput
+                    style={[styles.commentInput, { backgroundColor: theme.inputBg, color: theme.inputText }]}
+                    placeholder={replyToCommentId ? 'Escreva sua resposta' : 'Escreva um comentário'}
+                    placeholderTextColor={theme.textMuted}
+                    value={commentText}
+                    onChangeText={setCommentText}
+                  />
+                  <TouchableOpacity style={styles.commentSendButton} onPress={handleAddComment}>
+                    <Text style={styles.commentSendText}>Enviar</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {comments.length > 0 ? (
+                  comments.map((comment) => renderCommentItem(comment))
+                ) : (
+                  <Text style={[styles.commentText, { color: theme.textSecondary }]}>Nenhum comentário ainda.</Text>
+                )}
+              </ScrollView>
+            </SafeAreaView>
+          </View>
+        )}
       </SafeAreaView>
-    </Modal>
+    </View>
   );
 };
 
@@ -651,6 +730,38 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
 
+  imageWrapper: {
+    position: 'relative',
+  },
+  modalToolbarOverlay: {
+    position: "absolute",
+    bottom: 12,
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: "rgba(0,0,0,0.75)",
+  },
+  iconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  toolbarButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  toolbarText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
   modalContent: {
     padding: 20,
   },
@@ -777,6 +888,25 @@ const styles = StyleSheet.create({
     color: '#dc2626',
     fontWeight: '700',
     fontSize: 13,
+  },
+
+  commentsModalContainer: {
+    flex: 1,
+  },
+  commentsModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  commentsModalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  commentsModalContent: {
+    padding: 20,
+    paddingBottom: 40,
   },
 });
 

@@ -108,9 +108,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     paddingBottom: 5,
     flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: '#111216',
   },
   iconButton: {
+    marginTop: 12,
+    height: 32,
+    width: 32,
     borderRadius: 50,
     padding: 6,
   },
