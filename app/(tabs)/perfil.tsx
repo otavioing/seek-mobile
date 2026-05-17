@@ -2,7 +2,7 @@ import { api } from '@/src/services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
 import { router, useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Dimensions,
   Image,
@@ -39,8 +39,6 @@ const formatRelativeTime = (timestamp: number) => {
   const days = Math.floor(hours / 24);
   return `${days}d atrás`;
 };
-
-type TabName = 'Postagens' | 'Cursos';
 
 const { width } = Dimensions.get('window');
 const photoSize = (width - 32 - 8) / 2;
@@ -171,13 +169,16 @@ const ProfileScreen = () => {
 
   const { posts, removePost, refreshPosts } = usePosts();
   const routerHook = useRouter();
-  const [activeTab, setActiveTab] = useState<TabName>('Postagens');
 
   const [isPostModalVisible, setIsPostModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
   const [isProfileModalVisible, setIsProfileModalVisible] = useState(false);
   const [selectedProfileImage, setSelectedProfileImage] = useState<ImageSourcePropType | null>(null);
+  const [isEditProfileModalVisible, setIsEditProfileModalVisible] = useState(false);
+  const [editMenuPosition, setEditMenuPosition] = useState<{ top: number; left: number } | null>(null);
+  const [userNameTextWidth, setUserNameTextWidth] = useState<number>(0);
+  const userNameContainerRef = useRef<View>(null);
 
   const headerFallback = require('../../assets/images/perfil/denji.jpg');
   const [headerImageUrl, setHeaderImageUrl] = useState<any>(headerFallback);
@@ -240,12 +241,11 @@ const ProfileScreen = () => {
       }
     };
 
-
-
-
-    loadUser();
-    refreshPosts();
-  }, []);
+    if (isFocused) {
+      loadUser();
+      refreshPosts();
+    }
+  }, [isFocused, refreshPosts]);
 
   useEffect(() => {
     const loadTheme = async () => {
@@ -262,8 +262,19 @@ const ProfileScreen = () => {
     }
   }, [isFocused]);
 
+  const openEditMenu = () => {
+    userNameContainerRef.current?.measureInWindow((x, y, w, h) => {
+      const menuWidth = 220;
+      const left = Math.max(12, Math.min(x + w - menuWidth, width - menuWidth - 12));
+      const top = y + h + 6;
+      setEditMenuPosition({ top, left });
+      setIsEditProfileModalVisible(true);
+    });
+  };
+
   const fetchFollowers = async () => {
     if (!currentUserId) return;
+
 
     try {
       const { data } = await api.get(`/usuarios/lista-seguidores/${currentUserId}`);
@@ -309,13 +320,18 @@ const ProfileScreen = () => {
           comments: [],
         }));
         setRemoteUserPosts(mapped);
+
+        // Mantém a contagem de posts coerente mesmo se o endpoint de stats falhar/desatualizar
+        setUserStats((prev) => ({ ...prev, posts: mapped.length }));
       } catch (error) {
         console.log('Erro ao buscar posts do usuário:', error);
       }
     };
 
-    fetchUserPosts();
-  }, [currentUserId, userAvatar]);
+    if (isFocused) {
+      fetchUserPosts();
+    }
+  }, [isFocused, currentUserId, userAvatar]);
 
   const userPosts = useMemo(() => {
     // 1) Primeiro tenta pelo userId
@@ -332,6 +348,12 @@ const ProfileScreen = () => {
 
   const galleryPosts = useMemo(() => userPosts, [userPosts]);
   const displayPosts = remoteUserPosts.length ? remoteUserPosts : galleryPosts;
+  const postsCount = displayPosts.length;
+
+  useEffect(() => {
+    // Atualiza o contador mostrado no perfil com base no que estamos exibindo.
+    setUserStats((prev) => (prev.posts === postsCount ? prev : { ...prev, posts: postsCount }));
+  }, [postsCount]);
 
   const handleOpenPostModal = (post: Post) => {
     setSelectedPost(post);
@@ -359,43 +381,24 @@ const ProfileScreen = () => {
     setSelectedProfileImage(null);
   };
 
-  const renderTabButton = (tabName: TabName) => (
-    <TouchableOpacity style={styles.tabButton} onPress={() => setActiveTab(tabName)}>
-      <Text
-        style={[
-          styles.tabText,
-          { color: activeTab === tabName ? theme.tabActive : theme.tabInactive },
-          activeTab === tabName && styles.activeTabText,
-        ]}
-      >
-        {tabName}
-      </Text>
-      {activeTab === tabName && <View style={[styles.activeTabIndicator, { backgroundColor: theme.tabActive }]} />}
-    </TouchableOpacity>
-  );
+  const renderPostsContent = () => {
+    if (!displayPosts.length) {
+      return <Text style={[styles.placeholderText, { color: theme.textPrimary }]}>Você ainda não publicou nada.</Text>;
+    }
 
-  const renderTabContent = () => {
-    if (activeTab === 'Postagens') {
-      if (!displayPosts.length) {
-        return <Text style={[styles.placeholderText, { color: theme.textPrimary }]}>Você ainda não publicou nada.</Text>;
-      }
-      return (
-        <View style={styles.photoGrid}>
-          {displayPosts.map((post) => {
-            const cover = post.images[0];
-            if (!cover) return null;
-            return (
-              <TouchableOpacity key={post.id} onPress={() => handleOpenPostModal(post)}>
-                <Image source={cover} style={styles.photo} />
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      );
-    }
-    if (activeTab === 'Cursos') {
-      return <Text style={[styles.placeholderText, { color: theme.textPrimary }]}>Seção de Cursos</Text>;
-    }
+    return (
+      <View style={styles.photoGrid}>
+        {displayPosts.map((post) => {
+          const cover = post.images[0];
+          if (!cover) return null;
+          return (
+            <TouchableOpacity key={post.id} onPress={() => handleOpenPostModal(post)}>
+              <Image source={cover} style={styles.photo} />
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    );
   };
 
   return (
@@ -420,7 +423,30 @@ const ProfileScreen = () => {
         </View>
 
         <View style={styles.userInfoContainer}>
-          <Text style={[styles.userName, { color: theme.textPrimary }]}>{userName || 'Meu perfil'}</Text>
+          <View ref={userNameContainerRef} style={styles.userNameContainer}>
+            <Text
+              style={[styles.userName, { color: theme.textPrimary }]}
+              onLayout={(e) => setUserNameTextWidth(e.nativeEvent.layout.width)}
+            >
+              {userName || 'Meu perfil'}
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.editProfileButton,
+                {
+                  left: Math.min(
+                    width - 44,
+                    Math.max(12, (width - userNameTextWidth) / 2 + userNameTextWidth + 8),
+                  ),
+                },
+              ]}
+              activeOpacity={0.7}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              onPress={openEditMenu}
+            >
+              <Icon name="create-outline" size={24} color={theme.textPrimary} />
+            </TouchableOpacity>
+          </View>
           <Text style={[styles.userRole, { color: theme.textSecondary }]}>Empresa</Text>
           <Text style={[styles.userHandle, { color: theme.textMuted }]}>@seeking</Text>
           <View style={styles.statsContainer}>
@@ -440,7 +466,7 @@ const ProfileScreen = () => {
 
             <View style={styles.statItem}>
               <View style={styles.statRow}>
-                <Text style={[styles.statNumber, { color: theme.textPrimary }]}>{userStats.posts}</Text>
+                <Text style={[styles.statNumber, { color: theme.textPrimary }]}>{postsCount}</Text>
                 <Image
                   source={postsIcon}
                   style={styles.statIcon}
@@ -462,12 +488,8 @@ const ProfileScreen = () => {
             </View>
           </View>
         </View>
-        <View style={[styles.tabBar, { borderBottomColor: theme.border }]}>
-          {renderTabButton('Postagens')}
-          {renderTabButton('Cursos')}
-        </View>
         <View style={styles.contentContainer}>
-          {renderTabContent()}
+          {renderPostsContent()}
         </View>
       </ScrollView>
 
@@ -490,6 +512,51 @@ const ProfileScreen = () => {
         image={selectedProfileImage}
         theme={theme}
       />
+
+      <Modal
+        transparent
+        visible={isEditProfileModalVisible}
+        animationType="fade"
+        presentationStyle="overFullScreen"
+        onRequestClose={() => setIsEditProfileModalVisible(false)}
+      >
+        <View style={styles.profileMenuOverlay}>
+          <TouchableOpacity
+            style={styles.profileMenuBackdrop}
+            activeOpacity={1}
+            onPress={() => setIsEditProfileModalVisible(false)}
+          />
+
+          {editMenuPosition ? (
+            <View
+              style={[
+                styles.profileMenuBox,
+                {
+                  top: editMenuPosition.top,
+                  left: editMenuPosition.left,
+                  backgroundColor: theme.card,
+                },
+              ]}
+            >
+              <TouchableOpacity style={[styles.profileMenuItem, styles.profileMenuItemDisabled]} disabled>
+                <Text style={[styles.profileMenuText, { color: theme.textMuted }]}>Trocar foto de perfil</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.profileMenuItem, styles.profileMenuItemDisabled]} disabled>
+                <Text style={[styles.profileMenuText, { color: theme.textMuted }]}>Trocar banner</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.profileMenuItem, { borderBottomWidth: 0 }]}
+                onPress={() => {
+                  setIsEditProfileModalVisible(false);
+                  router.push('/configuracoes/informacoesuser');
+                }}
+              >
+                <Text style={[styles.profileMenuText, { color: theme.textPrimary }]}>Editar informações</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+        </View>
+      </Modal>
 
       <Modal
         visible={followersModalVisible}
@@ -576,8 +643,18 @@ const styles = StyleSheet.create({
   bannerTouchable: { width: '100%' },
   headerBackground: { width: '100%', height: 200 },
   profileImage: { width: 150, height: 150, borderRadius: 75, borderWidth: 4, borderColor: '#fff', marginTop: -75 },
-  userInfoContainer: { alignItems: 'center', marginTop: 16 },
+  userInfoContainer: { alignItems: 'center', marginTop: 16, width: '100%' },
+  userNameContainer: {
+    width: '100%',
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 34,
+    zIndex: 2,
+    elevation: 2,
+  },
   userName: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
+  editProfileButton: { position: 'absolute', top: 2, padding: 4 },
   userRole: { fontSize: 16, color: '#ccc', marginTop: 4 },
   userHandle: { fontSize: 14, color: '#888', marginTop: 4 },
   userIdDebug: { fontSize: 12, color: '#666', marginTop: 2 },
@@ -694,23 +771,6 @@ const styles = StyleSheet.create({
     color: '#ddd',
   },
 
-  optionsOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
-  },
-  optionsCard: {
-    backgroundColor: '#111',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  optionItem: {
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#222',
-  },
   optionText: {
     color: '#fff',
     fontSize: 16,
@@ -722,6 +782,35 @@ const styles = StyleSheet.create({
   optionDeleteText: {
     color: '#ff5c5c',
     fontWeight: 'bold',
+  },
+
+  profileMenuOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'transparent',
+  },
+  profileMenuBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  profileMenuBox: {
+    position: 'absolute',
+    width: 220,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#222',
+  },
+  profileMenuItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#222',
+  },
+  profileMenuItemDisabled: {
+    opacity: 0.7,
+  },
+  profileMenuText: {
+    fontSize: 14,
+    textAlign: 'left',
   },
   inlineOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -763,7 +852,7 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     alignItems: 'center',
     marginHorizontal: 20,
     marginTop: 15,
@@ -775,6 +864,7 @@ const styles = StyleSheet.create({
   statItem: {
     flex: 1,
     alignItems: 'center',
+    paddingHorizontal: 10,
   },
 
   statNumber: {

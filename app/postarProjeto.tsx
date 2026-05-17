@@ -1,9 +1,10 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { usePosts } from '../src/context/PostsContext';
 import { api } from '../src/services/api';
 
@@ -15,7 +16,7 @@ type Category = { id: string; name: string };
 
 export default function UploadScreen() {
   const router = useRouter();
-  const { addPost } = usePosts();
+  const { refreshPosts } = usePosts();
   const [drafts, setDrafts] = useState<DraftImage[]>([]);
   const [title, setTitle] = useState('');
   const [postDescription, setPostDescription] = useState('');
@@ -69,16 +70,41 @@ export default function UploadScreen() {
     setDrafts((prev) => prev.filter((d) => d.uri !== uri));
   };
 
+  const normalizeText = (text: string) => {
+    // Ajuda a manter acentos consistentes (NFC) quando enviar no multipart
+    try {
+      return (text || '').normalize('NFC');
+    } catch {
+      return text || '';
+    }
+  };
+
+  const toHashtag = (raw: string) => {
+    // Hashtag “segura”: sem espaços/acentos. Mantém letras/números/underscore.
+    const base = (raw || '').trim();
+    const noDiacritics = base
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+    return noDiacritics
+      .toLowerCase()
+      .replace(/\s+/g, '')
+      .replace(/[^a-z0-9_]/g, '');
+  };
+
   const ensureTagInDescription = (desc: string, tag: string) => {
-    const normalized = desc.toLowerCase();
-    const needle = `#${tag.toLowerCase()}`;
+    const safe = toHashtag(tag);
+    if (!safe) return desc;
+    const normalized = (desc || '').toLowerCase();
+    const needle = `#${safe}`;
     if (normalized.includes(needle)) return desc;
-    return `${desc.trim()} ${needle}`.trim();
+    return `${(desc || '').trim()} ${needle}`.trim();
   };
 
   const removeTagFromDescription = (desc: string, tag: string) => {
-    const regex = new RegExp(`(^|\\s)#${tag}(?=\\s|$)`, 'gi');
-    return desc.replace(regex, '').replace(/\s+/g, ' ').trim();
+    const safe = toHashtag(tag);
+    if (!safe) return desc;
+    const regex = new RegExp(`(^|\\s)#${safe}(?=\\s|$)`, 'gi');
+    return (desc || '').replace(regex, '').replace(/\s+/g, ' ').trim();
   };
 
   const toggleCategory = (category: Category) => {
@@ -117,12 +143,13 @@ export default function UploadScreen() {
         (acc, cat) => ensureTagInDescription(acc, cat.name),
         postDescription,
       );
+      const normalizedDescription = normalizeText(descWithTags);
 
       const formData = new FormData();
 
       formData.append('user_id', userId);
       formData.append('titulo', title.trim());
-      formData.append('legenda', descWithTags);
+      formData.append('legenda', normalizedDescription);
       formData.append('id_categoria', selectedCategories[0]?.id || '');
 
       drafts.forEach((img, index) => {
@@ -133,11 +160,11 @@ export default function UploadScreen() {
         } as any);
       });
 
-      await api.post('/posts', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      // Não setar manualmente multipart/form-data: o axios coloca o boundary corretamente.
+      await api.post('/posts', formData);
+
+      // Atualiza feed/contexto antes de voltar pro perfil
+      await refreshPosts();
 
       setDrafts([]);
       setTitle('');
@@ -147,8 +174,34 @@ export default function UploadScreen() {
       router.replace('/(tabs)/perfil');
 
     } catch (err) {
-      console.log(err);
-      Alert.alert('Erro ao publicar', 'Tente novamente.');
+      console.log('Erro ao publicar post:', err);
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        const data: any = err.response?.data;
+        const serverMsg =
+          (typeof data === 'string' && data.trim()) ||
+          data?.message ||
+          data?.mensagem ||
+          data?.error ||
+          data?.msg ||
+          data?.detail;
+
+        if (!err.response) {
+          Alert.alert('Sem conexão', 'Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.');
+        } else if (status === 401 || status === 403) {
+          Alert.alert('Sessão expirada', 'Faça login novamente para publicar.');
+        } else if (status === 413) {
+          Alert.alert('Imagem muito grande', 'Escolha uma imagem menor e tente novamente.');
+        } else if (status === 415) {
+          Alert.alert('Formato inválido', 'O formato da imagem não é suportado.');
+        } else if (serverMsg) {
+          Alert.alert('Erro ao publicar', String(serverMsg));
+        } else {
+          Alert.alert('Erro ao publicar', 'Não foi possível publicar agora. Tente novamente.');
+        }
+      } else {
+        Alert.alert('Erro ao publicar', 'Não foi possível publicar agora. Tente novamente.');
+      }
     } finally {
       setPublishing(false);
     }

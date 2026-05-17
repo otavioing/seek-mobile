@@ -95,14 +95,10 @@ export default function EditarPost() {
     try {
       setSaving(true);
       // Atualiza apenas a legenda. Se o backend tiver endpoint específico, ajuste aqui.
-      await fetch(`${process.env.EXPO_PUBLIC_API_URL || ''}/posts/${post.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          legenda: description,
-          titulo: title,
-          id_categoria: selectedCategory?.id || '',
-        }),
+      await api.put(`/posts/${post.id}`, {
+        legenda: description,
+        titulo: title,
+        id_categoria: selectedCategory?.id || '',
       });
       await refreshPosts();
       Alert.alert('Pronto', 'Post atualizado');

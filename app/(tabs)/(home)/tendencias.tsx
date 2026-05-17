@@ -6,20 +6,20 @@ import { useIsFocused } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Alert,
-  Dimensions,
-  Image,
-  ImageSourcePropType,
-  Keyboard,
-  SafeAreaView,
-  ScrollView,
-  Share,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View
+    Alert,
+    Dimensions,
+    Image,
+    ImageSourcePropType,
+    Keyboard,
+    SafeAreaView,
+    ScrollView,
+    Share,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { TrendingTheme, getTrendingTheme } from '../../../src/theme/appTheme';
@@ -69,11 +69,13 @@ interface PostDetailModalProps {
 
 const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPressCommentAuthor }: PostDetailModalProps) => {
   const [commentText, setCommentText] = useState('');
+  const commentInputRef = useRef<TextInput>(null);
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null);
   const [replyToUserName, setReplyToUserName] = useState('');
   const [isCommentsVisible, setIsCommentsVisible] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { commentsByPost, fetchComments, addComment, addReply } = useComments();
 
   useEffect(() => {
@@ -96,11 +98,31 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
 
     fetchComments(post.id);
     carregarLikes();
+    AsyncStorage.getItem('userId').then((id) => setCurrentUserId(id)).catch(() => setCurrentUserId(null));
     setCommentText('');
     setReplyToCommentId(null);
     setReplyToUserName('');
     setIsCommentsVisible(false);
   }, [post, visible]);
+
+  const sortCommentsForUser = (list: Comment[]) => {
+    if (!currentUserId) return list;
+
+    return list
+      .map((item, index) => ({ item, index }))
+      .sort((a, b) => {
+        const aMine = a.item.userId && String(a.item.userId) === String(currentUserId);
+        const bMine = b.item.userId && String(b.item.userId) === String(currentUserId);
+
+        if (aMine === bMine) return a.index - b.index;
+        return aMine ? -1 : 1;
+      })
+      .map(({ item }) => item);
+  };
+
+  const focusCommentInput = () => {
+    setTimeout(() => commentInputRef.current?.focus(), 150);
+  };
 
   const handleToggleLike = async () => {
     try {
@@ -145,6 +167,8 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
   const handleStartReply = (comment: Comment) => {
     setReplyToCommentId(comment.id);
     setReplyToUserName(comment.user);
+    setIsCommentsVisible(true);
+    focusCommentInput();
   };
 
   const handleCancelReply = () => {
@@ -189,7 +213,7 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
 
         {comment.replies.length > 0 && (
           <View style={styles.repliesContainer}>
-            {comment.replies.map((reply) => renderCommentItem(reply, depth + 1))}
+            {sortCommentsForUser(comment.replies).map((reply) => renderCommentItem(reply, depth + 1))}
           </View>
         )}
       </View>
@@ -228,10 +252,6 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
             <View style={styles.modalToolbarOverlay}>
               <TouchableOpacity style={styles.iconBtn} onPress={handleShare} activeOpacity={0.75}>
                 <Icon name="share-social-outline" size={22} color="#fff" />
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.iconBtn} onPress={onClose} activeOpacity={0.75}>
-                <Icon name="settings-outline" size={24} color="#fff" />
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.iconBtn} onPress={() => setIsCommentsVisible(true)} activeOpacity={0.75}>
@@ -274,7 +294,7 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
             </View>
 
             {comments.length > 0 ? (
-              comments.map((comment) => renderCommentItem(comment))
+              sortCommentsForUser(comments).map((comment) => renderCommentItem(comment))
             ) : (
               <Text style={[styles.commentText, { color: theme.textSecondary }]}>Nenhum comentário ainda.</Text>
             )}
@@ -304,6 +324,7 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
 
                 <View style={styles.commentInputRow}>
                   <TextInput
+                    ref={commentInputRef}
                     style={[styles.commentInput, { backgroundColor: theme.inputBg, color: theme.inputText }]}
                     placeholder={replyToCommentId ? 'Escreva sua resposta' : 'Escreva um comentário'}
                     placeholderTextColor={theme.textMuted}
@@ -316,7 +337,7 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
                 </View>
 
                 {comments.length > 0 ? (
-                  comments.map((comment) => renderCommentItem(comment))
+                  sortCommentsForUser(comments).map((comment) => renderCommentItem(comment))
                 ) : (
                   <Text style={[styles.commentText, { color: theme.textSecondary }]}>Nenhum comentário ainda.</Text>
                 )}
