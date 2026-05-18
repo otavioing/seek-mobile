@@ -3,15 +3,22 @@ import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Animated, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Animated, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { CadastroTheme, getCadastroTheme } from '../src/theme/appTheme';
 
 const logoapptemaescuro = require('@/assets/images/logo_seek_letrabranca.png');
 const logoapptemaclaro = require('@/assets/images/logo_seek_letrapreta.png');
 
-/* =========================
-   COMPONENTES (FORA)
-========================= */
+const temSenhaForte = (senha: string) => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(senha);
+
+const obterRequisitosSenha = (senha: string) => [
+  { id: 'tamanho', texto: 'Ter pelo menos 8 caracteres', atendido: senha.length >= 8 },
+  { id: 'maiuscula', texto: 'Ter uma letra maiúscula', atendido: /[A-Z]/.test(senha) },
+  { id: 'minuscula', texto: 'Ter uma letra minúscula', atendido: /[a-z]/.test(senha) },
+  { id: 'numero', texto: 'Ter um número', atendido: /\d/.test(senha) },
+  { id: 'especial', texto: 'Ter um caractere especial', atendido: /[^A-Za-z0-9]/.test(senha) },
+];
+
 
 function FormEtapa2({
   handleCadastro, nome, setNome, email, setEmail,
@@ -19,14 +26,21 @@ function FormEtapa2({
 }: any) {
   const [verSenha1, setVerSenha1] = useState(false);
   const [verSenha2, setVerSenha2] = useState(false);
+  const [senhaFocada, setSenhaFocada] = useState(false);
   const [tentouEnviar, setTentouEnviar] = useState(false); // Controla o feedback visual
   const [nomeErro, setNomeErro] = useState('');
   const [emailErro, setEmailErro] = useState('');
+  const [senhaFeedback, setSenhaFeedback] = useState('');
+  const senhaValida = temSenhaForte(senha);
+  const senhasCoincidem = senha === confirmarSenha;
+  const podeConfirmar = senhaValida && senhasCoincidem && !!nome.trim() && !!email.trim();
+  const requisitosSenha = obterRequisitosSenha(senha);
 
   const aoConfirmar = () => {
     setTentouEnviar(true);
     setNomeErro('');
     setEmailErro('');
+    setSenhaFeedback('');
 
     const nomeLimpo = nome.trim();
     const emailLimpo = email.trim();
@@ -59,8 +73,28 @@ function FormEtapa2({
     // Alertas específicos por campo
     if (!senha) return Alert.alert("Campo Vazio", "O campo 'Senha' é obrigatório.");
     if (!confirmarSenha) return Alert.alert("Campo Vazio", "A confirmação de senha é obrigatória.");
+    if (!senhaValida) {
+      const mensagemSenha = 'A senha deve ter pelo menos 8 caracteres, com uma letra maiúscula, uma minúscula, um número e um caractere especial.';
+      setSenhaFeedback(mensagemSenha);
+      return Alert.alert('Senha fraca', mensagemSenha);
+    }
+    if (!senhasCoincidem) {
+      setSenhaFeedback('As senhas precisam ser iguais.');
+      return Alert.alert('Erro', 'As senhas não coincidem.');
+    }
 
-    handleCadastro(); // Se passou, chama a função da API
+    const run = async () => {
+      const res = await handleCadastro();
+      if (!res || !res.success) {
+        if (res?.status === 409) {
+          setEmailErro(res.errorMessage || 'Este email já está cadastrado!');
+        } else {
+          Alert.alert('Erro no Cadastro', res?.errorMessage || 'Não foi possível conectar ao servidor.');
+        }
+      }
+    };
+ 
+    run();
   };
 
   return (
@@ -113,6 +147,8 @@ function FormEtapa2({
           placeholder="Senha"
           value={senha}
           onChangeText={setSenha}
+          onFocus={() => setSenhaFocada(true)}
+          onBlur={() => setSenhaFocada(false)}
           secureTextEntry={!verSenha1}
           textContentType="none" // Desativa sugestões nativas que bugam o layout
           autoComplete="off"
@@ -121,6 +157,22 @@ function FormEtapa2({
           <MaterialIcons name={verSenha1 ? "visibility" : "visibility-off"} size={22} color={theme.icon} />
         </TouchableOpacity>
       </View>
+      {senhaFocada ? (
+        <View style={styles.passwordChecklist}>
+          {requisitosSenha.map((requisito) => (
+            <View key={requisito.id} style={styles.passwordChecklistItem}>
+              <MaterialIcons
+                name={requisito.atendido ? 'check-circle' : 'radio-button-unchecked'}
+                size={18}
+                color={requisito.atendido ? '#16A34A' : theme.textPrimary}
+              />
+              <Text style={[styles.passwordChecklistText, { color: requisito.atendido ? '#16A34A' : theme.textPrimary }]}>
+                {requisito.texto}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
 
       <View
         style={[
@@ -145,8 +197,12 @@ function FormEtapa2({
           <MaterialIcons name={verSenha2 ? "visibility" : "visibility-off"} size={22} color={theme.icon} />
         </TouchableOpacity>
       </View>
+      {senhaFeedback ? <Text style={styles.errorText}>{senhaFeedback}</Text> : null}
 
-      <TouchableOpacity style={styles.button} onPress={aoConfirmar}>
+      <TouchableOpacity
+        style={[styles.button, !podeConfirmar && styles.buttonDisabled]}
+        onPress={aoConfirmar}
+      >
         <Text style={styles.buttonText}>Confirmar</Text>
       </TouchableOpacity>
     </>
@@ -240,12 +296,12 @@ export default function Cadastro() {
   }, []);
 
   const handleCadastro = async () => {
-    // Validações de regra de negócio
-    if (senha.length < 6) {
-      return Alert.alert("Senha Curta", "A senha deve ter pelo menos 6 caracteres.");
+    // Validações de regra de negócio (retornam objeto para o formulário tratar)
+    if (!temSenhaForte(senha)) {
+      return { success: false, status: 400, errorMessage: 'A senha deve ter pelo menos 8 caracteres, com uma letra maiúscula, uma minúscula, um número e um caractere especial.' };
     }
     if (senha !== confirmarSenha) {
-      return Alert.alert("Erro", "As senhas não coincidem.");
+      return { success: false, status: 400, errorMessage: 'As senhas não coincidem.' };
     }
 
     try {
@@ -258,11 +314,13 @@ export default function Cadastro() {
 
       Alert.alert("Sucesso!", "Sua conta Seek foi criada com sucesso.");
       router.replace('/principal');
+      return { success: true };
 
     } catch (error: any) {
-      const msg = error.response?.data?.message || "Não foi possível conectar ao servidor.";
-      Alert.alert("Erro no Cadastro", msg);
       console.error(error);
+      const status = error.response?.status;
+      const msg = error.response?.data?.message || "Não foi possível conectar ao servidor.";
+      return { success: false, status, errorMessage: msg };
     }
   };
 
@@ -272,7 +330,12 @@ export default function Cadastro() {
         <Image style={styles.logo} source={darkMode ? logoapptemaescuro : logoapptemaclaro} />
       </View>
 
-      <View style={styles.main}>
+      <ScrollView
+        style={styles.main}
+        contentContainerStyle={styles.mainContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.titleRow}>
           <View style={{ flexDirection: 'row' }}>
             <Animated.View style={dotStyle(dot1)} />
@@ -306,7 +369,7 @@ export default function Cadastro() {
             <Text style={[styles.footerLink, { color: theme.link }]} onPress={() => router.replace('/login')}>Entrar</Text>
           </Text>
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -332,10 +395,14 @@ const styles = StyleSheet.create({
   main: {
     flex: 6 / 10,
     width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
     paddingLeft: 30,
     paddingRight: 30,
+  },
+  mainContent: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingBottom: 24,
   },
   titleRow: {
     flexDirection: 'row-reverse',
@@ -423,12 +490,37 @@ const styles = StyleSheet.create({
     width: '100%',
     borderWidth: 1,
   },
+  passwordHint: {
+    width: '100%',
+    fontSize: 12,
+    marginTop: -6,
+    marginBottom: 10,
+    opacity: 0.85,
+  },
+  passwordChecklist: {
+    width: '100%',
+    marginTop: -4,
+    marginBottom: 12,
+    gap: 6,
+  },
+  passwordChecklistItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  passwordChecklistText: {
+    fontSize: 12,
+    flex: 1,
+  },
   inputFlex: {
     flex: 1,
     padding: 15,
   },
   eyeIcon: {
     paddingHorizontal: 15,
+  },
+  buttonDisabled: {
+    opacity: 0.5,
   },
 });
 
