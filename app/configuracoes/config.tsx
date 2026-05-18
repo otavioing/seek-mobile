@@ -188,19 +188,19 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "700",
     paddingHorizontal: 16,
-    marginTop: 10,
+    marginTop: 46,
   },
   divider: {
     width: "100%",
     borderBottomWidth: 2,
     marginTop: 20,
-    marginBottom: 10,
+    marginBottom: 1,
   },
   fbtContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10, // Espaçamento de 10px entre o SVG e a escrita
-    paddingVertical: 18,
+    gap: 12, // Espaçamento de 10px entre o SVG e a escrita
+    paddingTop: 18,
     paddingHorizontal: 16,
     width: "100%",
   },

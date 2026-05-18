@@ -88,9 +88,15 @@ function CustomTabBar() {
         {/* LOGO CENTRAL */}
         <TouchableOpacity
           onPress={() => setShowCreateMenu((prev) => !prev)}
-          style={showCreateMenu ? styles.logoWrapperOn : styles.logoWrapperOff}
+          style={styles.centerButton}
         >
-          <Image source={seekLogo} style={styles.logo} />
+          {showCreateMenu ? (
+            <View style={styles.logoWrapperOn}>
+              <Image source={seekLogo} style={styles.logo} />
+            </View>
+          ) : (
+            <Image source={seekLogo} style={styles.logo} />
+          )}
         </TouchableOpacity>
 
         {/* VAGAS */}
@@ -151,10 +157,11 @@ const styles = StyleSheet.create({
   createMenu: {
     position: "absolute",
     alignSelf: "center",
+
     backgroundColor: "#111216",
     borderRadius: 14,
     paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingHorizontal: 22,
     minWidth: 220,
     borderWidth: 1,
     borderColor: "#272B33",
@@ -184,7 +191,6 @@ const styles = StyleSheet.create({
   },
 
   item: {
-    padding: 10,
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
@@ -192,22 +198,27 @@ const styles = StyleSheet.create({
   },
 
   logoWrapperOff: {
-    width: 80,
-    height: 80,
+    width: 70,
+    height: 70,
     borderRadius: 40,
     justifyContent: "center",
     alignItems: "center",
     alignSelf: "center",
   },
+  centerButton: {
+    width: 70,           // Área de clique fixa, não empurra os vizinhos
+    height: 70,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 
   logoWrapperOn: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 50,           // Pouco maior que a foto (48), criando uma borda fina
+    height: 50,
+    borderRadius: 27,
     backgroundColor: "#fff",
     justifyContent: "center",
     alignItems: "center",
-    alignSelf: "center",
   },
 
   logo: {
