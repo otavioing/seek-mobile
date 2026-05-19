@@ -43,17 +43,6 @@ function CustomTabBar() {
               style={styles.createOption}
               onPress={() => {
                 setShowCreateMenu(false);
-                go("/postarCurso");
-              }}
-            >
-              <MaterialCommunityIcons name="school-outline" size={18} color="#fff" />
-              <Text style={styles.createOptionText}>Postar um curso</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.createOption}
-              onPress={() => {
-                setShowCreateMenu(false);
                 go("/postarVaga");
               }}
             >
@@ -77,12 +66,12 @@ function CustomTabBar() {
           />
         </TouchableOpacity>
 
-        {/* CURSOS */}
-        <TouchableOpacity onPress={() => go("/(tabs)/cursos")} style={styles.item}>
+        {/* MENSAGENS */}
+        <TouchableOpacity onPress={() => go("/(tabs)/mensagens")} style={styles.item}>
           <MaterialCommunityIcons
-            name={isActive("/cursos") ? "school" : "school-outline"}
+            name={isActive("/mensagens") ? "message-text" : "message-text-outline"}
             size={30}
-            color={isActive("/cursos") ? "#fff" : "#777"}
+            color={isActive("/mensagens") ? "#fff" : "#777"}
           />
         </TouchableOpacity>
 
@@ -102,6 +91,7 @@ function CustomTabBar() {
 
         {/* VAGAS */}
         <TouchableOpacity onPress={() => go("/(tabs)/vagas")} style={styles.item}>
+            <Tabs.Screen name="mensagens" />
           <MaterialIcons
             name={isActive("/vagas") ? "work" : "work-outline"}
             size={30}
@@ -136,8 +126,6 @@ export default function TabsLayout() {
         <Tabs.Screen name="(home)/principal" />
         <Tabs.Screen name="(home)/tendencias" />
         <Tabs.Screen name="(home)/seguindo" />
-
-        <Tabs.Screen name="cursos" />
         <Tabs.Screen name="vagas" />
         <Tabs.Screen name="perfil" />
       </Tabs>
