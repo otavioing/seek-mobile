@@ -1,4 +1,5 @@
 // app/(tabs)/_layout.tsx
+import { useStories } from "@/src/context/StoriesContext";
 import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { Tabs, useRouter, useSegments } from "expo-router";
 import React, { useState } from "react";
@@ -123,6 +124,7 @@ function CustomTabBar() {
 
 
 export default function TabsLayout() {
+  const { isStoryViewerOpen } = useStories();
   return (
     <View style={{ flex: 1 }}>
       <Tabs
@@ -140,7 +142,7 @@ export default function TabsLayout() {
         <Tabs.Screen name="perfil" />
       </Tabs>
 
-      <CustomTabBar />
+      {isStoryViewerOpen ? null : <CustomTabBar />}
     </View>
   );
 }

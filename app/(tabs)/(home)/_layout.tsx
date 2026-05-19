@@ -1,3 +1,4 @@
+import { useStories } from '@/src/context/StoriesContext';
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createMaterialTopTabNavigator, MaterialTopTabBar } from '@react-navigation/material-top-tabs';
@@ -14,6 +15,7 @@ const TopTabs = withLayoutContext(Navigator);
 export default function HomeTopLayout() {
   const router = useRouter();
   const [darkMode, setDarkMode] = useState(false);
+  const { isStoryViewerOpen } = useStories();
 
   const theme: HomeLayoutTheme = getHomeLayoutTheme(darkMode);
 
@@ -48,7 +50,7 @@ export default function HomeTopLayout() {
     <View style={{ flex: 1, backgroundColor: theme.background }}>
 
       <TopTabs
-        tabBar={(props) => (
+        tabBar={isStoryViewerOpen ? (() => null) : ((props) => (
           <View style={[styles.headerContainer, { backgroundColor: theme.header }]}>
             <TouchableOpacity
               onPress={() => router.push('/filtrarP')}
@@ -75,7 +77,7 @@ export default function HomeTopLayout() {
             </TouchableOpacity>
 
           </View>
-        )}
+        ))}
 
         screenOptions={{
           swipeEnabled: false,

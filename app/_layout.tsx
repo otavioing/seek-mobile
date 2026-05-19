@@ -10,6 +10,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { CommentsProvider } from '../src/context/CommentsContext'; // 👈 IMPORTANTE
 import { FollowedPostsProvider } from '../src/context/FollowedPostsContext';
 import { PostsProvider } from '../src/context/PostsContext';
+import { StoriesProvider } from '../src/context/StoriesContext';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -49,13 +50,15 @@ export default function RootLayout() {
       <PostsProvider>
         <FollowedPostsProvider>
           <CommentsProvider> {/* 👈 AQUI RESOLVE SEU ERRO */}
-            <SafeAreaProvider>
-              <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
-                <Stack screenOptions={{ headerShown: false }} />
-              </SafeAreaView>
+            <StoriesProvider>
+              <SafeAreaProvider>
+                <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
+                  <Stack screenOptions={{ headerShown: false }} />
+                </SafeAreaView>
 
-              <StatusBar style="light" />
-            </SafeAreaProvider>
+                <StatusBar style="light" />
+              </SafeAreaProvider>
+            </StoriesProvider>
           </CommentsProvider>
         </FollowedPostsProvider>
       </PostsProvider>

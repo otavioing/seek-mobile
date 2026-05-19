@@ -1,24 +1,28 @@
 import { Comment, useComments } from '@/src/context/CommentsContext';
 import { useFollowedPosts } from '@/src/context/FollowedPostsContext';
+import { Story, useStories } from '@/src/context/StoriesContext';
 import { api } from '@/src/services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    Alert,
-    Dimensions,
-    Image,
-    ImageStyle,
-    SafeAreaView,
-    ScrollView,
-    Share,
-    StyleProp,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  Image,
+  ImageStyle,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  Share,
+  StyleProp,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { FollowingTheme, getFollowingTheme } from '../../../src/theme/appTheme';
@@ -38,12 +42,9 @@ interface PostData {
   comments: Comment[];
 }
 
-// ---------------- STORY MOCK (mantido) ----------------
+const STORY_RING_PURPLE = '#6D28D9';
 
-const followingStories = [
-  { id: '1', user: 'user1', storyImage: require('@/assets/images/tabsHome/imgT1.jpg') },
-  { id: '2', user: 'user2', storyImage: require('@/assets/images/tabsHome/imgT2.jpg') },
-];
+const DEFAULT_AVATAR = require('@/assets/images/default-avatar.png');
 
 const { width } = Dimensions.get('window');
 
@@ -367,6 +368,119 @@ const AuthorAvatar: React.FC<AuthorAvatarProps> = ({ source, style, isStory }) =
   />
 );
 
+// ---------------- STORIES UI ----------------
+
+const MyStoryBubble = ({
+  avatarSource,
+  hasStory,
+  ringColor,
+  loading,
+  onPress,
+  onPressAdd,
+}: {
+  avatarSource: any;
+  hasStory: boolean;
+  ringColor: string;
+  loading: boolean;
+  onPress: () => void;
+  onPressAdd: () => void;
+}) => (
+  <TouchableOpacity style={styles.storyBubbleRoot} onPress={onPress} activeOpacity={0.85} disabled={loading}>
+    <View style={[styles.storyRing, { borderColor: hasStory ? ringColor : 'transparent' }]}>
+      <Image source={avatarSource} style={styles.storyAvatar} />
+      {!hasStory ? (
+        <>
+          <View pointerEvents="none" style={styles.storyAddOverlay} />
+          <View pointerEvents="none" style={styles.storyAddPlusWrapper}>
+            <Text style={styles.storyAddPlus}>+</Text>
+          </View>
+        </>
+      ) : null}
+
+      {loading ? (
+        <View pointerEvents="none" style={styles.storyLoadingOverlay}>
+          <ActivityIndicator color="#fff" />
+        </View>
+      ) : null}
+    </View>
+
+    {hasStory ? (
+      <TouchableOpacity style={styles.storyAddBadge} onPress={onPressAdd} activeOpacity={0.85}>
+        <Text style={styles.storyAddBadgePlus}>+</Text>
+      </TouchableOpacity>
+    ) : null}
+  </TouchableOpacity>
+);
+
+const StoryViewer = ({
+  story,
+  groupCount,
+  activeIndex,
+  avatarSource,
+  onClose,
+  onNext,
+  onPrev,
+}: {
+  story: Story;
+  groupCount: number;
+  activeIndex: number;
+  avatarSource: any;
+  onClose: () => void;
+  onNext: () => void;
+  onPrev: () => void;
+}) => {
+  return (
+    <View style={[StyleSheet.absoluteFill, styles.storyViewerRoot]}>
+      <SafeAreaView style={styles.storyViewerSafeArea}>
+        <View style={styles.storyViewerTopOverlay}>
+          <View style={styles.storySegmentsRow}>
+            {Array.from({ length: Math.max(0, groupCount) }).map((_, idx) => (
+              <View
+                key={idx}
+                style={[styles.storySegment, idx === activeIndex ? styles.storySegmentActive : null]}
+              />
+            ))}
+          </View>
+
+          <View style={styles.storyUserRow}>
+            <View style={styles.storyUserLeft}>
+              <Image source={avatarSource} style={styles.storyUserAvatar} />
+              <View>
+                <Text style={styles.storyUserName} numberOfLines={1}>{story.userName}</Text>
+              </View>
+            </View>
+
+            <TouchableOpacity onPress={onClose} style={styles.storyCloseBtn} activeOpacity={0.8}>
+              <Icon name="close" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.storyViewerBody}>
+          <Image source={{ uri: story.mediaUri }} style={styles.storyViewerMedia} resizeMode="contain" />
+
+          <Pressable style={styles.storyNavZone} onPress={onPrev} />
+          <Pressable style={styles.storyNavZoneRight} onPress={onNext} />
+        </View>
+
+        <View style={styles.storyReplyBar}>
+          <View style={styles.storyReplyInputWrap}>
+            <TextInput
+              placeholder="Responder..."
+              placeholderTextColor="#A3A3A3"
+              style={styles.storyReplyInput}
+            />
+          </View>
+
+          <TouchableOpacity style={styles.storyReplySendBtn} activeOpacity={0.8}>
+            <Icon name="send" size={18} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </View>
+  );
+};
+
 // ---------------- POST CARD ----------------
 
 const PostCard = ({ post }: { post: PostData }) => (
@@ -390,18 +504,207 @@ const PostCard = ({ post }: { post: PostData }) => (
 const SeguindoScreen = () => {
   const router = useRouter();
   const { posts, refreshPosts } = useFollowedPosts();
+  const { stories, myProfile, addStory, refreshStories, refreshMyProfile, isStorySeen, markStorySeen, setStoryViewerOpen } = useStories();
   const [isPostModalVisible, setIsPostModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState<PostData | null>(null);
   const [darkMode, setDarkMode] = useState(false);
   const isFocused = useIsFocused();
+  const [activeGroupIndex, setActiveGroupIndex] = useState<number | null>(null);
+  const [activeStoryIndex, setActiveStoryIndex] = useState<number>(0);
+  const [isPostingStory, setIsPostingStory] = useState(false);
+  const [myUserId, setMyUserId] = useState<string | null>(null);
 
   const theme = getFollowingTheme(darkMode);
 
   useEffect(() => {
     if (isFocused) {
       refreshPosts();
+      refreshStories();
+      refreshMyProfile();
+      AsyncStorage.getItem('userId').then((id) => setMyUserId(id)).catch(() => setMyUserId(null));
     }
   }, [isFocused]);
+
+  const effectiveMyUserId = myProfile.userId || myUserId || 'me';
+
+  type StoryGroup = {
+    userId: string;
+    userName: string;
+    userAvatarUri: string | null;
+    stories: Story[];
+    latest: Story;
+  };
+
+  const isMyStory = React.useCallback(
+    (s: Story) => s.userId === effectiveMyUserId || (effectiveMyUserId !== 'me' && s.userId === 'me'),
+    [effectiveMyUserId]
+  );
+
+  const myGroup = React.useMemo<StoryGroup | null>(() => {
+    const mine = stories
+      .filter(isMyStory)
+      .slice()
+      .sort((a, b) => a.createdAt - b.createdAt);
+    if (!mine.length) return null;
+    const latest = mine[mine.length - 1];
+    return {
+      userId: effectiveMyUserId,
+      userName: latest.userName || 'Você',
+      userAvatarUri: latest.userAvatarUri ?? myProfile.userAvatarUri ?? null,
+      stories: mine,
+      latest,
+    };
+  }, [stories, isMyStory, effectiveMyUserId, myProfile.userAvatarUri]);
+
+  const otherGroups = React.useMemo<StoryGroup[]>(() => {
+    const map = new Map<string, Story[]>();
+    for (const st of stories) {
+      if (isMyStory(st)) continue;
+      const arr = map.get(st.userId) || [];
+      arr.push(st);
+      map.set(st.userId, arr);
+    }
+
+    const groups: StoryGroup[] = Array.from(map.entries()).map(([userId, arr]) => {
+      const sorted = arr.slice().sort((a, b) => a.createdAt - b.createdAt);
+      const latest = sorted[sorted.length - 1];
+      return {
+        userId,
+        userName: latest.userName || 'Usuário',
+        userAvatarUri: latest.userAvatarUri ?? null,
+        stories: sorted,
+        latest,
+      };
+    });
+
+    groups.sort((a, b) => {
+      const aSeen = isStorySeen(a.latest);
+      const bSeen = isStorySeen(b.latest);
+      if (aSeen !== bSeen) return aSeen ? 1 : -1;
+      return b.latest.createdAt - a.latest.createdAt;
+    });
+
+    return groups;
+  }, [stories, isMyStory, isStorySeen]);
+
+  const storyGroups = React.useMemo<StoryGroup[]>(() => {
+    return (myGroup ? [myGroup, ...otherGroups] : [...otherGroups]);
+  }, [myGroup, otherGroups]);
+
+  const activeGroup = activeGroupIndex != null ? storyGroups[activeGroupIndex] : null;
+  const activeStory = activeGroup ? activeGroup.stories[activeStoryIndex] : null;
+
+  const myAvatarSource = myProfile.userAvatarUri ? { uri: myProfile.userAvatarUri } : DEFAULT_AVATAR;
+
+  useEffect(() => {
+    setStoryViewerOpen(activeGroupIndex != null);
+    return () => setStoryViewerOpen(false);
+  }, [activeGroupIndex, setStoryViewerOpen]);
+
+  useEffect(() => {
+    if (!isFocused) {
+      setStoryViewerOpen(false);
+    }
+  }, [isFocused, setStoryViewerOpen]);
+
+  useEffect(() => {
+    if (!activeStory) return;
+    markStorySeen(activeStory).catch(() => undefined);
+  }, [activeStory?.id]);
+
+  const openGroup = async (groupIdx: number) => {
+    const group = storyGroups[groupIdx];
+    if (!group) return;
+    const firstUnseen = group.stories.findIndex((s) => !isStorySeen(s));
+    const startIdx = firstUnseen >= 0 ? firstUnseen : 0;
+    await markStorySeen(group.stories[startIdx]);
+    setActiveGroupIndex(groupIdx);
+    setActiveStoryIndex(startIdx);
+  };
+
+  const handleCloseStory = () => {
+    setStoryViewerOpen(false);
+    setActiveGroupIndex(null);
+    setActiveStoryIndex(0);
+  };
+
+  const handleNextStory = async () => {
+    if (activeGroupIndex == null) return;
+    const group = storyGroups[activeGroupIndex];
+    if (!group) return;
+
+    const nextStoryIdx = activeStoryIndex + 1;
+    if (nextStoryIdx < group.stories.length) {
+      await markStorySeen(group.stories[nextStoryIdx]);
+      setActiveStoryIndex(nextStoryIdx);
+      return;
+    }
+
+    const nextGroupIdx = activeGroupIndex + 1;
+    if (nextGroupIdx >= storyGroups.length) {
+      handleCloseStory();
+      return;
+    }
+
+    const nextGroup = storyGroups[nextGroupIdx];
+    const firstUnseen = nextGroup.stories.findIndex((s) => !isStorySeen(s));
+    const startIdx = firstUnseen >= 0 ? firstUnseen : 0;
+    await markStorySeen(nextGroup.stories[startIdx]);
+    setActiveGroupIndex(nextGroupIdx);
+    setActiveStoryIndex(startIdx);
+  };
+
+  const handlePrevStory = async () => {
+    if (activeGroupIndex == null) return;
+    const group = storyGroups[activeGroupIndex];
+    if (!group) return;
+
+    const prevStoryIdx = activeStoryIndex - 1;
+    if (prevStoryIdx >= 0) {
+      await markStorySeen(group.stories[prevStoryIdx]);
+      setActiveStoryIndex(prevStoryIdx);
+      return;
+    }
+
+    const prevGroupIdx = activeGroupIndex - 1;
+    if (prevGroupIdx < 0) return;
+    const prevGroup = storyGroups[prevGroupIdx];
+    const lastIdx = Math.max(0, prevGroup.stories.length - 1);
+    await markStorySeen(prevGroup.stories[lastIdx]);
+    setActiveGroupIndex(prevGroupIdx);
+    setActiveStoryIndex(lastIdx);
+  };
+
+  const handleAddStory = async () => {
+    try {
+      setIsPostingStory(true);
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert('Permissão necessária', 'Permita acesso à galeria para postar um story.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.85,
+      });
+
+      if (result.canceled) return;
+      const uri = result.assets?.[0]?.uri;
+      if (!uri) {
+        Alert.alert('Erro', 'Não consegui ler a imagem selecionada.');
+        return;
+      }
+
+      const resultUpload = await addStory(uri);
+      void resultUpload;
+      Alert.alert('Story', 'Story atualizado!');
+    } catch {
+      Alert.alert('Erro', 'Não foi possível postar o story agora.');
+    } finally {
+      setIsPostingStory(false);
+    }
+  };
 
   useEffect(() => {
     const loadTheme = async () => {
@@ -458,11 +761,34 @@ const SeguindoScreen = () => {
         {/* STORIES */}
         <View style={styles.storiesContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {followingStories.map((story) => (
-              <View key={story.id} style={styles.story}>
-                <AuthorAvatar source={story.storyImage} isStory />
-              </View>
-            ))}
+            <View style={styles.story}>
+              <MyStoryBubble
+                avatarSource={myAvatarSource}
+                hasStory={Boolean(myGroup)}
+                ringColor={myGroup ? (isStorySeen(myGroup.latest) ? theme.inputBorder : STORY_RING_PURPLE) : STORY_RING_PURPLE}
+                loading={isPostingStory}
+                onPress={() => (myGroup ? openGroup(0) : handleAddStory())}
+                onPressAdd={handleAddStory}
+              />
+            </View>
+
+            {storyGroups.slice(myGroup ? 1 : 0).map((group, idx) => {
+              const avatarSource = group.userAvatarUri ? { uri: group.userAvatarUri } : DEFAULT_AVATAR;
+              const seen = isStorySeen(group.latest);
+              const ringColor = seen ? theme.inputBorder : STORY_RING_PURPLE;
+              return (
+                <TouchableOpacity
+                  key={group.userId}
+                  style={styles.story}
+                  onPress={() => openGroup((myGroup ? 1 : 0) + idx)}
+                  activeOpacity={0.85}
+                >
+                  <View style={[styles.storyRing, { borderColor: ringColor }]}>
+                    <AuthorAvatar source={avatarSource} isStory />
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </View>
 
@@ -509,6 +835,18 @@ const SeguindoScreen = () => {
         onPressAuthor={handleOpenAuthorProfile}
         onPressCommentAuthor={handleOpenCommentAuthorProfile}
       />
+
+      {activeGroupIndex != null && activeStory ? (
+        <StoryViewer
+          story={activeStory}
+          groupCount={activeGroup ? activeGroup.stories.length : 0}
+          activeIndex={activeStoryIndex}
+          avatarSource={activeStory.userAvatarUri ? { uri: activeStory.userAvatarUri } : DEFAULT_AVATAR}
+          onClose={handleCloseStory}
+          onNext={handleNextStory}
+          onPrev={handlePrevStory}
+        />
+      ) : null}
     </View>
   );
 };
@@ -522,9 +860,184 @@ const styles = StyleSheet.create({
   storiesContainer: { padding: 12 },
   story: { marginRight: 16 },
 
+  storyAddButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    overflow: 'hidden',
+  },
+  storyBubbleRoot: {
+    width: 70,
+    height: 70,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  storyAddOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#000',
+    opacity: 0.35,
+  },
+  storyAddPlusWrapper: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  storyAddPlus: {
+    color: '#fff',
+    fontSize: 36,
+    fontWeight: '900',
+    lineHeight: 40,
+  },
+
+  storyLoadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  storyAddBadge: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: STORY_RING_PURPLE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#000',
+  },
+  storyAddBadgePlus: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '900',
+    marginTop: -1,
+  },
+
   avatar: { width: 40, height: 40, borderRadius: 20 },
   storyAvatar: { width: 64, height: 64, borderRadius: 32 },
 
+  storyRing: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    borderWidth: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  storyViewerRoot: {
+    backgroundColor: '#000',
+    zIndex: 200,
+  },
+  storyViewerSafeArea: {
+    flex: 1,
+  },
+  storyViewerTopOverlay: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 10,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  storySegmentsRow: {
+    flexDirection: 'row',
+    gap: 4,
+    marginBottom: 10,
+  },
+  storySegment: {
+    flex: 1,
+    height: 2,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+  },
+  storySegmentActive: {
+    backgroundColor: '#fff',
+  },
+  storyUserRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  storyUserLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flexShrink: 1,
+  },
+  storyUserAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+  },
+  storyUserName: {
+    color: '#fff',
+    fontWeight: '800',
+    maxWidth: 220,
+  },
+  storyCloseBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  storyViewerBody: {
+    flex: 1,
+    position: 'relative',
+  },
+  storyNavZone: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: '50%',
+    zIndex: 3,
+  },
+  storyNavZoneRight: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: '50%',
+    zIndex: 3,
+  },
+  storyViewerMedia: {
+    width: '100%',
+    height: '100%',
+  },
+
+  storyReplyBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  storyReplyInputWrap: {
+    flex: 1,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.35)',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  storyReplyInput: {
+    color: '#fff',
+    padding: 0,
+    margin: 0,
+  },
+  storyReplySendBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   feedContainer: { padding: 16 },
 
   cardContainer: {
