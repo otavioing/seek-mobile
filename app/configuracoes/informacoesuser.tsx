@@ -1,24 +1,26 @@
+import { api } from '@/src/services/api';
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Slider from '@react-native-community/slider';
 import { useFocusEffect } from "@react-navigation/native";
+import { BlurView } from "expo-blur";
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Alert,
+  Animated,
+  Dimensions,
+  Modal,
+  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  Modal,
-  Animated,
-  Dimensions,
-  Pressable
+  View
 } from "react-native";
-import * as ImagePicker from 'expo-image-picker';
-import { BlurView } from "expo-blur";
-import Slider from '@react-native-community/slider';
 
 const { width } = Dimensions.get('window');
 
@@ -33,11 +35,14 @@ export default function InformacoesUser() {
   // Estados de Imagem
   const [perfilImage, setPerfilImage] = useState<string | null>(null);
   const [bannerImage, setBannerImage] = useState<string | null>(null);
+  const [perfilChanged, setPerfilChanged] = useState(false);
+  const [bannerChanged, setBannerChanged] = useState(false);
   const [editingTarget, setEditingTarget] = useState<'perfil' | 'banner' | null>(null);
 
   // Modais
   const [showOptions, setShowOptions] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Estados de Transformação
   const [rotation, setRotation] = useState(0);
@@ -52,7 +57,118 @@ export default function InformacoesUser() {
     } catch (error) { console.log(error); }
   }, []);
 
+  const carregarUsuario = useCallback(async () => {
+    try {
+      const userId = await AsyncStorage.getItem("userId");
+      if (!userId) return;
+
+      const { data } = await api.get(`/usuarios/basico/${userId}`);
+
+      setNomeUsuario(data?.nome ?? data?.nome_usuario ?? "");
+      setUsername(data?.nome_de_usuario ?? data?.username ?? data?.usuario ?? data?.login ?? "");
+      setBio(data?.descricao ?? data?.bio ?? data?.biografia ?? "");
+
+      if (data?.foto_perfil ?? data?.foto) {
+        setPerfilImage(data.foto_perfil ?? data.foto);
+      }
+
+      if (data?.banner ?? data?.foto_banner) {
+        setBannerImage(data.banner ?? data.foto_banner);
+      }
+    } catch (error) {
+      console.log("Erro ao carregar informações do usuário:", error);
+    }
+  }, []);
+
+  const handleConfirmar = useCallback(async () => {
+    try {
+      setIsSaving(true);
+
+      const userId = await AsyncStorage.getItem("userId");
+      if (!userId) {
+        Alert.alert("Atenção", "Usuário não encontrado.");
+        return;
+      }
+
+      // Construir FormData para envio multipart (texto + arquivos)
+      const formData = new FormData();
+      formData.append('nome', nomeUsuario ?? '');
+      formData.append('nome_de_usuario', username ?? '');
+      formData.append('descricao', bio ?? '');
+
+      // Converter URI para Blob e anexar ao FormData (compatível Android/iOS)
+      const makeFileAndAppend = async (field: string, uri: string, fallbackName: string) => {
+        try {
+          const name = uri.split('/').pop() || fallbackName;
+          const match = /\.(\w+)$/.exec(name);
+          const ext = match ? match[1].toLowerCase() : 'jpg';
+          const type = ext === 'png' ? 'image/png' : 'image/jpeg';
+
+          // Usar fetch para obter Blob a partir do URI (funciona para file:// e content:// em RN/Expo)
+          const fetched = await fetch(uri);
+          const blob = await fetched.blob();
+
+          // Em React Native, append(name, blob, filename) funciona para enviar arquivos
+          formData.append(field, blob as any, name);
+        } catch (err) {
+          console.log('Erro ao preparar arquivo para upload:', err);
+          throw err;
+        }
+      };
+
+      if (perfilChanged && perfilImage) {
+        await makeFileAndAppend('foto', perfilImage, `perfil_${userId}.jpg`);
+      }
+
+      if (bannerChanged && bannerImage) {
+        await makeFileAndAppend('banner', bannerImage, `banner_${userId}.jpg`);
+      }
+
+      // Se houver arquivos, usar fetch para enviar FormData (axios pode serializar indevidamente como urlencoded)
+      let responseData: any = null;
+      if (perfilChanged || bannerChanged) {
+        const token = await AsyncStorage.getItem('token');
+        const url = `${(api as any).defaults.baseURL}/usuarios/${userId}`;
+
+        const fetchResponse = await fetch(url, {
+          method: 'PUT',
+          headers: {
+            // Não setar Content-Type — deixe o runtime definir a boundary
+            Authorization: token ? `Bearer ${token}` : undefined,
+          } as any,
+          body: formData,
+        });
+
+        if (!fetchResponse.ok) {
+          const text = await fetchResponse.text().catch(() => null);
+          throw new Error(`Upload failed: ${fetchResponse.status} ${text}`);
+        }
+
+        responseData = await fetchResponse.json().catch(() => null);
+        console.log('Upload response (fetch):', responseData);
+      } else {
+        // Sem arquivos, usar o axios normal com JSON
+        const jsonBody = { nome: nomeUsuario, nome_de_usuario: username, descricao: bio };
+        const resp = await api.put(`/usuarios/${userId}`, jsonBody);
+        responseData = resp.data;
+        console.log('Update response (axios):', responseData);
+      }
+
+      Alert.alert("Sucesso", "Informações atualizadas com sucesso.");
+      await carregarUsuario();
+      // Resetar flags de alteração de imagem após sucesso
+      setPerfilChanged(false);
+      setBannerChanged(false);
+    } catch (error) {
+        console.log("Erro ao salvar informações do usuário:", error, (error as any)?.response, (error as any)?.request, (error as any)?.message);
+      Alert.alert("Erro", "Não foi possível salvar as informações.");
+    } finally {
+      setIsSaving(false);
+    }
+  }, [nomeUsuario, username, bio, carregarUsuario]);
+
   useEffect(() => { carregarTema(); }, [carregarTema]);
+  useEffect(() => { carregarUsuario(); }, [carregarUsuario]);
   useFocusEffect(useCallback(() => { carregarTema(); }, [carregarTema]));
 
   // FUNÇÃO PARA RESETAR TUDO ANTES DE ABRIR O EDITOR
@@ -75,16 +191,33 @@ export default function InformacoesUser() {
   };
 
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: false,
-      quality: 1,
-    });
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (permission.status !== 'granted') {
+        Alert.alert('Permissão necessária', 'Permissão para acessar a galeria é necessária.');
+        return;
+      }
 
-    if (!result.canceled) {
-      if (editingTarget === 'perfil') setPerfilImage(result.assets[0].uri);
-      else setBannerImage(result.assets[0].uri);
-      handleOpenEditor();
+      // Não passar `mediaTypes` para evitar incompatibilidades entre versões
+      const result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: false,
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const uri = result.assets[0].uri;
+        if (editingTarget === 'perfil') {
+          setPerfilImage(uri);
+          setPerfilChanged(true);
+        } else {
+          setBannerImage(uri);
+          setBannerChanged(true);
+        }
+        handleOpenEditor();
+      }
+    } catch (err) {
+      console.log('Erro ao abrir a galeria:', err);
+      Alert.alert('Erro', 'Não foi possível abrir a galeria.');
     }
   };
 
@@ -155,8 +288,17 @@ export default function InformacoesUser() {
         </View>
 
         <View style={styles.footer}>
-          <TouchableOpacity style={[styles.confirmButton, { backgroundColor: theme.buttonBackground }]}>
-            <Text style={[styles.confirmButtonText, { color: theme.buttonText }]}>Confirmar</Text>
+          <TouchableOpacity
+            style={[
+              styles.confirmButton,
+              { backgroundColor: theme.buttonBackground, opacity: isSaving ? 0.7 : 1 },
+            ]}
+            onPress={handleConfirmar}
+            disabled={isSaving}
+          >
+            <Text style={[styles.confirmButtonText, { color: theme.buttonText }]}>
+              {isSaving ? "Salvando..." : "Confirmar"}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
