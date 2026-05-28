@@ -66,12 +66,13 @@ function CustomTabBar() {
           />
         </TouchableOpacity>
 
-        {/* MENSAGENS */}
-        <TouchableOpacity onPress={() => go("/(tabs)/mensagens")} style={styles.item}>
-          <MaterialCommunityIcons
-            name={isActive("/mensagens") ? "message-text" : "message-text-outline"}
+        {/* VAGAS */}
+        <TouchableOpacity onPress={() => go("/(tabs)/vagas")} style={styles.item}>
+            <Tabs.Screen name="mensagens" />
+          <MaterialIcons
+            name={isActive("/vagas") ? "work" : "work-outline"}
             size={30}
-            color={isActive("/mensagens") ? "#fff" : "#777"}
+            color={isActive("/vagas") ? "#fff" : "#777"}
           />
         </TouchableOpacity>
 
@@ -89,15 +90,15 @@ function CustomTabBar() {
           )}
         </TouchableOpacity>
 
-        {/* VAGAS */}
-        <TouchableOpacity onPress={() => go("/(tabs)/vagas")} style={styles.item}>
-            <Tabs.Screen name="mensagens" />
-          <MaterialIcons
-            name={isActive("/vagas") ? "work" : "work-outline"}
+        {/* MENSAGENS */}
+        <TouchableOpacity onPress={() => go("/(tabs)/mensagens")} style={styles.item}>
+          <MaterialCommunityIcons
+            name={isActive("/mensagens") ? "message-text" : "message-text-outline"}
             size={30}
-            color={isActive("/vagas") ? "#fff" : "#777"}
+            color={isActive("/mensagens") ? "#fff" : "#777"}
           />
         </TouchableOpacity>
+
 
         {/* PERFIL / CONFIGURAÇÕES */}
         <TouchableOpacity onPress={() => go("/configuracoes/menuUser")} style={styles.item}>

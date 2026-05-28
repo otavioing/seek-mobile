@@ -240,45 +240,21 @@ export const CommentsProvider = ({ children }: { children: React.ReactNode }) =>
   const addReply = async (postId: string, parentCommentId: string, userId: string, text: string) => {
     try {
       const numericUserId = Number(userId);
-      const numericPostId = Number(postId);
-      const numericParentId = Number(parentCommentId);
+      const replyUrl = `/comentarios/${postId}/responder/${parentCommentId}`;
+      const payload = {
+        idusuario: Number.isNaN(numericUserId) ? userId : String(numericUserId),
+        conteudo: text,
+      };
 
-      const payloads = [
-        { idusuario: userId, conteudo: text },
-        { idusuario: numericUserId, conteudo: text },
-        { idusuario: userId, comentario: text },
-        { userId: numericUserId, postId: numericPostId, parentCommentId: numericParentId, conteudo: text },
-        { userId: numericUserId, postId: numericPostId, parentCommentId: numericParentId, comentario: text },
-        { usuario_id: numericUserId, post_id: numericPostId, comentario_pai_id: numericParentId, conteudo: text },
-        { usuario_id: numericUserId, post_id: numericPostId, comentario_pai_id: numericParentId, comentario: text },
-      ];
-
-      const urls = [
-        `/comentarios/${postId}/responder/${parentCommentId}`,
-        `/api/comentarios/${postId}/responder/${parentCommentId}`,
-        `/comentarios/responder/${parentCommentId}`,
-        `/api/comentarios/responder/${parentCommentId}`,
-        `/posts/${postId}/comentarios/${parentCommentId}/responder`,
-        `/api/posts/${postId}/comentarios/${parentCommentId}/responder`,
-        `/comentarios/${parentCommentId}/respostas`,
-        `/api/comentarios/${parentCommentId}/respostas`,
-      ];
-
-      const tried: string[] = [];
       let lastError: unknown;
 
-      outer: for (const url of urls) {
-        for (const payload of payloads) {
-          try {
-            tried.push(url);
-            await api.post(url, payload);
-            lastError = undefined;
-            break outer;
-          } catch (e) {
-            lastError = e;
-            if (isRetryableRouteError(e)) continue;
-            throw e;
-          }
+      try {
+        await api.post(replyUrl, payload);
+        lastError = undefined;
+      } catch (e) {
+        lastError = e;
+        if (!isRetryableRouteError(e)) {
+          throw e;
         }
       }
 
@@ -297,7 +273,7 @@ export const CommentsProvider = ({ children }: { children: React.ReactNode }) =>
           return;
         }
 
-        console.log('❌ addReply falhou. Rotas tentadas:', Array.from(new Set(tried)));
+        console.log('❌ addReply falhou. Rota tentada:', replyUrl);
         throw lastError;
       }
 

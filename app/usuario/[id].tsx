@@ -112,11 +112,13 @@ const UserProfileScreen = () => {
         setCurrentUserId(uid);
         if (uid && uid !== userId) {
           try {
-            const resp = await api.get(`/usuarios/esta-seguindo/${userId}`);
-            if (resp?.data && typeof resp.data.seguindo !== 'undefined') {
+            const resp = await api.get(`/usuarios/verificarsesegue/${uid}/${userId}`);
+            // resposta esperada: { segue: true } ou { segue: false }
+            if (resp?.data && typeof resp.data.segue !== 'undefined') {
+              setIsFollowing(!!resp.data.segue);
+            } else if (resp?.data && typeof resp.data.seguindo !== 'undefined') {
+              // fallback para formatos alternativos
               setIsFollowing(!!resp.data.seguindo);
-            } else if (resp?.data === true || resp?.data === false) {
-              setIsFollowing(!!resp.data);
             }
           } catch (e) {
             console.log('Erro ao verificar seguimento:', e);
@@ -253,17 +255,26 @@ const UserProfileScreen = () => {
                 }
                 if (isProcessing) return;
                 setIsProcessing(true);
-                const next = !isFollowing;
-                setIsFollowing(next);
-                setStats((s) => ({ ...s, seguidores: next ? s.seguidores + 1 : Math.max(0, s.seguidores - 1) }));
+
                 try {
-                  if (next) await api.post(`/usuarios/seguir/${userId}`);
-                  else await api.delete(`/usuarios/seguir/${userId}`);
+                  const resp = await api.post(`/usuarios/seguir-usuario/${currentUserId}/${userId}`);
+                  const follows = resp?.data && typeof resp.data.seguindo !== 'undefined' ? !!resp.data.seguindo : (resp?.data?.segue ?? null);
+
+                  if (follows === null) {
+                    // resposta inesperada, tenta inferir por mensagem
+                    const msg = resp?.data?.message || '';
+                    const inferred = msg.toLowerCase().includes('agora segue') || msg.toLowerCase().includes('segue');
+                    setIsFollowing(!!inferred);
+                    setStats((s) => ({ ...s, seguidores: inferred ? s.seguidores + 1 : Math.max(0, s.seguidores - 1) }));
+                  } else {
+                    // atualiza estado com valor retornado
+                    const prev = isFollowing;
+                    setIsFollowing(follows);
+                    setStats((s) => ({ ...s, seguidores: follows ? s.seguidores + 1 : Math.max(0, s.seguidores - 1) }));
+                  }
                 } catch (e) {
                   console.log('Erro ao (un)follow:', e);
-                  // revert
-                  setIsFollowing(!next);
-                  setStats((s) => ({ ...s, seguidores: next ? Math.max(0, s.seguidores - 1) : s.seguidores + 1 }));
+                  Alert.alert('Erro', 'Não foi possível atualizar o seguimento.');
                 } finally {
                   setIsProcessing(false);
                 }
