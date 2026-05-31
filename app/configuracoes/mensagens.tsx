@@ -1,17 +1,20 @@
 // import Breadcrumb from '@/components/Breadcrumb';
+import { api } from '@/src/services/api';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
-    FlatList,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+	ActivityIndicator,
+	FlatList,
+	Image,
+	SafeAreaView,
+	StyleSheet,
+	Text,
+	TextInput,
+	TouchableOpacity,
+	View,
 } from 'react-native';
 
 type Conversa = {
@@ -21,48 +24,45 @@ type Conversa = {
 	hora: string;
 	naoLida: boolean;
 	online: boolean;
+	foto?: string | null;
 };
 
-const conversasMock: Conversa[] = [
-	{
-		id: 1,
-		nome: 'Ana Paula',
-		ultimaMensagem: 'Conseguiu ver o projeto de UX?',
-		hora: '09:14',
-		naoLida: true,
-		online: true,
-	},
-	{
-		id: 2,
-		nome: 'Rafael Souza',
-		ultimaMensagem: 'Fechamos o cronograma da sprint.',
-		hora: 'Ontem',
-		naoLida: false,
-		online: false,
-	},
-	{
-		id: 3,
-		nome: 'Time SEEK',
-		ultimaMensagem: 'Novo feedback no seu post.',
-		hora: 'Seg',
-		naoLida: true,
-		online: false,
-	},
-	{
-		id: 4,
-		nome: 'Marina Costa',
-		ultimaMensagem: 'Posso te ligar em 10min?',
-		hora: 'Dom',
-		naoLida: false,
-		online: true,
-	},
-];
+type ApiConversa = {
+	id: number;
+	tipo?: string;
+	nome?: string | null;
+	foto?: string | null;
+	mensagens_nao_lidas?: number | null;
+	ultima_mensagem?: string | null;
+	ultima_mensagem_em?: string | null;
+	nome_exibicao?: string | null;
+	participantes?: Array<{
+		usuario_id?: number;
+		nome?: string | null;
+		foto?: string | null;
+	}>;
+};
+
+const formatConversationTime = (dateString?: string | null) => {
+	if (!dateString) return '';
+	const date = new Date(dateString);
+	if (Number.isNaN(date.getTime())) return '';
+	return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+};
+
+const resolveOtherParticipant = (conversa: ApiConversa, currentUserId: string) => {
+	const participante = conversa.participantes?.find((item) => String(item.usuario_id) !== currentUserId);
+	return participante || conversa.participantes?.[0] || null;
+};
 
 export default function Mensagens() {
 	const router = useRouter();
 	const [darkMode, setDarkMode] = useState(true);
 	const [busca, setBusca] = useState('');
 	const [filtroNaoLidas, setFiltroNaoLidas] = useState(false);
+	const [conversas, setConversas] = useState<Conversa[]>([]);
+	const [carregandoConversas, setCarregandoConversas] = useState(false);
+	const [currentUserId, setCurrentUserId] = useState('');
 
 	const carregarTema = useCallback(async () => {
 		try {
@@ -78,10 +78,51 @@ export default function Mensagens() {
 		}
 	}, []);
 
+	const carregarConversas = useCallback(async () => {
+		setCarregandoConversas(true);
+		try {
+			const uid = await AsyncStorage.getItem('userId');
+			setCurrentUserId(uid || '');
+
+			if (!uid) {
+				setConversas([]);
+				return;
+			}
+
+			const { data } = await api.get(`/mensagens/usuarios/${uid}/conversas`);
+			const lista = Array.isArray(data) ? data : [];
+
+			const conversasMapeadas = lista.map((conversa: ApiConversa) => {
+				const outroParticipante = resolveOtherParticipant(conversa, uid);
+				const nome = conversa.nome_exibicao || conversa.nome || outroParticipante?.nome || 'Conversa';
+				const ultimaMensagem = conversa.ultima_mensagem || 'Nenhuma mensagem ainda';
+				const hora = formatConversationTime(conversa.ultima_mensagem_em || undefined) || formatConversationTime(conversa['criado_em' as keyof ApiConversa] as string | undefined) || '';
+
+				return {
+					id: conversa.id,
+					nome,
+					ultimaMensagem,
+					hora,
+					naoLida: (conversa.mensagens_nao_lidas ?? 0) > 0,
+					online: false,
+					foto: conversa.foto || outroParticipante?.foto || null,
+				};
+			});
+
+			setConversas(conversasMapeadas);
+		} catch (error) {
+			console.log('Erro ao carregar conversas:', error);
+			setConversas([]);
+		} finally {
+			setCarregandoConversas(false);
+		}
+	}, []);
+
 	useFocusEffect(
 		useCallback(() => {
 			void carregarTema();
-		}, [carregarTema])
+			void carregarConversas();
+		}, [carregarTema, carregarConversas])
 	);
 
 	const theme = darkMode
@@ -121,7 +162,7 @@ export default function Mensagens() {
 	const conversasFiltradas = useMemo(() => {
 		const texto = busca.trim().toLowerCase();
 
-		return conversasMock.filter((conversa) => {
+		return conversas.filter((conversa) => {
 			const correspondeBusca =
 				!texto ||
 				conversa.nome.toLowerCase().includes(texto) ||
@@ -131,7 +172,7 @@ export default function Mensagens() {
 
 			return correspondeBusca && correspondeFiltro;
 		});
-	}, [busca, filtroNaoLidas]);
+	}, [busca, filtroNaoLidas, conversas]);
 
 	const renderConversa = ({ item }: { item: Conversa }) => (
 		<TouchableOpacity
@@ -143,9 +184,14 @@ export default function Mensagens() {
 					borderColor: theme.border,
 				},
 			]}
+				onPress={() => router.push({ pathname: '/configuracoes/conversa/[id]', params: { id: String(item.id), usuario_id: currentUserId } })}
 		>
-			<View style={[styles.avatar, { backgroundColor: theme.avatar }]}> 
-				<Text style={[styles.avatarText, { color: theme.textPrimary }]}>{item.nome.slice(0, 1)}</Text>
+				<View style={[styles.avatar, { backgroundColor: theme.avatar }]}> 
+					{item.foto ? (
+						<Image source={{ uri: item.foto }} style={styles.avatarImage} />
+					) : (
+						<Text style={[styles.avatarText, { color: theme.textPrimary }]}>{item.nome.slice(0, 1)}</Text>
+					)}
 				{item.online ? <View style={[styles.onlineDot, { backgroundColor: theme.online }]} /> : null}
 			</View>
 
@@ -233,12 +279,17 @@ export default function Mensagens() {
 						contentContainerStyle={styles.listContent}
 						showsVerticalScrollIndicator={false}
 					/>
+				) : carregandoConversas ? (
+					<View style={styles.emptyContainer}>
+						<ActivityIndicator size="large" color={theme.textPrimary} />
+						<Text style={[styles.emptySubtitle, { color: theme.textSecondary, marginTop: 12 }]}>Carregando conversas...</Text>
+					</View>
 				) : (
 					<View style={styles.emptyContainer}>
 						<Ionicons name="chatbubbles-outline" size={74} color={theme.emptyIcon} />
 						<Text style={[styles.emptyTitle, { color: theme.textPrimary }]}>Nada por aqui</Text>
 						<Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}> 
-							Nenhuma conversa encontrada com esse filtro.
+							{currentUserId ? 'Nenhuma conversa encontrada com esse filtro.' : 'Faça login para ver suas conversas.'}
 						</Text>
 					</View>
 				)}
@@ -331,6 +382,11 @@ const styles = StyleSheet.create({
 	avatarText: {
 		fontSize: 18,
 		fontWeight: '700',
+	},
+	avatarImage: {
+		width: '100%',
+		height: '100%',
+		borderRadius: 25,
 	},
 	onlineDot: {
 		position: 'absolute',

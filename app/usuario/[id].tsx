@@ -5,24 +5,25 @@ import { useIsFocused } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-    Alert,
-    Dimensions,
-    Image,
-    ImageBackground,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Dimensions,
+  Image,
+  ImageBackground,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { AppTheme, getAppTheme } from '../../src/theme/appTheme';
 
 const { width } = Dimensions.get('window');
 const photoSize = (width - 32 - 8) / 2;
+const actionButtonWidth = (width - 16 - 8) / 2;
 
 const formatRelativeTime = (timestamp: number) => {
   const diff = Date.now() - timestamp;
@@ -101,6 +102,7 @@ const UserProfileScreen = () => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isMessaging, setIsMessaging] = useState(false);
 
   const theme = getAppTheme(darkMode);
 
@@ -246,43 +248,72 @@ const UserProfileScreen = () => {
           <Text style={[styles.userName, { color: theme.textPrimary }]}>{userName || 'Perfil'}</Text>
           <Text style={[styles.userHandle, { color: theme.textMuted }]}>@usuario_{userId}</Text>
           {currentUserId !== userId && (
-            <TouchableOpacity
-              style={[styles.followButton, isFollowing ? styles.following : styles.follow]}
-              onPress={async () => {
-                if (!currentUserId) {
-                  Alert.alert('Atenção', 'Faça login para seguir usuários.');
-                  return;
-                }
-                if (isProcessing) return;
-                setIsProcessing(true);
-
-                try {
-                  const resp = await api.post(`/usuarios/seguir-usuario/${currentUserId}/${userId}`);
-                  const follows = resp?.data && typeof resp.data.seguindo !== 'undefined' ? !!resp.data.seguindo : (resp?.data?.segue ?? null);
-
-                  if (follows === null) {
-                    // resposta inesperada, tenta inferir por mensagem
-                    const msg = resp?.data?.message || '';
-                    const inferred = msg.toLowerCase().includes('agora segue') || msg.toLowerCase().includes('segue');
-                    setIsFollowing(!!inferred);
-                    setStats((s) => ({ ...s, seguidores: inferred ? s.seguidores + 1 : Math.max(0, s.seguidores - 1) }));
-                  } else {
-                    // atualiza estado com valor retornado
-                    const prev = isFollowing;
-                    setIsFollowing(follows);
-                    setStats((s) => ({ ...s, seguidores: follows ? s.seguidores + 1 : Math.max(0, s.seguidores - 1) }));
+            <View style={styles.actionsRow}>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.followButton, { width: actionButtonWidth }, isFollowing ? styles.following : styles.follow]}
+                onPress={async () => {
+                  if (!currentUserId) {
+                    Alert.alert('Atenção', 'Faça login para seguir usuários.');
+                    return;
                   }
-                } catch (e) {
-                  console.log('Erro ao (un)follow:', e);
-                  Alert.alert('Erro', 'Não foi possível atualizar o seguimento.');
-                } finally {
-                  setIsProcessing(false);
-                }
-              }}
-              disabled={isProcessing}
-            >
-              <Text style={styles.followText}>{isFollowing ? 'Seguindo' : 'Seguir'}</Text>
-            </TouchableOpacity>
+                  if (isProcessing) return;
+                  setIsProcessing(true);
+
+                  try {
+                    const resp = await api.post(`/usuarios/seguir-usuario/${currentUserId}/${userId}`);
+                    const follows = resp?.data && typeof resp.data.seguindo !== 'undefined' ? !!resp.data.seguindo : (resp?.data?.segue ?? null);
+
+                    if (follows === null) {
+                      const msg = resp?.data?.message || '';
+                      const inferred = msg.toLowerCase().includes('agora segue') || msg.toLowerCase().includes('segue');
+                      setIsFollowing(!!inferred);
+                      setStats((s) => ({ ...s, seguidores: inferred ? s.seguidores + 1 : Math.max(0, s.seguidores - 1) }));
+                    } else {
+                      setIsFollowing(follows);
+                      setStats((s) => ({ ...s, seguidores: follows ? s.seguidores + 1 : Math.max(0, s.seguidores - 1) }));
+                    }
+                  } catch (e) {
+                    console.log('Erro ao (un)follow:', e);
+                    Alert.alert('Erro', 'Não foi possível atualizar o seguimento.');
+                  } finally {
+                    setIsProcessing(false);
+                  }
+                }}
+                disabled={isProcessing || isMessaging}
+              >
+                <Text style={styles.followText}>{isFollowing ? 'Seguindo' : 'Seguir'}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.actionButton, { width: actionButtonWidth }, styles.messageButton]}
+                onPress={async () => {
+                  if (!currentUserId) {
+                    Alert.alert('Atenção', 'Faça login para enviar mensagens.');
+                    return;
+                  }
+                  if (isMessaging) return;
+
+                  setIsMessaging(true);
+                  try {
+                    await api.post('/mensagens/conversas/privada', {
+                      usuario_id: currentUserId,
+                      outro_usuario_id: userId,
+                      foto: null,
+                    });
+                    Alert.alert('Sucesso', 'Conversa criada com sucesso.');
+                  } catch (e) {
+                    console.log('Erro ao criar conversa privada:', e);
+                    Alert.alert('Erro', 'Não foi possível iniciar a conversa.');
+                  } finally {
+                    setIsMessaging(false);
+                  }
+                }}
+                disabled={isProcessing || isMessaging}
+              >
+                <Icon name="chatbubble-outline" size={18} color="#fff" />
+                <Text style={styles.followText}>Mensagem</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 
@@ -377,9 +408,12 @@ const styles = StyleSheet.create({
   profileImage: { width: 140, height: 140, borderRadius: 70, borderWidth: 3 },
   userName: { fontSize: 22, fontWeight: 'bold', color: '#fff', marginTop: 12 },
   userHandle: { fontSize: 14, color: '#888', marginTop: 4 },
-  followButton: { marginTop: 10, paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20 },
+  actionsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 10, paddingHorizontal: 8, width: '100%' },
+  actionButton: { minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20 },
+  followButton: { marginRight: 8 },
   follow: { backgroundColor: '#007bff' },
   following: { backgroundColor: '#4f4f4f' },
+  messageButton: { backgroundColor: '#111827', marginLeft: 0 },
   followText: { color: '#fff', fontWeight: '700' },
   statsContainer: { flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 32, marginTop: 20 },
   statItem: { alignItems: 'center', flex: 1 },
