@@ -3,7 +3,7 @@ import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { usePosts } from '../src/context/PostsContext';
 import { api } from '../src/services/api';
@@ -21,7 +21,9 @@ export default function UploadScreen() {
   const [title, setTitle] = useState('');
   const [postDescription, setPostDescription] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [newCategoryModalVisible, setNewCategoryModalVisible] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
   const [publishing, setPublishing] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
 
@@ -79,44 +81,36 @@ export default function UploadScreen() {
     }
   };
 
-  const toHashtag = (raw: string) => {
-    // Hashtag “segura”: sem espaços/acentos. Mantém letras/números/underscore.
-    const base = (raw || '').trim();
-    const noDiacritics = base
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
-    return noDiacritics
-      .toLowerCase()
-      .replace(/\s+/g, '')
-      .replace(/[^a-z0-9_]/g, '');
-  };
-
-  const ensureTagInDescription = (desc: string, tag: string) => {
-    const safe = toHashtag(tag);
-    if (!safe) return desc;
-    const normalized = (desc || '').toLowerCase();
-    const needle = `#${safe}`;
-    if (normalized.includes(needle)) return desc;
-    return `${(desc || '').trim()} ${needle}`.trim();
-  };
-
-  const removeTagFromDescription = (desc: string, tag: string) => {
-    const safe = toHashtag(tag);
-    if (!safe) return desc;
-    const regex = new RegExp(`(^|\\s)#${safe}(?=\\s|$)`, 'gi');
-    return (desc || '').replace(regex, '').replace(/\s+/g, ' ').trim();
-  };
-
   const toggleCategory = (category: Category) => {
-    setSelectedCategories((prev) => {
-      const exists = prev.some((c) => c.id === category.id);
-      if (exists) {
-        setPostDescription((prevDesc) => removeTagFromDescription(prevDesc, category.name));
-        return prev.filter((c) => c.id !== category.id);
-      }
-      setPostDescription((prevDesc) => ensureTagInDescription(prevDesc, category.name));
-      return [...prev, category];
-    });
+    setSelectedCategory((prev) => (prev?.id === category.id ? null : category));
+  };
+
+  const handleAddCategory = () => {
+    const normalizedName = newCategoryName.trim();
+
+    if (!normalizedName) {
+      Alert.alert('Categoria obrigatória', 'Digite um nome para adicionar a nova categoria.');
+      return;
+    }
+
+    const alreadyExists = categories.some(
+      (category) => category.name.toLowerCase() === normalizedName.toLowerCase(),
+    );
+
+    if (alreadyExists) {
+      Alert.alert('Categoria já existe', 'Essa categoria já está na lista.');
+      return;
+    }
+
+    const createdCategory: Category = {
+      id: String(Date.now()),
+      name: normalizedName,
+    };
+
+    setCategories((prev) => [...prev, createdCategory]);
+    setSelectedCategory(createdCategory);
+    setNewCategoryName('');
+    setNewCategoryModalVisible(false);
   };
 
   const handlePublish = async () => {
@@ -139,20 +133,16 @@ export default function UploadScreen() {
         return;
       }
 
-      const descWithTags = selectedCategories.reduce(
-        (acc, cat) => ensureTagInDescription(acc, cat.name),
-        postDescription,
-      );
-      const normalizedDescription = normalizeText(descWithTags);
+      const normalizedDescription = normalizeText(postDescription);
 
       const formData = new FormData();
 
       formData.append('user_id', userId);
       formData.append('titulo', title.trim());
       formData.append('legenda', normalizedDescription);
-      formData.append('id_categoria', selectedCategories[0]?.id || '');
+      formData.append('nome_categoria', selectedCategory?.name || '');
 
-      drafts.forEach((img, index) => {
+      drafts.slice(0, 5).forEach((img, index) => {
         formData.append('imagens', {
           uri: img.uri,
           name: `foto_${index}.jpg`,
@@ -161,7 +151,9 @@ export default function UploadScreen() {
       });
 
       // Não setar manualmente multipart/form-data: o axios coloca o boundary corretamente.
-      await api.post('/posts', formData);
+      await api.post('/posts', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
 
       // Atualiza feed/contexto antes de voltar pro perfil
       await refreshPosts();
@@ -169,7 +161,7 @@ export default function UploadScreen() {
       setDrafts([]);
       setTitle('');
       setPostDescription('');
-      setSelectedCategories([]);
+      setSelectedCategory(null);
 
       router.replace('/(tabs)/perfil');
 
@@ -228,11 +220,11 @@ export default function UploadScreen() {
         style={styles.input}
       />
 
-      <Text style={styles.label}>Categorias</Text>
+      <Text style={styles.label}>Categoria</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow}>
         {loadingCategories && <Text style={styles.placeholder}>Carregando categorias...</Text>}
         {!loadingCategories && categories.map((cat) => {
-          const active = selectedCategories.some((c) => c.id === cat.id);
+          const active = selectedCategory?.id === cat.id;
           return (
             <TouchableOpacity
               key={cat.id}
@@ -243,13 +235,16 @@ export default function UploadScreen() {
             </TouchableOpacity>
           );
         })}
+        <TouchableOpacity style={[styles.chip, styles.addChip]} onPress={() => setNewCategoryModalVisible(true)}>
+          <Text style={styles.addChipText}>Adicionar nova categoria</Text>
+        </TouchableOpacity>
       </ScrollView>
 
       <Text style={styles.label}>Descrição geral</Text>
       <TextInput
         value={postDescription}
         onChangeText={setPostDescription}
-        placeholder="Fale sobre o post. As categorias viram #hashtag automaticamente."
+        placeholder="Fale sobre o post."
         placeholderTextColor="#777"
         multiline
         style={[styles.input, { minHeight: 90 }]}
@@ -283,6 +278,42 @@ export default function UploadScreen() {
       >
         <Text style={styles.publishText}>{publishing ? 'Publicando...' : 'Publicar no perfil'}</Text>
       </TouchableOpacity>
+
+      <Modal
+        visible={newCategoryModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setNewCategoryModalVisible(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Adicionar nova categoria</Text>
+            <Text style={styles.modalSubtitle}>Digite o nome da categoria e confirme para adicionar ao scroll.</Text>
+            <TextInput
+              value={newCategoryName}
+              onChangeText={setNewCategoryName}
+              placeholder="Nome da categoria"
+              placeholderTextColor="#777"
+              style={styles.modalInput}
+              autoFocus
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSecondary]}
+                onPress={() => {
+                  setNewCategoryModalVisible(false);
+                  setNewCategoryName('');
+                }}
+              >
+                <Text style={styles.modalButtonSecondaryText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, styles.modalButtonPrimary]} onPress={handleAddCategory}>
+                <Text style={styles.modalButtonPrimaryText}>Confirmar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -423,5 +454,76 @@ const styles = StyleSheet.create({
   },
   chipTextActive: {
     color: '#fff',
+  },
+  addChip: {
+    borderStyle: 'dashed',
+    borderColor: '#A78BFA',
+  },
+  addChipText: {
+    color: '#A78BFA',
+    fontWeight: '700',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.72)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  modalCard: {
+    width: '100%',
+    borderRadius: 18,
+    backgroundColor: '#111',
+    borderWidth: 1,
+    borderColor: '#262626',
+    padding: 18,
+  },
+  modalTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  modalSubtitle: {
+    color: '#9CA3AF',
+    marginTop: 6,
+    marginBottom: 14,
+    lineHeight: 20,
+  },
+  modalInput: {
+    backgroundColor: '#0B0B0B',
+    color: '#fff',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 16,
+  },
+  modalButton: {
+    flex: 1,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonSecondary: {
+    backgroundColor: '#1a1a1a',
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
+  },
+  modalButtonPrimary: {
+    backgroundColor: '#A78BFA',
+  },
+  modalButtonSecondaryText: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+  modalButtonPrimaryText: {
+    color: '#0B0B0B',
+    fontWeight: '800',
   },
 });

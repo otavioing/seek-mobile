@@ -1,3 +1,6 @@
+import { api } from '@/src/services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 import React, { useState } from 'react';
 import {
   Alert,
@@ -46,16 +49,65 @@ export default function PostarVaga() {
     setRemoveCategoryModalVisible(false);
   };
 
-  const handlePublishVacancy = () => {
-    if (!title.trim() || !redirectLink.trim() || !description.trim() || categories.length === 0) {
+  const handlePublishVacancy = async () => {
+    const categoria = title.trim() || categories[0]?.trim() || '';
+
+    if (!categoria || !redirectLink.trim() || !description.trim()) {
       Alert.alert(
         'Campos obrigatórios',
-        'Preencha o título, o link, a descrição e adicione pelo menos uma categoria para continuar.',
+        'Preencha a categoria, o link e a descrição para continuar.',
       );
       return;
     }
 
-    Alert.alert('Vaga pronta', 'Sua vaga está pronta para ser publicada.');
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+
+      if (!userId) {
+        Alert.alert('Erro', 'Usuário não encontrado.');
+        return;
+      }
+
+      await api.post('/postsvagas', {
+        id_usuario: Number(userId),
+        categoria,
+        link_vaga: redirectLink.trim(),
+        descricao_vaga: description.trim(),
+      });
+
+      setTitle('');
+      setRedirectLink('');
+      setDescription('');
+      setCategories([]);
+      setCategoryInput('');
+      setCategoryModalVisible(false);
+      setRemoveCategoryModalVisible(false);
+      setCategoryToRemove('');
+
+      Alert.alert('Vaga publicada', 'Sua vaga foi enviada com sucesso.');
+    } catch (error) {
+      console.log('Erro ao publicar vaga:', error);
+
+      if (axios.isAxiosError(error)) {
+        const serverMsg =
+          (typeof error.response?.data === 'string' && error.response?.data.trim()) ||
+          error.response?.data?.message ||
+          error.response?.data?.mensagem ||
+          error.response?.data?.error ||
+          error.response?.data?.msg ||
+          error.response?.data?.detail;
+
+        if (!error.response) {
+          Alert.alert('Sem conexão', 'Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.');
+        } else if (serverMsg) {
+          Alert.alert('Erro ao publicar', String(serverMsg));
+        } else {
+          Alert.alert('Erro ao publicar', 'Não foi possível publicar agora. Tente novamente.');
+        }
+      } else {
+        Alert.alert('Erro ao publicar', 'Não foi possível publicar agora. Tente novamente.');
+      }
+    }
   };
 
   return (
@@ -65,10 +117,11 @@ export default function PostarVaga() {
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
+        <Text style={styles.label}>Categoria da vaga</Text>
         <TextInput
           value={title}
           onChangeText={setTitle}
-          placeholder="Título da vaga"
+          placeholder="Ex: Design gráfico"
           placeholderTextColor="#F3F4F6"
           style={styles.titleInput}
         />
@@ -112,6 +165,7 @@ export default function PostarVaga() {
         >
           <Text style={styles.addCategoryIcon}>+</Text>
         </TouchableOpacity>
+        <Text style={styles.categoriesHint}>A categoria principal é o texto acima. Os chips abaixo continuam disponíveis para organizar ideias localmente.</Text>
 
         <View style={styles.spacer} />
 
@@ -284,6 +338,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 150,
+  },
+  categoriesHint: {
+    color: '#8A8A8A',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: -138,
+    marginBottom: 18,
   },
   categoriesWrap: {
     flexDirection: 'row',

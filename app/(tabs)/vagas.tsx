@@ -2,79 +2,58 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
-  Image,
-  ImageSourcePropType,
   Linking,
-  Modal,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 // Importe o ícone para o botão "Voltar"
 import Icon from 'react-native-vector-icons/Ionicons';
+import { api } from '../../src/services/api';
 import { AppTheme, getAppTheme } from '../../src/theme/appTheme';
 
 // --- 1. Definição do Tipo de Dados ---
 interface Vaga {
   id: string;
+  category: string;
   title: string;
-  companyName: string;
-  logoBannerUrl: ImageSourcePropType; // Banner com a logo
+  authorName: string;
+  location: string;
   timestamp: string;
   description: string;
+  linkOriginal: string;
 }
 
-// --- 2. Dados Fictícios (Mock Data) ---
-// (Usei o 'require' para as imagens locais, como no seu perfil)
-const VAGAS_DATA: Vaga[] = [
-  {
-    id: '1',
-    title: 'Designer',
-    companyName: 'Seek',
-    logoBannerUrl: require('../../assets/images/imgC1.png'), // Ajuste o caminho
-    timestamp: '11 horas atrás',
-    description: 'Estamos procurando um Designer talentoso para se juntar à nossa equipe. Você será responsável por criar visuais incríveis para nossa plataforma, desde o UI/UX até materiais de marketing.'
-  },
-  {
-    id: '2',
-    title: 'Designer',
-    companyName: 'Seek',
-    logoBannerUrl: require('../../assets/images/imgC2.png'), // Ajuste o caminho
-    timestamp: '11 horas atrás',
-    description: 'Descrição da segunda vaga de Designer, com foco em mídias sociais e branding.'
-  },
-  {
-    id: '3',
-    title: 'Designer',
-    companyName: 'Seek',
-    logoBannerUrl: require('../../assets/images/imgC3.png'), // Ajuste o caminho
-    timestamp: '11 horas atrás',
-    description: 'Terceira vaga de Designer, especializada em Motion Graphics e animação 2D.'
-  },
-];
+type ApiVaga = {
+  id: number;
+  titulo: string;
+  empresa: string | null;
+  localizacao: string | null;
+  descricao: string;
+  link_original: string | null;
+  criado_em: string;
+  nome: string | null;
+  foto_perfil: string | null;
+  nome_categoria: string | null;
+};
 
-// --- 3. Componente de Header do Modal (Reutilizado) ---
-const ModalHeader = ({ onClose, theme }: { onClose: () => void; theme: AppTheme }) => (
-  <TouchableOpacity style={styles.modalGoBack} onPress={onClose}>
-    <Icon name="arrow-back-outline" size={28} color={theme.textPrimary} />
-    <Text style={[styles.modalGoBackText, { color: theme.textPrimary }]}>Voltar</Text>
-  </TouchableOpacity>
-);
-
-// --- 4. Componente do Card (Reutilizável) ---
+// --- 3. Componente do Card (Reutilizável) ---
 interface JobCardProps {
   item: Vaga;
-  onPressInfo: (item: Vaga) => void; // Função para abrir o modal
   theme: AppTheme;
 }
 
-const openApplicationLink = async () => {
-  const url = 'https://www.linkedin.com/';
+const openApplicationLink = async (url?: string | null) => {
+  if (!url) {
+    Alert.alert('Link indisponível', 'Esta vaga não possui link para abrir.');
+    return;
+  }
+
   try {
     const supported = await Linking.canOpenURL(url);
     if (supported) {
@@ -87,87 +66,98 @@ const openApplicationLink = async () => {
   }
 };
 
-const JobCard: React.FC<JobCardProps> = ({ item, onPressInfo, theme }) => (
-  <View style={[styles.cardContainer, { backgroundColor: theme.card }] }>
-    {/* Imagem (Banner com Logo) */}
-    <Image source={item.logoBannerUrl} style={[styles.cardImage, { backgroundColor: theme.imagePlaceholder }]} />
+const formatTimeAgo = (dateString?: string | null) => {
+  if (!dateString) return '';
 
-    {/* Conteúdo de texto */}
-    <View style={[styles.contentContainer, { borderTopColor: theme.border }]}>
-      {/* Linha 1: Título e Botão */}
-      <View style={styles.row}>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: theme.textPrimary }]} numberOfLines={1}>{item.title}</Text>
-          <Text style={[styles.timestamp, { color: theme.textMuted }]}>{item.timestamp}</Text>
-        </View>
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return '';
 
-        <TouchableOpacity
-          style={[styles.propostaButton, { backgroundColor: '#1E90FF' }]}
-          onPress={openApplicationLink}
-        >
-          <Text style={styles.propostaButtonText}>Inscrição</Text>
-        </TouchableOpacity>
-      </View>
+  const diffMs = Date.now() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
 
-      {/* "mais informações" centralizado */}
-      <TouchableOpacity style={styles.infoButton} onPress={() => onPressInfo(item)}>
-        <Text style={[styles.link, { color: theme.link }]}>mais informações</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-);
+  if (diffMinutes < 60) {
+    return `Há ${Math.max(1, diffMinutes)} min`;
+  }
 
-// --- 5. Componente do Modal (NOVO) ---
-interface JobDetailModalProps {
-  visible: boolean;
-  onClose: () => void;
-  vaga: Vaga | null;
-  theme: AppTheme;
-}
+  if (diffHours < 24) {
+    return `Há ${diffHours} horas`;
+  }
 
-const JobDetailModal: React.FC<JobDetailModalProps> = ({ visible, onClose, vaga, theme }) => {
-  if (!vaga) return null;
-
-  return (
-    <Modal
-      animationType="slide"
-      visible={visible}
-      onRequestClose={onClose}
-    >
-      <SafeAreaView style={[styles.modalContainer, { backgroundColor: theme.modalBackground }]}>
-        {/* Botão "Voltar" */}
-        <ModalHeader onClose={onClose} theme={theme} />
-        <ScrollView>
-          <View style={styles.modalContent}>
-            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>{vaga.title}</Text>
-            <Text style={[styles.modalCompany, { color: theme.textMuted, borderBottomColor: theme.border }]}>Publicado por: {vaga.companyName}</Text>
-            <Text style={[styles.modalDescription, { color: theme.textPrimary }]}>{vaga.description}</Text>
-
-            {/* botão agora igual ao de Proposta */}
-            <TouchableOpacity
-              style={[styles.propostaButton, styles.modalApplyButton, { backgroundColor: '#1E90FF' }]}
-              onPress={openApplicationLink}
-            >
-              <Text style={styles.propostaButtonText}>Enviar proposta</Text>
-            </TouchableOpacity>
-
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </Modal>
-  );
+  return `Há ${diffDays} dias`;
 };
+
+const JobCard: React.FC<JobCardProps> = ({ item, theme }) => (
+  <TouchableOpacity
+    activeOpacity={0.9}
+    style={[styles.cardContainer, { backgroundColor: theme.card, borderColor: theme.border }]}
+    onPress={() => openApplicationLink(item.linkOriginal)}
+  >
+    <View style={styles.cardTopRow}>
+      <View style={[styles.categoryBadge, { borderColor: theme.border }]}>
+        <Text style={[styles.categoryBadgeText, { color: theme.textMuted }]}>{item.category}</Text>
+      </View>
+      <Text style={[styles.timestamp, { color: theme.textMuted }]}>{item.timestamp}</Text>
+    </View>
+
+    <Text style={[styles.cardTitle, { color: theme.link }]} numberOfLines={1}>
+      {item.title}
+    </Text>
+
+    <View style={styles.metaRow}>
+      <View style={styles.metaItem}>
+        <Icon name="person-circle-outline" size={18} color={theme.textPrimary} />
+        <Text style={[styles.metaText, { color: theme.textPrimary }]} numberOfLines={1}>{item.authorName}</Text>
+      </View>
+      <View style={styles.metaItemRight}>
+        <Icon name="location-outline" size={18} color={theme.textMuted} />
+        <Text style={[styles.locationText, { color: theme.textMuted }]} numberOfLines={1}>{item.location}</Text>
+      </View>
+    </View>
+
+    <Text style={[styles.description, { color: theme.textPrimary }]} numberOfLines={4}>
+      {item.description}
+    </Text>
+  </TouchableOpacity>
+);
 
 
 // --- 6. Componente da Tela Principal ---
 const TrabalhoScreen = () => {
-  // Estado para controlar o modal
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedVaga, setSelectedVaga] = useState<Vaga | null>(null);
+  const [vagas, setVagas] = useState<Vaga[]>([]);
+  const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const isFocused = useIsFocused();
 
   const theme = getAppTheme(darkMode);
+
+  const carregarVagas = async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get('/postsvagas');
+      const lista = Array.isArray(data) ? data : [];
+
+      setVagas(
+        lista.map((item: ApiVaga) => ({
+          id: String(item.id),
+          category: item.nome_categoria || 'Sem categoria',
+          title: item.titulo || 'Vaga sem título',
+          authorName: item.nome || item.empresa || 'Nome do autor',
+          location: item.localizacao || 'Localização não informada',
+          timestamp: formatTimeAgo(item.criado_em),
+          description: item.descricao || '',
+          linkOriginal: item.link_original || '',
+        })),
+      );
+    } catch (error) {
+      console.log('Erro ao carregar vagas:', error);
+      setVagas([]);
+      Alert.alert('Erro', 'Não foi possível carregar as vagas no momento.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const loadTheme = async () => {
@@ -181,25 +171,15 @@ const TrabalhoScreen = () => {
 
     if (isFocused) {
       loadTheme();
+      void carregarVagas();
     }
   }, [isFocused]);
-
-  // Funções para abrir/fechar o modal
-  const handleOpenModal = (vaga: Vaga) => {
-    setSelectedVaga(vaga);
-    setIsModalVisible(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalVisible(false);
-    setSelectedVaga(null);
-  };
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <FlatList
-        data={VAGAS_DATA}
-        renderItem={({ item }) => <JobCard item={item} onPressInfo={handleOpenModal} theme={theme} />}
+        data={vagas}
+        renderItem={({ item }) => <JobCard item={item} theme={theme} />}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContainer}
         style={{ backgroundColor: theme.background }}
@@ -207,14 +187,19 @@ const TrabalhoScreen = () => {
         ListHeaderComponent={
           <Text style={[styles.pageTitle, { color: theme.textPrimary }]}>Vagas</Text>
         }
-      />
-
-      {/* Renderiza o modal (ele fica escondido até ser ativado) */}
-      <JobDetailModal
-        visible={isModalVisible}
-        onClose={handleCloseModal}
-        vaga={selectedVaga}
-        theme={theme}
+        ListEmptyComponent={
+          loading ? (
+            <View style={styles.emptyState}>
+              <ActivityIndicator size="large" color={theme.textPrimary} />
+              <Text style={[styles.emptyText, { color: theme.textMuted }]}>Carregando vagas...</Text>
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Icon name="briefcase-outline" size={56} color={theme.textMuted} />
+              <Text style={[styles.emptyText, { color: theme.textMuted }]}>Nenhuma vaga encontrada.</Text>
+            </View>
+          )
+        }
       />
     </SafeAreaView>
   );
@@ -226,111 +211,114 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingHorizontal: 12,
+    paddingTop: 12,
     paddingBottom: 120,
   },
   pageTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 24,
+    fontSize: 30,
+    fontWeight: '800',
+    marginBottom: 16,
   },
 
   // card
   cardContainer: {
-    borderRadius: 14,
+    borderRadius: 12,
     marginBottom: 18,
     overflow: 'hidden',
-    // sombra leve para Android/iOS
+    padding: 14,
+    borderWidth: 1,
+    backgroundColor: '#fff',
     elevation: 2,
     shadowColor: '#000',
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.08,
     shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-  },
-  cardImage: {
-    width: '100%',
-    height: 140,
-    resizeMode: 'cover',
-  },
-  contentContainer: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 6,
-  },
-  propostaButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 10,
-    alignSelf: 'flex-start',
-    marginLeft: 12,
-  },
-  propostaButtonText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 13,
+    shadowOffset: { width: 0, height: 2 },
   },
   timestamp: {
-    fontSize: 13,
-    color: '#999',
+    fontSize: 12,
+    color: '#777',
   },
-
-  infoButton: {
-    marginTop: 14,
-    width: '100%',
-    alignItems: 'center',
-  },
-  link: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-
-  // --- Estilos do Modal ---
-  modalContainer: {
-    flex: 1,
-  },
-  modalGoBack: {
+  cardTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
-  modalGoBackText: {
+  categoryBadge: {
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    alignSelf: 'flex-start',
+  },
+  categoryBadgeText: {
+    fontSize: 12,
+  },
+  cardTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 8,
+    fontWeight: '800',
+    marginBottom: 12,
   },
-  modalContent: {
-    padding: 20,
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    gap: 8,
   },
-  modalTitle: {
-    fontSize: 26,
-    fontWeight: 'bold',
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 6,
   },
-  modalCompany: {
-    fontSize: 16,
-    marginTop: 8,
-    marginBottom: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
+  metaItemRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    flex: 1,
+    gap: 4,
   },
-  modalDescription: {
-    fontSize: 16,
-    lineHeight: 24,
+  metaText: {
+    fontSize: 14,
+    flexShrink: 1,
   },
-  modalApplyButton: {
-    marginTop: 20,
-    alignSelf: 'flex-end',
+  locationText: {
+    fontSize: 14,
+    flexShrink: 1,
+  },
+  description: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 14,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  salaryText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  viewsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  viewsText: {
+    fontSize: 14,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 50,
+    gap: 12,
+  },
+  emptyText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
 
