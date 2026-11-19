@@ -1,10 +1,13 @@
-import { api } from '@/src/services/api';
+import { apiErrorMessage } from '@/src/services/api';
+import { contactInitial, loadConversationMessages, type Mensagem } from '@/src/services/messaging';
+import { messagesApi } from '@/src/services/seek';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Image,
   KeyboardAvoidingView,
@@ -20,37 +23,6 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import { getAppTheme } from '../../../src/theme/appTheme';
 
-type MensagemApi = {
-  id: number;
-  conversa_id: number;
-  remetente_id: number;
-  remetente_nome: string;
-  remetente_foto: string | null;
-  remetente_nome_de_usuario: string | null;
-  mensagem: string;
-  lida: boolean;
-  lida_em: string | null;
-  criado_em: string;
-};
-
-type Mensagem = {
-  id: number;
-  texto: string;
-  remetenteId: number;
-  remetenteNome: string;
-  remetenteFoto: string | null;
-  hora: string;
-  lida: boolean;
-  minha: boolean;
-};
-
-const formatHora = (dateString?: string | null) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-};
-
 export default function ConversaMensagens() {
   const router = useRouter();
   const isFocused = useIsFocused();
@@ -64,6 +36,7 @@ export default function ConversaMensagens() {
   const [currentUserId, setCurrentUserId] = useState('');
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [carregando, setCarregando] = useState(false);
+  const [erroCarregamento, setErroCarregamento] = useState<string | null>(null);
   const [novaMensagem, setNovaMensagem] = useState('');
   const [enviando, setEnviando] = useState(false);
 
@@ -81,6 +54,7 @@ export default function ConversaMensagens() {
     if (!conversaId) return;
 
     setCarregando(true);
+    setErroCarregamento(null);
     try {
       const uid = usuarioIdParam || (await AsyncStorage.getItem('userId')) || '';
       setCurrentUserId(uid);
@@ -90,33 +64,11 @@ export default function ConversaMensagens() {
         return;
       }
 
-      const { data } = await api.get(`/mensagens/conversas/${conversaId}/mensagens`, {
-        params: { usuario_id: uid },
-      });
+      setMensagens(await loadConversationMessages(conversaId, uid));
 
-      const lista = Array.isArray(data) ? data : [];
-      const mapped: Mensagem[] = lista.map((item: MensagemApi) => ({
-        id: item.id,
-        texto: item.mensagem,
-        remetenteId: item.remetente_id,
-        remetenteNome: item.remetente_nome,
-        remetenteFoto: item.remetente_foto,
-        hora: formatHora(item.criado_em),
-        lida: !!item.lida,
-        minha: String(item.remetente_id) === String(uid),
-      }));
-
-      setMensagens(mapped);
-
-      try {
-        await api.put(`/mensagens/conversas/${conversaId}/lidas`, {
-          usuario_id: uid,
-        });
-      } catch (readError) {
-        console.log('Erro ao marcar mensagens como lidas:', readError);
-      }
     } catch (error) {
       console.log('Erro ao carregar mensagens da conversa:', error);
+      setErroCarregamento(apiErrorMessage(error));
       setMensagens([]);
     } finally {
       setCarregando(false);
@@ -140,10 +92,7 @@ export default function ConversaMensagens() {
 
     setEnviando(true);
     try {
-      await api.post(`/mensagens/conversas/${conversaId}/mensagens`, {
-        remetente_id: Number(remetenteId),
-        mensagem: texto,
-      });
+      await messagesApi.send(conversaId, texto);
       setNovaMensagem('');
       await carregarMensagens();
       requestAnimationFrame(() => {
@@ -151,17 +100,18 @@ export default function ConversaMensagens() {
       });
     } catch (error) {
       console.log('Erro ao enviar mensagem:', error);
+      Alert.alert('Não foi possível enviar a mensagem', apiErrorMessage(error));
     } finally {
       setEnviando(false);
     }
   }, [carregarMensagens, conversaId, currentUserId, novaMensagem, usuarioIdParam]);
 
   useEffect(() => {
-    void carregarTema();
+    if (isFocused) void carregarTema();
   }, [carregarTema, isFocused]);
 
   useEffect(() => {
-    void carregarMensagens();
+    if (isFocused) void carregarMensagens();
   }, [carregarMensagens, isFocused]);
 
   const theme = getAppTheme(darkMode);
@@ -173,7 +123,7 @@ export default function ConversaMensagens() {
           {item.remetenteFoto ? (
             <Image source={{ uri: item.remetenteFoto }} style={styles.avatarImage} />
           ) : (
-            <Text style={[styles.avatarLetter, { color: theme.textPrimary }]}>{item.remetenteNome.slice(0, 1)}</Text>
+            <Text style={[styles.avatarLetter, { color: theme.textPrimary }]}>{contactInitial(item.remetenteNome)}</Text>
           )}
         </View>
       ) : null}
@@ -215,6 +165,14 @@ export default function ConversaMensagens() {
             <ActivityIndicator size="large" color={theme.textPrimary} />
             <Text style={[styles.emptyText, { color: theme.textSecondary }]}>Carregando mensagens...</Text>
           </View>
+        ) : erroCarregamento ? (
+          <View style={styles.emptyState}>
+            <Text style={[styles.emptyTitle, { color: theme.textPrimary }]}>Não foi possível carregar a conversa</Text>
+            <Text style={[styles.emptyText, { color: theme.textSecondary }]}>{erroCarregamento}</Text>
+            <TouchableOpacity onPress={() => void carregarMensagens()} style={styles.backButton}>
+              <Text style={[styles.backText, { color: theme.textPrimary }]}>Tentar novamente</Text>
+            </TouchableOpacity>
+          </View>
         ) : mensagens.length > 0 ? (
           <FlatList
             ref={listRef}
@@ -227,7 +185,7 @@ export default function ConversaMensagens() {
           />
         ) : (
           <View style={styles.emptyState}>
-            <Icon name="chatbubbles-outline" size={72} color={theme.emptyIcon} />
+            <Icon name="chatbubbles-outline" size={72} color={theme.textMuted} />
             <Text style={[styles.emptyTitle, { color: theme.textPrimary }]}>Sem mensagens</Text>
             <Text style={[styles.emptyText, { color: theme.textSecondary }]}>Essa conversa ainda não tem mensagens.</Text>
           </View>

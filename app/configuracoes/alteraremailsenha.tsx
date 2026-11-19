@@ -1,13 +1,17 @@
+import { api } from '@/src/services/api';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function AlterarEmailSenha() {
     const router = useRouter();
     const [email, setEmail] = useState('');
+    const [codigo, setCodigo] = useState('');
+    const [confirmandoEmail, setConfirmandoEmail] = useState(false);
+    const [saving, setSaving] = useState(false);
     const [senhaAtual, setSenhaAtual] = useState('');
     const [novaSenha, setNovaSenha] = useState('');
     const [showSenhaAtual, setShowSenhaAtual] = useState(false);
@@ -33,6 +37,27 @@ export default function AlterarEmailSenha() {
             carregarTema();
         }, [carregarTema])
     );
+
+    const salvar = async () => {
+        if (saving) return;
+        setSaving(true);
+        try {
+            if (confirmandoEmail) {
+                await api.post('/auth/email/confirmar', { codigo });
+                setConfirmandoEmail(false); setEmail(''); setCodigo('');
+                Alert.alert('Sucesso', 'E-mail atualizado.');
+            } else if (email.trim()) {
+                await api.put('/auth/email', { novo_email: email.trim(), senha_atual: senhaAtual });
+                setConfirmandoEmail(true);
+                Alert.alert('Código enviado', 'Confirme o código recebido no novo e-mail. Depois você pode alterar a senha.');
+            } else if (novaSenha) {
+                await api.put('/auth/password', { senha_atual: senhaAtual, nova_senha: novaSenha });
+                setSenhaAtual(''); setNovaSenha('');
+                Alert.alert('Sucesso', 'Senha atualizada.');
+            } else Alert.alert('Preencha os campos', 'Informe o novo e-mail ou a nova senha e sua senha atual.');
+        } catch (e: any) { Alert.alert('Erro', e.response?.data?.message || 'Não foi possível salvar.'); }
+        finally { setSaving(false); }
+    };
 
     const theme = darkMode
         ? {
@@ -67,6 +92,7 @@ export default function AlterarEmailSenha() {
             </View>
 
             <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+                {confirmandoEmail && <TextInput style={[styles.input, { color: theme.inputText, backgroundColor: theme.inputBackground }]} placeholder="Código recebido por e-mail" keyboardType="number-pad" maxLength={6} value={codigo} onChangeText={setCodigo} />}
                 <Text style={[styles.title, { color: theme.textPrimary }]}>Email e Senha</Text>
 
                 <View style={styles.group}>
@@ -141,6 +167,8 @@ export default function AlterarEmailSenha() {
 
                 <View style={styles.footer}>
                     <TouchableOpacity
+                        onPress={salvar}
+                        disabled={saving}
                         activeOpacity={0.85}
                         style={[styles.confirmButton, { backgroundColor: theme.buttonBackground }]}
                     >

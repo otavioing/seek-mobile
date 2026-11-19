@@ -1,6 +1,6 @@
-import { api } from '@/src/services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { api, normalizePost } from '@/src/services/api';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useSessionScope } from './useSessionScope';
 
 type Comment = {
   id: string;
@@ -29,23 +29,29 @@ type FollowedPostsContextValue = {
 
 const FollowedPostsContext = createContext<FollowedPostsContextValue | undefined>(undefined);
 
-export const FollowedPostsProvider = ({ children }: { children: React.ReactNode }) => {
+export const FollowedPostsProvider = ({ children, sessionUserId }: { children: React.ReactNode; sessionUserId: string | null }) => {
   const [posts, setPosts] = useState<FollowedPost[]>([]);
   const [loading, setLoading] = useState(false);
+  const scope = useSessionScope(sessionUserId);
 
-  const refreshPosts = async () => {
+  const refreshPosts = useCallback(async () => {
+    const generation = scope.current;
     try {
       setLoading(true);
-      const userId = await AsyncStorage.getItem('userId');
+      const userId = sessionUserId;
 
       if (!userId) {
         setPosts([]);
         return;
       }
 
-      const response = await api.get(`/posts/posts-seguidos/${userId}`);
+      const following = await api.get(`/seguidores/seguindo/${userId}`);
+      if (generation !== scope.current) return;
+      const feeds = await Promise.all(following.data.map((u: any) => api.get(`/posts/usuario/${u.id ?? u.id_usuario}`)));
+      if (generation !== scope.current) return;
+      const response = { data: feeds.flatMap(r => r.data) };
 
-      const parsed = (response.data || []).map((post: any) => ({
+      const parsed = (response.data || []).map(normalizePost).map((post: any) => ({
         id: String(post.id),
         author: post.user?.nome || 'Usuário',
         userId:
@@ -77,19 +83,22 @@ export const FollowedPostsProvider = ({ children }: { children: React.ReactNode 
 
       setPosts(parsed);
     } catch (error) {
+      if (generation !== scope.current) return;
       console.log('Erro ao buscar posts seguidos:', error);
     } finally {
-      setLoading(false);
+      if (generation === scope.current) setLoading(false);
     }
-  };
+  }, [scope, sessionUserId]);
 
   useEffect(() => {
-    refreshPosts();
-  }, []);
+    setPosts([]);
+    setLoading(false);
+    void refreshPosts();
+  }, [refreshPosts]);
 
   const value = useMemo(
     () => ({ posts, loading, refreshPosts }),
-    [posts, loading]
+    [posts, loading, refreshPosts]
   );
 
   return <FollowedPostsContext.Provider value={value}>{children}</FollowedPostsContext.Provider>;

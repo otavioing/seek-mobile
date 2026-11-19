@@ -1,6 +1,6 @@
-import { api } from '@/src/services/api';
+import { jobsApi } from '@/src/services/seek';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
+import { isAxiosError } from 'axios';
 import React, { useState } from 'react';
 import {
   Alert,
@@ -50,9 +50,9 @@ export default function PostarVaga() {
   };
 
   const handlePublishVacancy = async () => {
-    const categoria = title.trim() || categories[0]?.trim() || '';
+    const categoria = categories[0]?.trim() || '';
 
-    if (!categoria || !redirectLink.trim() || !description.trim()) {
+    if (!title.trim() || !categoria || !/^https?:\/\//i.test(redirectLink.trim()) || !description.trim()) {
       Alert.alert(
         'Campos obrigatórios',
         'Preencha a categoria, o link e a descrição para continuar.',
@@ -68,11 +68,11 @@ export default function PostarVaga() {
         return;
       }
 
-      await api.post('/postsvagas', {
-        id_usuario: Number(userId),
-        categoria,
-        link_vaga: redirectLink.trim(),
-        descricao_vaga: description.trim(),
+      await jobsApi.create({
+        titulo: title.trim(),
+        categorias: categories,
+        url: redirectLink.trim(),
+        descricao: description.trim(),
       });
 
       setTitle('');
@@ -88,7 +88,7 @@ export default function PostarVaga() {
     } catch (error) {
       console.log('Erro ao publicar vaga:', error);
 
-      if (axios.isAxiosError(error)) {
+      if (isAxiosError(error)) {
         const serverMsg =
           (typeof error.response?.data === 'string' && error.response?.data.trim()) ||
           error.response?.data?.message ||
@@ -117,7 +117,7 @@ export default function PostarVaga() {
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.label}>Categoria da vaga</Text>
+        <Text style={styles.label}>Título da vaga</Text>
         <TextInput
           value={title}
           onChangeText={setTitle}

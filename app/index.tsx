@@ -1,16 +1,8 @@
-import { useRouter } from 'expo-router';
-import React, { useEffect } from "react";
+import React from "react";
 import { Image, StyleSheet, View } from "react-native";
-import Logo from "../assets/images/logoSplash.png";
+const Logo = require("../assets/images/logo_seek_letrapreta.png");
 
 export default function Splash() {
-  const router = useRouter();
-
-  useEffect(() => {
-    const timer = setTimeout(() => router.replace('/login'), 3000);
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
     <View style={styles.container}>
       <Image source={Logo} style={{ width: 200, height: 200 }} resizeMode="contain" />

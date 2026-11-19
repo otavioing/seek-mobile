@@ -1,6 +1,7 @@
 import { api } from '@/src/services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useSessionScope } from './useSessionScope';
 
 export type Story = {
   id: string;
@@ -40,24 +41,22 @@ const DEFAULT_PROFILE: MyProfile = {
   userAvatarUri: null,
 };
 
-export const StoriesProvider = ({ children }: { children: React.ReactNode }) => {
+export const StoriesProvider = ({ children, sessionUserId }: { children: React.ReactNode; sessionUserId: string | null }) => {
   const [stories, setStories] = useState<Story[]>([]);
   const [myProfile, setMyProfile] = useState<MyProfile>(DEFAULT_PROFILE);
   const [seenByUser, setSeenByUser] = useState<SeenByUserMap>({});
   const [isStoryViewerOpen, setStoryViewerOpen] = useState(false);
+  const scope = useSessionScope(sessionUserId);
 
   useEffect(() => {
-    refreshMyProfile();
-    refreshStories();
-  }, []);
-
-  useEffect(() => {
+    const generation = scope.current;
+    if (!sessionUserId) return;
     const loadSeen = async () => {
       try {
         const raw = await AsyncStorage.getItem('storiesSeenByUser');
         if (!raw) return;
         const parsed = JSON.parse(raw);
-        if (parsed && typeof parsed === 'object') {
+        if (generation === scope.current && parsed && typeof parsed === 'object') {
           setSeenByUser(parsed as SeenByUserMap);
         }
       } catch {
@@ -65,88 +64,56 @@ export const StoriesProvider = ({ children }: { children: React.ReactNode }) => 
       }
     };
     loadSeen();
-  }, []);
+  }, [scope, sessionUserId]);
 
-  const refreshMyProfile = async () => {
+  const refreshMyProfile = useCallback(async () => {
+    const generation = scope.current;
+    const userId = sessionUserId;
+    if (!userId) {
+      setMyProfile(DEFAULT_PROFILE);
+      return;
+    }
     try {
-      const userId = await AsyncStorage.getItem('userId');
-      if (!userId) {
-        setMyProfile(DEFAULT_PROFILE);
-        return;
-      }
-
-      try {
-        const { data } = await api.get(`/usuarios/foto-perfil/${userId}`);
+      const { data } = await api.get(`/usuarios/${userId}`);
+      if (generation === scope.current) {
         setMyProfile({
           userId,
           userName: data?.nome || 'Você',
           userAvatarUri: data?.foto || null,
         });
-      } catch (e) {
+      }
+    } catch {
+      if (generation === scope.current) {
         setMyProfile({
           userId,
           userName: 'Você',
           userAvatarUri: null,
         });
       }
-    } catch {
-      setMyProfile(DEFAULT_PROFILE);
     }
-  };
+  }, [scope, sessionUserId]);
 
-  const fetchProfile = async (userId: string): Promise<MyProfile> => {
-    try {
-      const { data } = await api.get(`/usuarios/foto-perfil/${userId}`);
-      return {
-        userId,
-        userName: data?.nome || 'Você',
-        userAvatarUri: data?.foto || null,
-      };
-    } catch {
-      return {
-        userId,
-        userName: 'Você',
-        userAvatarUri: null,
-      };
-    }
-  };
+  const refreshStories = useCallback(async () => { setStories([]); }, []);
 
-  const refreshStories = async () => {
-    try {
-      const resp = await api.get('/stories');
-      const normalized: Story[] = (resp.data || []).map((s: any) => ({
-        id: String(s.id ?? `${s.user_id}-${s.criado_em ?? Date.now()}`),
-        userId: String(s.user_id ?? s.userId ?? ''),
-        userName: s.user?.nome || s.userName || 'Usuário',
-        userAvatarUri: s.user?.foto || s.userAvatarUri || null,
-        mediaUri: s.media || s.midia || s.url || s.mediaUri,
-        createdAt: s.criado_em ? new Date(s.criado_em).getTime() : (s.createdAt ?? Date.now()),
-      }))
-        .filter((s: Story) => Boolean(s.mediaUri));
+  useEffect(() => {
+    setStories([]);
+    setMyProfile(DEFAULT_PROFILE);
+    setSeenByUser({});
+    setStoryViewerOpen(false);
+    void refreshMyProfile();
+    void refreshStories();
+  }, [refreshMyProfile, refreshStories]);
 
-      setStories((prev) => {
-        // Não descarta stories antigos: mantém o que já foi carregado e mescla com a resposta atual.
-        // Isso evita ficar só com 1 story quando o backend retorna apenas o mais recente.
-        const merged = [...prev, ...normalized];
-        const uniq = new Map<string, Story>();
-        for (const st of merged) {
-          const key = `${st.userId}-${st.createdAt}-${st.mediaUri}`;
-          uniq.set(key, st);
-        }
-        return Array.from(uniq.values()).sort((a, b) => b.createdAt - a.createdAt);
-      });
-    } catch {
-      // Sem backend de stories: mantém apenas locais
-    }
-  };
-
-  const isStorySeen = (story: Story) => {
+  const isStorySeen = useCallback((story: Story) => {
     const lastSeen = seenByUser[story.userId] ?? 0;
     return lastSeen >= story.createdAt;
-  };
+  }, [seenByUser]);
 
-  const markStorySeen = async (story: Story) => {
+  const markStorySeen = useCallback(async (story: Story) => {
+    if (!sessionUserId) return;
+    const generation = scope.current;
     setSeenByUser((prev) => {
+      if (generation !== scope.current) return prev;
       const current = prev[story.userId] ?? 0;
       const nextValue = Math.max(current, story.createdAt);
       if (nextValue === current) return prev;
@@ -154,69 +121,10 @@ export const StoriesProvider = ({ children }: { children: React.ReactNode }) => 
       AsyncStorage.setItem('storiesSeenByUser', JSON.stringify(next)).catch(() => undefined);
       return next;
     });
-  };
+  }, [scope, sessionUserId]);
 
   const addStory = async (mediaUri: string): Promise<{ uploaded: boolean }> => {
-    const userId = (await AsyncStorage.getItem('userId')) || 'me';
-
-    let userName = myProfile.userName || 'Você';
-    let userAvatarUri = myProfile.userAvatarUri;
-
-    if (userId && userId !== 'me' && myProfile.userId !== userId) {
-      const fetched = await fetchProfile(userId);
-      userName = fetched.userName;
-      userAvatarUri = fetched.userAvatarUri;
-      setMyProfile(fetched);
-    }
-
-    const localStory: Story = {
-      id: `local-${userId}-${Date.now()}`,
-      userId,
-      userName,
-      userAvatarUri,
-      mediaUri,
-      createdAt: Date.now(),
-    };
-
-    setStories((prev) => [localStory, ...prev]);
-
-    try {
-      const ext = (mediaUri.split('?')[0].split('#')[0].split('.').pop() || '').toLowerCase();
-      const mime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : ext === 'heic' || ext === 'heif' ? 'image/heic' : 'image/jpeg';
-      const filename = ext ? `story.${ext}` : 'story.jpg';
-
-      const form = new FormData();
-      form.append('user_id', String(userId));
-      form.append('userId', String(userId));
-
-      const filePayload = {
-        uri: mediaUri,
-        name: filename,
-        type: mime,
-      } as any;
-
-      // Alguns backends usam "arquivo", outros "imagem".
-      form.append('arquivo', filePayload);
-      form.append('imagem', filePayload);
-
-      const UPLOAD_TIMEOUT_MS = 20000;
-      await Promise.race([
-        api.post('/stories', form, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-          timeout: UPLOAD_TIMEOUT_MS,
-        }),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('STORY_UPLOAD_TIMEOUT')), UPLOAD_TIMEOUT_MS)
-        ),
-      ]);
-
-      setStories((prev) => prev.filter((s) => s.id !== localStory.id));
-      await refreshStories();
-      return { uploaded: true };
-    } catch {
-      // fallback: story fica apenas local
-      return { uploaded: false };
-    }
+    throw new Error('Stories ainda não estão disponíveis nesta versão.');
   };
 
   const value = useMemo(
@@ -232,7 +140,7 @@ export const StoriesProvider = ({ children }: { children: React.ReactNode }) => 
       refreshMyProfile,
       addStory,
     }),
-    [stories, myProfile, seenByUser, isStoryViewerOpen]
+    [stories, myProfile, seenByUser, isStoryViewerOpen, refreshMyProfile, refreshStories, isStorySeen, markStorySeen]
   );
 
   return <StoriesContext.Provider value={value}>{children}</StoriesContext.Provider>;

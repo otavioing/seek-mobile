@@ -1,7 +1,8 @@
 import { api } from '@/src/services/api';
+import { loadFirstLoginState, sessionDestination } from '@/src/services/onboarding';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Link, router } from 'expo-router';
+import { type Href, Link, router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Image, Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { LoginTheme, getLoginTheme } from '../src/theme/appTheme';
@@ -60,24 +61,27 @@ export default function Login() {
             setLoginError('');
             setLoading(true); // ativa loading
 
-            const response = await api.post('/usuarios/login', {
+            const response = await api.post('/auth/login', {
                 email: trimmedEmail,
                 senha
             });
 
-            const { usuario, token } = response.data;
+            const { usuario } = response.data;
+            const session = await loadFirstLoginState();
+            if (String(session.user.id) !== String(usuario.id)) throw new Error('Não foi possível confirmar o acesso a esta conta. Tente entrar novamente.');
 
-            await AsyncStorage.setItem('token', token);
+            await AsyncStorage.removeItem('token');
             await AsyncStorage.setItem('userId', usuario.id.toString());
+            await AsyncStorage.setItem('session', 'cookie');
 
-            router.replace('/principal');
+            router.replace(sessionDestination(session, 'login') as Href);
 
         } catch (error: any) {
             if (error.response?.status === 401) {
                 setLoginError('Email ou senha inválidos');
             } else {
-                setLoginError('Erro ao conectar com servidor');
-                console.log(error);
+                setLoginError(error.response?.data?.message || error.message || 'Não foi possível conectar à API. Verifique o servidor e a rede Wi-Fi.');
+
             }
         } finally {
             setLoading(false);
@@ -101,7 +105,7 @@ export default function Login() {
             }
 
             if (forgotStep === 'email') {
-                const response = await api.post('/usuarios/criar-codigo-verificacao', {
+                const response = await api.post('/auth/esqueci-senha', {
                     email: forgotEmail
                 });
 
@@ -121,10 +125,10 @@ export default function Login() {
                     return;
                 }
 
-                const response = await api.post('/usuarios/atualizar-senha', {
+                const response = await api.post('/auth/redefinir-senha', {
                     email: forgotEmail,
                     codigo: forgotCode,
-                    novaSenha: forgotNewPassword
+                    nova_senha: forgotNewPassword
                 });
 
                 Alert.alert('Sucesso', response.data.message);
@@ -134,7 +138,7 @@ export default function Login() {
         } catch (error: any) {
             const msg = error.response?.data?.message || 'Erro ao conectar com servidor';
             Alert.alert('Erro', msg);
-            console.log(error);
+
         }
     };
 
@@ -215,6 +219,7 @@ export default function Login() {
                     </Text>
                 </TouchableOpacity>
 
+                <TouchableOpacity onPress={() => router.push({ pathname: '/verificarConta', params: { email: email.trim() } })} style={styles.linkLikeButton}><Text style={{ color: theme.link }}>Ativar conta com código</Text></TouchableOpacity>
                 <TouchableOpacity onPress={startForgotFlow} style={styles.linkLikeButton}>
                     <Text style={[styles.linkLikeText, { color: theme.link }]}>Esqueci minha senha</Text>
                 </TouchableOpacity>

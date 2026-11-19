@@ -1,0 +1,322 @@
+[
+  {
+    "method": "POST",
+    "path": "/usuarios",
+    "protected": false
+  },
+  {
+    "method": "POST",
+    "path": "/usuarios/verificar-codigo",
+    "protected": false
+  },
+  {
+    "method": "POST",
+    "path": "/usuarios/reenviar-codigo",
+    "protected": false
+  },
+  {
+    "method": "GET",
+    "path": "/usuarios/verificar-primeiro-login",
+    "protected": true
+  },
+  {
+    "method": "PATCH",
+    "path": "/usuarios/completar-cadastro",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/usuarios/historico-pesquisas",
+    "protected": true
+  },
+  {
+    "method": "DELETE",
+    "path": "/usuarios/historico-pesquisas/:id",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/usuarios/pesquisar",
+    "protected": false
+  },
+  {
+    "method": "GET",
+    "path": "/usuarios/perfil",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/usuarios/:id",
+    "protected": false
+  },
+  {
+    "method": "PUT",
+    "path": "/usuarios/foto-perfil",
+    "protected": true
+  },
+  {
+    "method": "PUT",
+    "path": "/usuarios/banner-perfil",
+    "protected": true
+  },
+  {
+    "method": "PUT",
+    "path": "/usuarios/perfil-empresa",
+    "protected": true
+  },
+  {
+    "method": "PUT",
+    "path": "/usuarios/perfil-pessoa-fisica",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/categorias/populares",
+    "protected": false
+  },
+  {
+    "method": "POST",
+    "path": "/posts",
+    "protected": true
+  },
+  {
+    "method": "POST",
+    "path": "/posts/:id/like",
+    "protected": true
+  },
+  {
+    "method": "DELETE",
+    "path": "/posts/:id/like",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/posts/curtidos",
+    "protected": true
+  },
+  {
+    "method": "POST",
+    "path": "/posts/:id/salvar",
+    "protected": true
+  },
+  {
+    "method": "DELETE",
+    "path": "/posts/:id/salvar",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/posts/salvos",
+    "protected": true
+  },
+  {
+    "method": "POST",
+    "path": "/posts/:id/comentarios",
+    "protected": true
+  },
+  {
+    "method": "POST",
+    "path": "/posts/comentarios/:id/respostas",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/posts/comentarios/:id/respostas",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/posts",
+    "protected": false
+  },
+  {
+    "method": "GET",
+    "path": "/posts/categoria/:id_categoria",
+    "protected": false
+  },
+  {
+    "method": "GET",
+    "path": "/posts/usuario/:id_usuario",
+    "protected": false
+  },
+  {
+    "method": "DELETE",
+    "path": "/posts/:id",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/posts/:id",
+    "protected": true
+  },
+  {
+    "method": "POST",
+    "path": "/auth/login",
+    "protected": false
+  },
+  {
+    "method": "POST",
+    "path": "/auth/logout",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/auth/me",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/auth/id",
+    "protected": true
+  },
+  {
+    "method": "PUT",
+    "path": "/auth/password",
+    "protected": true
+  },
+  {
+    "method": "PUT",
+    "path": "/auth/email",
+    "protected": true
+  },
+  {
+    "method": "POST",
+    "path": "/auth/email/confirmar",
+    "protected": true
+  },
+  {
+    "method": "POST",
+    "path": "/auth/esqueci-senha",
+    "protected": false
+  },
+  {
+    "method": "POST",
+    "path": "/auth/redefinir-senha",
+    "protected": false
+  },
+  {
+    "method": "POST",
+    "path": "/seguidores/:id",
+    "protected": true
+  },
+  {
+    "method": "DELETE",
+    "path": "/seguidores/:id",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/seguidores/seguidores/:id",
+    "protected": false
+  },
+  {
+    "method": "GET",
+    "path": "/seguidores/seguindo/:id",
+    "protected": false
+  },
+  {
+    "method": "GET",
+    "path": "/seguidores/status/:id",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/notificacoes",
+    "protected": true
+  },
+  {
+    "method": "DELETE",
+    "path": "/notificacoes",
+    "protected": true
+  },
+  {
+    "method": "PATCH",
+    "path": "/notificacoes/:id/lida",
+    "protected": true
+  },
+  {
+    "method": "DELETE",
+    "path": "/notificacoes/:id",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/preferencias-notificacoes",
+    "protected": true
+  },
+  {
+    "method": "PUT",
+    "path": "/preferencias-notificacoes",
+    "protected": true
+  },
+  {
+    "method": "POST",
+    "path": "/mensagens/conversas",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/mensagens/conversas",
+    "protected": true
+  },
+  {
+    "method": "POST",
+    "path": "/mensagens/conversas/:id_conversa/mensagens",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/mensagens/conversas/:id_conversa/mensagens",
+    "protected": true
+  },
+  {
+    "method": "POST",
+    "path": "/vagas",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/vagas",
+    "protected": false
+  },
+  {
+    "method": "GET",
+    "path": "/vagas/categoria/:categoria",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/vagas/data",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/vagas/mais-utilizados",
+    "protected": false
+  },
+  {
+    "method": "GET",
+    "path": "/vagas/favoritas",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/vagas/usuario/:id",
+    "protected": true
+  },
+  {
+    "method": "POST",
+    "path": "/vagas/:id/favoritar",
+    "protected": true
+  },
+  {
+    "method": "GET",
+    "path": "/vagas/:id",
+    "protected": true
+  },
+  {
+    "method": "DELETE",
+    "path": "/vagas/:id/favoritar",
+    "protected": true
+  }
+]

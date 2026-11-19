@@ -266,6 +266,7 @@ export default function Cadastro() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
+  const [cnpj, setCnpj] = useState('');
   const [tipoConta, setTipoConta] = useState<'artista' | 'empresa' | null>(null);
   const [step, setStep] = useState(1);
   const [darkMode, setDarkMode] = useState(false);
@@ -306,14 +307,15 @@ export default function Cadastro() {
 
     try {
       const response = await api.post('/usuarios', {
-        nome,
-        email,
+        nome: nome.trim(),
+        email: email.trim(),
         senha,
-        tipoConta
+        tipo_usuario: tipoConta === 'empresa' ? 'EMPRESA' : 'PF',
+        ...(tipoConta === 'empresa' ? { cnpj: cnpj.replace(/\D/g, '') } : {}),
       });
 
-      Alert.alert("Sucesso!", "Sua conta Seek foi criada com sucesso.");
-      router.replace('/principal');
+      Alert.alert("Sucesso!", "Conta criada. Confirme o código enviado ao seu e-mail para ativá-la.");
+      router.replace({ pathname: '/verificarConta', params: { email: email.trim() } });
       return { success: true };
 
     } catch (error: any) {
@@ -354,11 +356,14 @@ export default function Cadastro() {
           {step === 1 ? (
             <FormEtapa1 tipoConta={tipoConta} setTipoConta={setTipoConta} setStep={setStep} theme={theme} />
           ) : (
+            <>
+            {tipoConta === 'empresa' && <TextInput style={[styles.input, { color: theme.inputText }]} placeholder="CNPJ" placeholderTextColor={theme.placeholder} keyboardType="number-pad" value={cnpj} onChangeText={setCnpj} />}
             <FormEtapa2
               nome={nome} setNome={setNome} email={email} setEmail={setEmail}
               senha={senha} setSenha={setSenha} confirmarSenha={confirmarSenha}
               setConfirmarSenha={setConfirmarSenha} handleCadastro={handleCadastro} theme={theme}
             />
+            </>
           )}
         </View>
 

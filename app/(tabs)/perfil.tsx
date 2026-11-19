@@ -1,4 +1,4 @@
-import { api } from '@/src/services/api';
+import { api, normalizePost } from '@/src/services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
 import { router, useRouter } from 'expo-router';
@@ -209,7 +209,7 @@ const ProfileScreen = () => {
         if (!uid) return;
 
         // 🔹 FOTO DE PERFIL
-        const response = await api.get(`/usuarios/foto-perfil/${uid}`);
+        const response = await api.get(`/usuarios/${uid}`);
         const data = response.data;
 
         setUserName(data?.nome || '');
@@ -219,7 +219,7 @@ const ProfileScreen = () => {
         }
 
         // 🔥 BANNER (NOVO)
-        const bannerResponse = await api.get(`/usuarios/foto-banner/${uid}`);
+        const bannerResponse = response;
         const bannerData = bannerResponse.data;
 
         if (bannerData?.banner) {
@@ -227,7 +227,7 @@ const ProfileScreen = () => {
         }
 
         // 🔥 STATS (seguidores, posts, likes)
-        const statsResponse = await api.get(`/usuarios/numero-posts-seguidores-likes/${uid}`);
+        const statsResponse = response;
         const statsData = statsResponse.data;
 
         setUserStats({
@@ -277,7 +277,7 @@ const ProfileScreen = () => {
 
 
     try {
-      const { data } = await api.get(`/usuarios/lista-seguidores/${currentUserId}`);
+      const { data } = await api.get(`/seguidores/seguidores/${currentUserId}`);
       setFollowers(data);
       setFollowersModalVisible(true);
     } catch (error) {
@@ -290,7 +290,7 @@ const ProfileScreen = () => {
       if (!currentUserId) return;
       try {
         const { data } = await api.get(`/posts/usuario/${currentUserId}`);
-        const mapped: Post[] = (data || []).map((post: any) => ({
+        const mapped: Post[] = (data || []).map(normalizePost).map((post: any) => ({
           id: String(post.id),
 
           author: post.user?.nome || 'Usuário',

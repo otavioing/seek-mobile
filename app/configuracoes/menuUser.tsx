@@ -15,7 +15,7 @@ import {
 import { Path, Svg } from "react-native-svg";
 
 
-export default function menuUser() {
+export default function MenuUser() {
 
   const size = 48;
   const router = useRouter();
@@ -46,7 +46,7 @@ export default function menuUser() {
 
         if (!userId) return;
 
-        const response = await api.get(`/usuarios/foto-perfil/${userId}`);
+        const response = await api.get(`/usuarios/${userId}`);
 
         const data = response.data;
 
@@ -70,13 +70,17 @@ export default function menuUser() {
 
   const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem('token');
+      await api.post('/auth/logout');
+      await AsyncStorage.multiRemove(['token', 'session']);
       await AsyncStorage.removeItem('userId');
 
       router.replace('/login');
     } catch (error) {
       console.log('Erro', 'Erro ao sair da conta');
       console.log(error);
+    } finally {
+      await AsyncStorage.multiRemove(['session', 'userId', 'token']);
+      router.replace('/login');
     }
   };
 

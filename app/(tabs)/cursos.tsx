@@ -146,7 +146,7 @@ const CursosScreen = () => {
 
   const fetchCourses = async () => {
     try {
-      const response = await api.get('/postscursos');
+      const response = { data: [] };
 
       const data = response.data.map((item: any) => ({
         id: item.id.toString(),
@@ -184,6 +184,7 @@ const CursosScreen = () => {
         )}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContainer}
+        ListEmptyComponent={<Text style={{ color: "#888", padding: 20 }}>Cursos ainda não estão disponíveis nesta versão.</Text>}
         ListHeaderComponent={<Text style={styles.pageTitle}>Cursos</Text>}
       />
 

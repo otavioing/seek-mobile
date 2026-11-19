@@ -1,6 +1,6 @@
-import { api } from '@/src/services/api'; // ajusta o caminho se precisar
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { api, normalizePost, appendImage } from '@/src/services/api'; // ajusta o caminho se precisar
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useSessionScope } from './useSessionScope';
 
 export type Comment = {
   id: string;
@@ -41,18 +41,18 @@ type PostsContextValue = {
 
 const PostsContext = createContext<PostsContextValue | undefined>(undefined);
 
-export const PostsProvider = ({ children }: { children: React.ReactNode }) => {
+export const PostsProvider = ({ children, sessionUserId }: { children: React.ReactNode; sessionUserId: string | null }) => {
   const [posts, setPosts] = useState<Post[]>([]);
+  const scope = useSessionScope(sessionUserId);
 
-  useEffect(() => {
-    buscarPosts();
-  }, []);
-
-  const buscarPosts = async () => {
+  const buscarPosts = useCallback(async () => {
+    if (!sessionUserId) return;
+    const generation = scope.current;
     try {
       const response = await api.get('/posts');
+      if (generation !== scope.current) return;
 
-      const dadosTratados = response.data.map((post: any) => {
+      const dadosTratados = response.data.map(normalizePost).map((post: any) => {
         const imagensApi = Array.isArray(post.imagens)
           ? post.imagens.map((img: any) => ({ uri: img }))
           : post.imagem
@@ -76,120 +76,47 @@ export const PostsProvider = ({ children }: { children: React.ReactNode }) => {
         } as Post;
       });
 
-      // preserva posts locais (criados offline ou não retornados pelo backend)
-      setPosts((prev) => {
-        const locais = prev.filter((p) => p.id.startsWith('user-') || p.userId === 'me');
-        const merged = [...locais, ...dadosTratados];
-        const uniq = new Map<string, Post>();
-        merged.forEach((p) => uniq.set(p.id, p));
-        return Array.from(uniq.values());
-      });
+      setPosts(dadosTratados);
 
     } catch (error) {
       console.log('Erro ao buscar posts:', error);
     }
-  };
+  }, [scope, sessionUserId]);
 
-  const addPost = async (input: NewPostInput) => {
-    try {
-      const userId = await AsyncStorage.getItem('userId');
-      let author = 'Você';
-      let avatar: any = { uri: '' };
+  useEffect(() => {
+    setPosts([]);
+    void buscarPosts();
+  }, [buscarPosts]);
 
-      if (userId) {
-        try {
-          const { data } = await api.get(`/usuarios/foto-perfil/${userId}`);
-          author = data?.nome || author;
-          if (data?.foto) avatar = { uri: data.foto };
-        } catch (e) {
-          console.log('Falha ao carregar dados do usuário para o post', e);
-        }
-      }
+  const addPost = useCallback(async (input: NewPostInput) => {
+    if (!sessionUserId) throw new Error('Faça login para publicar.');
+    const generation = scope.current;
+    const form = new FormData();
+    form.append('titulo', input.title || '');
+    form.append('descricao', input.description || '');
+    form.append('visibilidade', 'publico');
+    form.append('permissao_comentarios', 'todos');
+    form.append('categorias', JSON.stringify(input.categoryName ? [input.categoryName] : []));
+    for (const [index, file] of input.images.slice(0, 10).entries()) await appendImage(form, 'imagens', file.uri || file, `post-${index}.jpg`);
+    await api.post('/posts', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+    if (generation === scope.current) await buscarPosts();
+  }, [scope, sessionUserId, buscarPosts]);
 
-      // envia para o backend usando FormData (rota espera upload.single("arquivo"))
-      let createdId = `user-${Date.now()}`;
-      let returnedImages = input.images;
+  const removePost = useCallback(async (postId: string) => {
+    if (!sessionUserId) throw new Error('Faça login para excluir uma publicação.');
+    const generation = scope.current;
+    await api.delete(`/posts/${postId}`);
+    if (generation === scope.current) setPosts(prev => prev.filter(p => p.id !== postId));
+  }, [scope, sessionUserId]);
 
-      if (userId && input.images.length) {
-        const firstTwo = input.images.slice(0, 2);
-        const form = new FormData();
-        form.append('user_id', userId);
-        form.append('legenda', input.description || '');
-        form.append('titulo', input.title || '');
-        form.append('id_categoria', input.categoryId || '');
-        firstTwo.forEach((file, idx) => {
-          const payload = {
-            uri: file.uri || file,
-            name: `post-${idx + 1}.jpg`,
-            type: 'image/jpeg',
-          } as any;
-          // Alguns backends esperam "arquivo", outros "imagem"; mandamos ambos para garantir
-          form.append('arquivo', payload);
-          form.append('imagem', payload);
-        });
-
-        try {
-          const resp = await api.post('/posts', form, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
-          createdId = String(resp.data?.id ?? createdId);
-          if (resp.data?.imagens && Array.isArray(resp.data.imagens)) {
-            returnedImages = resp.data.imagens.map((img: any) => ({ uri: img }));
-          } else if (resp.data?.imagem) {
-            returnedImages = [{ uri: resp.data.imagem }];
-          }
-          if (resp.data?.foto_perfil) avatar = { uri: resp.data.foto_perfil };
-          if (resp.data?.nome) author = resp.data.nome;
-          // Após criar, recarrega lista oficial do backend para garantir path completo
-          await buscarPosts();
-          return;
-        } catch (e) {
-          console.log('Falha ao salvar post no backend, mantendo local:', e);
-        }
-      }
-
-      const newPost: Post = {
-        id: createdId,
-        author,
-        userId: userId || 'me',
-        followers: 'seguindo',
-        images: returnedImages,
-        avatar,
-        likes: 0,
-        comments: [],
-        title: input.title,
-        categoryId: input.categoryId,
-        categoryName: input.categoryName,
-        description: input.description,
-        postedAt: Date.now(),
-      };
-
-      setPosts((prev) => [newPost, ...prev]);
-    } catch (error) {
-      console.log('Erro ao adicionar post:', error);
-      throw error;
-    }
-  };
-
-  const removePost = async (postId: string) => {
-    setPosts((prev) => prev.filter((p) => p.id !== postId));
-    try {
-      await api.delete(`/posts/${postId}`);
-    } catch (error) {
-      console.log('Erro ao remover post no backend:', error);
-    }
-  };
-
-  const refreshPosts = async () => {
-    await buscarPosts();
-  };
+  const refreshPosts = buscarPosts;
 
   const value = useMemo(() => ({
     posts,
     addPost,
     removePost,
     refreshPosts
-  }), [posts]);
+  }), [posts, addPost, removePost, refreshPosts]);
 
   return (
     <PostsContext.Provider value={value}>

@@ -1,4 +1,5 @@
 import { Comment, useComments } from '@/src/context/CommentsContext';
+import SavePostButton from '@/components/SavePostButton';
 import { api } from '@/src/services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
@@ -60,7 +61,7 @@ interface PostDetailModalProps {
   onPressCommentAuthor?: (comment: Comment) => void;
 }
 
-const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPressCommentAuthor }: PostDetailModalProps) => {
+export const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPressCommentAuthor }: PostDetailModalProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const pagerRef = useRef<ScrollView>(null);
   const [commentText, setCommentText] = useState('');
@@ -81,11 +82,9 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
       const userId = await AsyncStorage.getItem('userId');
       if (!userId) return;
 
-      const resLike = await api.get(`/posts/verifica-like/${userId}/${post.id}`);
-      setLiked(resLike.data === true);
-
-      const resCount = await api.get(`/posts/likes/${post.id}`);
-      setLikesCount(resCount.data[0]?.total_likes || 0);
+      const detail = await api.get(`/posts/${post.id}`);
+      setLiked(!!detail.data.usuario_curtiu);
+      setLikesCount(Number(detail.data.likes || 0));
     } catch (err) {
       console.log("Erro ao carregar likes:", err);
     }
@@ -96,7 +95,7 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
     if (pagerRef.current) pagerRef.current.scrollTo({ y: 0, animated: false });
 
     if (post?.id) {
-      fetchComments(post.id);
+      fetchComments(post.id).catch(error => console.log('Erro ao carregar comentários:', error));
       carregarLikes();
     }
 
@@ -106,7 +105,7 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
     setReplyToCommentId(null);
     setReplyToUserName('');
     setIsCommentsVisible(false);
-  }, [post]);
+  }, [post, fetchComments]);
 
   if (!post || !visible) return null;
 
@@ -137,15 +136,10 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
       const userId = await AsyncStorage.getItem('userId');
       if (!userId) return;
 
-      const response = await api.post('/posts/like', {
-        userId: Number(userId),
-        postId: post.id
-      });
-
-      const { liked } = response.data;
-
-      setLiked(liked);
-      setLikesCount((prev) => liked ? prev + 1 : Math.max(0, prev - 1));
+      if (liked) await api.delete(`/posts/${post.id}/like`);
+      else await api.post(`/posts/${post.id}/like`);
+      setLikesCount(prev => liked ? Math.max(0, prev - 1) : prev + 1);
+      setLiked(!liked);
 
     } catch (err) {
       console.log("Erro ao dar like:", err);
@@ -175,7 +169,7 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
   };
 
   const handleStartReply = (comment: Comment) => {
-    setReplyToCommentId(comment.id);
+    setReplyToCommentId(comment.parentCommentId || comment.id);
     setReplyToUserName(comment.user);
     setIsCommentsVisible(true);
     focusCommentInput();
@@ -276,6 +270,7 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
             </ScrollView>
 
             <View style={styles.modalToolbarOverlay}>
+              <SavePostButton postId={post.id} />
               <TouchableOpacity style={styles.iconBtn} onPress={handleShare} activeOpacity={0.75}>
                 <Icon name="share-social-outline" size={22} color="#fff" />
               </TouchableOpacity>

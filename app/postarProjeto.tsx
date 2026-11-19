@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Image, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { usePosts } from '../src/context/PostsContext';
-import { api } from '../src/services/api';
+import { api, appendImage } from '../src/services/api';
 
 interface DraftImage {
   uri: string;
@@ -28,15 +28,15 @@ export default function UploadScreen() {
   const [loadingCategories, setLoadingCategories] = useState(false);
 
   useEffect(() => {
-    // categorias fixas (igual você mandou)
-    setCategories([
-      { id: '1', name: 'Ilustração' },
-      { id: '2', name: 'Design' },
-      { id: '3', name: 'Foto' },
-      { id: '4', name: 'Futurista' },
-      { id: '5', name: 'Abstrato' },
-      { id: '6', name: 'Identidade Visual' },
-    ]);
+    const load = async () => {
+      setLoadingCategories(true);
+      try {
+        const { data } = await api.get('/categorias/populares');
+        setCategories(data.map((category: any) => ({ id: String(category.id), name: category.nome })));
+      } catch { Alert.alert('Erro', 'Não foi possível carregar as categorias.'); }
+      finally { setLoadingCategories(false); }
+    };
+    void load();
   }, []);
 
   const requestPermission = async () => {
@@ -139,16 +139,14 @@ export default function UploadScreen() {
 
       formData.append('user_id', userId);
       formData.append('titulo', title.trim());
-      formData.append('legenda', normalizedDescription);
-      formData.append('nome_categoria', selectedCategory?.name || '');
+      formData.append('descricao', normalizedDescription);
+      formData.append('visibilidade', 'publico');
+      formData.append('permissao_comentarios', 'todos');
+      formData.append('categorias', JSON.stringify(selectedCategory ? [selectedCategory.name] : []));
 
-      drafts.slice(0, 5).forEach((img, index) => {
-        formData.append('imagens', {
-          uri: img.uri,
-          name: `foto_${index}.jpg`,
-          type: 'image/jpeg',
-        } as any);
-      });
+      for (const [index, img] of drafts.slice(0, 10).entries()) {
+        await appendImage(formData, 'imagens', img.uri, `foto_${index}.jpg`);
+      }
 
       // Não setar manualmente multipart/form-data: o axios coloca o boundary corretamente.
       await api.post('/posts', formData, {

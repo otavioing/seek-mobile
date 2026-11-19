@@ -1,5 +1,6 @@
 // import Breadcrumb from '@/components/Breadcrumb';
-import { api } from '@/src/services/api';
+import { contactInitial, normalizeConversation, type Conversa } from '@/src/services/messaging';
+import { messagesApi } from '@/src/services/seek';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -16,44 +17,6 @@ import {
 	TouchableOpacity,
 	View,
 } from 'react-native';
-
-type Conversa = {
-	id: number;
-	nome: string;
-	ultimaMensagem: string;
-	hora: string;
-	naoLida: boolean;
-	online: boolean;
-	foto?: string | null;
-};
-
-type ApiConversa = {
-	id: number;
-	tipo?: string;
-	nome?: string | null;
-	foto?: string | null;
-	mensagens_nao_lidas?: number | null;
-	ultima_mensagem?: string | null;
-	ultima_mensagem_em?: string | null;
-	nome_exibicao?: string | null;
-	participantes?: Array<{
-		usuario_id?: number;
-		nome?: string | null;
-		foto?: string | null;
-	}>;
-};
-
-const formatConversationTime = (dateString?: string | null) => {
-	if (!dateString) return '';
-	const date = new Date(dateString);
-	if (Number.isNaN(date.getTime())) return '';
-	return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-};
-
-const resolveOtherParticipant = (conversa: ApiConversa, currentUserId: string) => {
-	const participante = conversa.participantes?.find((item) => String(item.usuario_id) !== currentUserId);
-	return participante || conversa.participantes?.[0] || null;
-};
 
 export default function Mensagens() {
 	const router = useRouter();
@@ -89,27 +52,9 @@ export default function Mensagens() {
 				return;
 			}
 
-			const { data } = await api.get(`/mensagens/usuarios/${uid}/conversas`);
+			const { data } = await messagesApi.conversations();
 			const lista = Array.isArray(data) ? data : [];
-
-			const conversasMapeadas = lista.map((conversa: ApiConversa) => {
-				const outroParticipante = resolveOtherParticipant(conversa, uid);
-				const nome = conversa.nome_exibicao || conversa.nome || outroParticipante?.nome || 'Conversa';
-				const ultimaMensagem = conversa.ultima_mensagem || 'Nenhuma mensagem ainda';
-				const hora = formatConversationTime(conversa.ultima_mensagem_em || undefined) || formatConversationTime(conversa['criado_em' as keyof ApiConversa] as string | undefined) || '';
-
-				return {
-					id: conversa.id,
-					nome,
-					ultimaMensagem,
-					hora,
-					naoLida: (conversa.mensagens_nao_lidas ?? 0) > 0,
-					online: false,
-					foto: conversa.foto || outroParticipante?.foto || null,
-				};
-			});
-
-			setConversas(conversasMapeadas);
+			setConversas(lista.map(normalizeConversation));
 		} catch (error) {
 			console.log('Erro ao carregar conversas:', error);
 			setConversas([]);
@@ -190,7 +135,7 @@ export default function Mensagens() {
 					{item.foto ? (
 						<Image source={{ uri: item.foto }} style={styles.avatarImage} />
 					) : (
-						<Text style={[styles.avatarText, { color: theme.textPrimary }]}>{item.nome.slice(0, 1)}</Text>
+						<Text style={[styles.avatarText, { color: theme.textPrimary }]}>{contactInitial(item.nome)}</Text>
 					)}
 				{item.online ? <View style={[styles.onlineDot, { backgroundColor: theme.online }]} /> : null}
 			</View>

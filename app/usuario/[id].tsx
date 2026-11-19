@@ -1,5 +1,6 @@
 import { Post } from '@/src/context/PostsContext';
-import { api } from '@/src/services/api';
+import { api, normalizePost } from '@/src/services/api';
+import { messagesApi } from '@/src/services/seek';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -114,7 +115,7 @@ const UserProfileScreen = () => {
         setCurrentUserId(uid);
         if (uid && uid !== userId) {
           try {
-            const resp = await api.get(`/usuarios/verificarsesegue/${uid}/${userId}`);
+            const resp = await api.get(`/seguidores/status/${userId}`);
             // resposta esperada: { segue: true } ou { segue: false }
             if (resp?.data && typeof resp.data.segue !== 'undefined') {
               setIsFollowing(!!resp.data.segue);
@@ -133,7 +134,7 @@ const UserProfileScreen = () => {
     loadCurrent();
     const fetchUser = async () => {
       try {
-        const { data } = await api.get(`/usuarios/foto-perfil/${userId}`);
+        const { data } = await api.get(`/usuarios/${userId}`);
         setUserName(data?.nome || '');
         if (data?.foto) setAvatar({ uri: data.foto });
       } catch (e) {
@@ -143,7 +144,7 @@ const UserProfileScreen = () => {
 
     const fetchBanner = async () => {
         try {
-          const { data } = await api.get(`/usuarios/foto-banner/${userId}`);
+          const { data } = await api.get(`/usuarios/${userId}`);
           if (data?.banner) setBanner({ uri: data.banner });
         } catch (e) {
           console.log('Erro ao buscar banner do usuário', e);
@@ -152,7 +153,7 @@ const UserProfileScreen = () => {
 
     const fetchStats = async () => {
       try {
-        const { data } = await api.get(`/usuarios/numero-posts-seguidores-likes/${userId}`);
+        const { data } = await api.get(`/usuarios/${userId}`);
         setStats({
           seguidores: data?.total_seguidores ?? 0,
           posts: data?.total_posts ?? 0,
@@ -166,7 +167,7 @@ const UserProfileScreen = () => {
     const fetchPosts = async () => {
       try {
         const { data } = await api.get(`/posts/usuario/${userId}`);
-        const mapped: Post[] = (data || []).map((post: any) => ({
+        const mapped: Post[] = (data || []).map(normalizePost).map((post: any) => ({
           id: String(post.id),
           author: post.nome,
           userId: post.user_id ? String(post.user_id) : String(userId),
@@ -211,7 +212,7 @@ const UserProfileScreen = () => {
 
   const fetchFollowers = async () => {
     try {
-      const { data } = await api.get(`/usuarios/lista-seguidores/${userId}`);
+      const { data } = await api.get(`/seguidores/seguidores/${userId}`);
       setFollowers(data || []);
       setFollowersModalVisible(true);
     } catch (error) {
@@ -260,18 +261,10 @@ const UserProfileScreen = () => {
                   setIsProcessing(true);
 
                   try {
-                    const resp = await api.post(`/usuarios/seguir-usuario/${currentUserId}/${userId}`);
-                    const follows = resp?.data && typeof resp.data.seguindo !== 'undefined' ? !!resp.data.seguindo : (resp?.data?.segue ?? null);
-
-                    if (follows === null) {
-                      const msg = resp?.data?.message || '';
-                      const inferred = msg.toLowerCase().includes('agora segue') || msg.toLowerCase().includes('segue');
-                      setIsFollowing(!!inferred);
-                      setStats((s) => ({ ...s, seguidores: inferred ? s.seguidores + 1 : Math.max(0, s.seguidores - 1) }));
-                    } else {
-                      setIsFollowing(follows);
-                      setStats((s) => ({ ...s, seguidores: follows ? s.seguidores + 1 : Math.max(0, s.seguidores - 1) }));
-                    }
+                    if (isFollowing) await api.delete(`/seguidores/${userId}`);
+                    else await api.post(`/seguidores/${userId}`);
+                    setIsFollowing(!isFollowing);
+                    setStats(s => ({ ...s, seguidores: isFollowing ? Math.max(0, s.seguidores - 1) : s.seguidores + 1 }));
                   } catch (e) {
                     console.log('Erro ao (un)follow:', e);
                     Alert.alert('Erro', 'Não foi possível atualizar o seguimento.');
@@ -295,12 +288,8 @@ const UserProfileScreen = () => {
 
                   setIsMessaging(true);
                   try {
-                    await api.post('/mensagens/conversas/privada', {
-                      usuario_id: currentUserId,
-                      outro_usuario_id: userId,
-                      foto: null,
-                    });
-                    Alert.alert('Sucesso', 'Conversa criada com sucesso.');
+                    const result = await messagesApi.startConversation(userId);
+                    router.push({ pathname: '/configuracoes/conversa/[id]', params: { id: String(result.data.id_conversa) } });
                   } catch (e) {
                     console.log('Erro ao criar conversa privada:', e);
                     Alert.alert('Erro', 'Não foi possível iniciar a conversa.');

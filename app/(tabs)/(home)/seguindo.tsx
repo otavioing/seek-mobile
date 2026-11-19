@@ -1,4 +1,5 @@
 import { Comment, useComments } from '@/src/context/CommentsContext';
+import SavePostButton from '@/components/SavePostButton';
 import { useFollowedPosts } from '@/src/context/FollowedPostsContext';
 import { Story, useStories } from '@/src/context/StoriesContext';
 import { api } from '@/src/services/api';
@@ -77,11 +78,9 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressCommentAuthor, 
       const userId = await AsyncStorage.getItem('userId');
       if (!userId) return;
 
-      const resLike = await api.get(`/posts/verifica-like/${userId}/${post.id}`);
-      setLiked(resLike.data === true);
-
-      const resCount = await api.get(`/posts/likes/${post.id}`);
-      setLikesCount(resCount.data[0]?.total_likes || 0);
+      const detail = await api.get(`/posts/${post.id}`);
+      setLiked(!!detail.data.usuario_curtiu);
+      setLikesCount(Number(detail.data.likes || 0));
     } catch (err) {
       console.log('Erro ao carregar likes:', err);
     }
@@ -90,14 +89,14 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressCommentAuthor, 
   useEffect(() => {
     if (!post?.id || !visible) return;
 
-    fetchComments(post.id);
+    fetchComments(post.id).catch(error => console.log('Erro ao carregar comentários:', error));
     carregarLikes();
     AsyncStorage.getItem('userId').then((id) => setCurrentUserId(id)).catch(() => setCurrentUserId(null));
     setCommentText('');
     setReplyToCommentId(null);
     setReplyToUserName('');
     setIsCommentsVisible(false);
-  }, [post, visible]);
+  }, [post, visible, fetchComments]);
 
   const sortCommentsForUser = (list: Comment[]) => {
     if (!currentUserId) return list;
@@ -125,14 +124,11 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressCommentAuthor, 
       const userId = await AsyncStorage.getItem('userId');
       if (!userId) return;
 
-      const response = await api.post('/posts/like', {
-        userId: Number(userId),
-        postId: post.id,
-      });
-
-      const isLiked = response.data?.liked === true;
-      setLiked(isLiked);
-      setLikesCount((prev) => (isLiked ? prev + 1 : Math.max(0, prev - 1)));
+      if (!post?.id) return;
+      if (liked) await api.delete(`/posts/${post.id}/like`);
+      else await api.post(`/posts/${post.id}/like`);
+      setLikesCount(prev => liked ? Math.max(0, prev - 1) : prev + 1);
+      setLiked(!liked);
     } catch (err) {
       console.log('Erro ao dar like:', err);
     }
@@ -161,7 +157,7 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressCommentAuthor, 
   };
 
   const handleStartReply = (comment: Comment) => {
-    setReplyToCommentId(comment.id);
+    setReplyToCommentId(comment.parentCommentId || comment.id);
     setReplyToUserName(comment.user);
     setIsCommentsVisible(true);
     focusCommentInput();
@@ -246,6 +242,7 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressCommentAuthor, 
             </ScrollView>
 
             <View style={styles.modalToolbarOverlay}>
+              <SavePostButton postId={post.id} />
               <TouchableOpacity style={styles.iconBtn} onPress={handleShare} activeOpacity={0.75}>
                 <Icon name="share-social-outline" size={22} color="#fff" />
               </TouchableOpacity>
@@ -676,34 +673,7 @@ const SeguindoScreen = () => {
   };
 
   const handleAddStory = async () => {
-    try {
-      setIsPostingStory(true);
-      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!perm.granted) {
-        Alert.alert('Permissão necessária', 'Permita acesso à galeria para postar um story.');
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        quality: 0.85,
-      });
-
-      if (result.canceled) return;
-      const uri = result.assets?.[0]?.uri;
-      if (!uri) {
-        Alert.alert('Erro', 'Não consegui ler a imagem selecionada.');
-        return;
-      }
-
-      const resultUpload = await addStory(uri);
-      void resultUpload;
-      Alert.alert('Story', 'Story atualizado!');
-    } catch {
-      Alert.alert('Erro', 'Não foi possível postar o story agora.');
-    } finally {
-      setIsPostingStory(false);
-    }
+    Alert.alert('Indisponível', 'Stories ainda não estão disponíveis nesta versão.');
   };
 
   useEffect(() => {

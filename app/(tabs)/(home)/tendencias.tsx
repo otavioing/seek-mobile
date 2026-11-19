@@ -1,5 +1,6 @@
 import { Comment, useComments } from '@/src/context/CommentsContext';
-import { api } from '@/src/services/api';
+import SavePostButton from '@/components/SavePostButton';
+import { api, normalizePost } from '@/src/services/api';
 import { MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from "@react-navigation/native";
@@ -86,24 +87,22 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
         const userId = await AsyncStorage.getItem('userId');
         if (!userId) return;
 
-        const resLike = await api.get(`/posts/verifica-like/${userId}/${post.id}`);
-        setLiked(resLike.data === true);
-
-        const resCount = await api.get(`/posts/likes/${post.id}`);
-        setLikesCount(resCount.data[0]?.total_likes || 0);
+        const detail = await api.get(`/posts/${post.id}`);
+      setLiked(!!detail.data.usuario_curtiu);
+      setLikesCount(Number(detail.data.likes || 0));
       } catch (err) {
         console.log('Erro ao carregar likes:', err);
       }
     };
 
-    fetchComments(post.id);
+    fetchComments(post.id).catch(error => console.log('Erro ao carregar comentários:', error));
     carregarLikes();
     AsyncStorage.getItem('userId').then((id) => setCurrentUserId(id)).catch(() => setCurrentUserId(null));
     setCommentText('');
     setReplyToCommentId(null);
     setReplyToUserName('');
     setIsCommentsVisible(false);
-  }, [post, visible]);
+  }, [post, visible, fetchComments]);
 
   const sortCommentsForUser = (list: Comment[]) => {
     if (!currentUserId) return list;
@@ -129,14 +128,11 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
       const userId = await AsyncStorage.getItem('userId');
       if (!userId) return;
 
-      const response = await api.post('/posts/like', {
-        userId: Number(userId),
-        postId: post.id,
-      });
-
-      const isLiked = response.data?.liked === true;
-      setLiked(isLiked);
-      setLikesCount((prev) => (isLiked ? prev + 1 : Math.max(0, prev - 1)));
+      if (!post?.id) return;
+      if (liked) await api.delete(`/posts/${post.id}/like`);
+      else await api.post(`/posts/${post.id}/like`);
+      setLikesCount(prev => liked ? Math.max(0, prev - 1) : prev + 1);
+      setLiked(!liked);
     } catch (err) {
       console.log('Erro ao dar like:', err);
     }
@@ -165,7 +161,7 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
   };
 
   const handleStartReply = (comment: Comment) => {
-    setReplyToCommentId(comment.id);
+    setReplyToCommentId(comment.parentCommentId || comment.id);
     setReplyToUserName(comment.user);
     setIsCommentsVisible(true);
     focusCommentInput();
@@ -250,6 +246,7 @@ const PostDetailModal = ({ visible, onClose, post, theme, onPressAuthor, onPress
             </ScrollView>
 
             <View style={styles.modalToolbarOverlay}>
+              <SavePostButton postId={post.id} />
               <TouchableOpacity style={styles.iconBtn} onPress={handleShare} activeOpacity={0.75}>
                 <Icon name="share-social-outline" size={22} color="#fff" />
               </TouchableOpacity>
@@ -442,11 +439,12 @@ const TendenciasScreen = () => {
 
   const fetchTendencias = async () => {
     try {
-      const resCategorias = await api.get("/tendencias");
+      const resCategorias = await api.get("/categorias/populares");
+      resCategorias.data = resCategorias.data.map((c: any) => ({ ...c, id_categoria: c.id, nome_categoria: c.nome }));
       setCategorias(resCategorias.data);
 
       const promises = resCategorias.data.map((cat: any) =>
-        api.get(`/tendencias/${cat.id_categoria}`)
+        api.get(`/posts/categoria/${cat.id_categoria}`)
       );
 
       const responses = await Promise.all(promises);
@@ -456,7 +454,7 @@ const TendenciasScreen = () => {
       responses.forEach((res, index) => {
         const categoria = resCategorias.data[index];
 
-        postsTemp[categoria.nome_categoria] = res.data.map((item: any) => ({
+        postsTemp[categoria.nome_categoria] = res.data.map(normalizePost).map((item: any) => ({
           id: item.id.toString(),
 
           imageUrl: {
@@ -533,10 +531,13 @@ const TendenciasScreen = () => {
             <View style={[styles.searchBox, { backgroundColor: theme.inputBg }]}>
               <TextInput
                 ref={inputRef}
+                onSubmitEditing={event => router.push({ pathname: '/pesquisar', params: { termo: event.nativeEvent.text } })}
+                returnKeyType="search"
                 placeholder="Buscar..."
                 placeholderTextColor={theme.textMuted}
                 style={[styles.searchInput, { color: theme.inputText }]}
               />
+              <TouchableOpacity accessibilityRole="button" onPress={() => router.push('/pesquisar')}><Text style={{ color: theme.textPrimary }}>Buscar pessoas</Text></TouchableOpacity>
 
               <TouchableOpacity onPress={() => inputRef.current?.focus()}>
                 <MaterialIcons name="search" size={24} color={theme.textMuted} />

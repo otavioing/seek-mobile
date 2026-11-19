@@ -20,7 +20,7 @@ function CustomTabBar() {
   const go = (path: string) => router.push(path as any);
   const refreshHome = () => {
     const target = `/(tabs)/(home)/principal?refresh=${Date.now()}`;
-    router.replace(target as any);
+    router.navigate(target as any);
   };
 
   return (
@@ -68,7 +68,6 @@ function CustomTabBar() {
 
         {/* VAGAS */}
         <TouchableOpacity onPress={() => go("/(tabs)/vagas")} style={styles.item}>
-            <Tabs.Screen name="mensagens" />
           <MaterialIcons
             name={isActive("/vagas") ? "work" : "work-outline"}
             size={30}
@@ -124,11 +123,10 @@ export default function TabsLayout() {
           tabBarStyle: { display: "none" }, // esconde a tab nativa
         }}
       >
-        <Tabs.Screen name="(home)/principal" />
-        <Tabs.Screen name="(home)/tendencias" />
-        <Tabs.Screen name="(home)/seguindo" />
+        <Tabs.Screen name="(home)" />
         <Tabs.Screen name="vagas" />
         <Tabs.Screen name="perfil" />
+        <Tabs.Screen name="mensagens" />
       </Tabs>
 
       {isStoryViewerOpen ? null : <CustomTabBar />}

@@ -1,10 +1,11 @@
+import { notificationsApi } from '@/src/services/seek';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BlurView } from 'expo-blur';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Easing, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal, Pressable } from 'react-native';
+import { Alert, Animated, Easing, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal, Pressable } from 'react-native';
 
 type ToggleSwitchProps = {
     value: boolean;
@@ -49,6 +50,7 @@ function ToggleSwitch({ value, onToggle, trackColor, thumbColor }: ToggleSwitchP
 export default function Notificacoes() {
     const router = useRouter();
     const [darkMode, setDarkMode] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
 
     // Estados dos Toggles Originais
@@ -68,6 +70,22 @@ export default function Notificacoes() {
     useEffect(() => { carregarTema(); }, [carregarTema]);
     useFocusEffect(useCallback(() => { carregarTema(); }, [carregarTema]));
 
+    const loadPreferences = useCallback(async () => {
+        try {
+            const { data } = await notificationsApi.preferences();
+            setCurtidas(data.email_like_post); setNovosSeguidores(data.email_novo_seguidor); setEmailLogin(data.email_login);
+        } catch { Alert.alert('Erro', 'Não foi possível carregar as preferências.'); }
+    }, []);
+    useFocusEffect(useCallback(() => { void loadPreferences(); }, [loadPreferences]));
+    const savePreference = async (key: string, value: boolean) => {
+        if (saving) return;
+        setSaving(true);
+        try {
+            await notificationsApi.updatePreferences({ [key]: value });
+            await loadPreferences();
+        } catch { Alert.alert('Erro', 'Não foi possível salvar as preferências.'); }
+        finally { setSaving(false); }
+    };
     const theme = darkMode
         ? { background: '#121212', textPrimary: '#FFFFFF', textSecondary: '#B0B0B0', switchTrack: '#333333', switchThumb: '#FFFFFF', card: '#1E1E1E', divider: '#333' }
         : { background: '#F2F2F2', textPrimary: '#111111', textSecondary: '#5C5C5C', switchTrack: '#BDBDBD', switchThumb: '#111111', card: '#FFFFFF', divider: '#E0E0E0' };
@@ -97,28 +115,28 @@ export default function Notificacoes() {
                 <View style={styles.list}>
                     {/* Lista de Toggles Reais */}
                     <View style={styles.fbtContainer}>
-                        <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Curtidas</Text>
-                        <ToggleSwitch value={curtidas} onToggle={() => setCurtidas(!curtidas)} trackColor={curtidas ? '#3B82F6' : theme.switchTrack} thumbColor={theme.switchThumb} />
+                        <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>E-mail de curtidas</Text>
+                        <ToggleSwitch value={curtidas} onToggle={() => savePreference('email_like_post', !curtidas)} trackColor={curtidas ? '#3B82F6' : theme.switchTrack} thumbColor={theme.switchThumb} />
                     </View>
 
                     <View style={styles.fbtContainer}>
-                        <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Novos Seguidores</Text>
-                        <ToggleSwitch value={novosSeguidores} onToggle={() => setNovosSeguidores(!novosSeguidores)} trackColor={novosSeguidores ? '#3B82F6' : theme.switchTrack} thumbColor={theme.switchThumb} />
+                        <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>E-mail de novos seguidores</Text>
+                        <ToggleSwitch value={novosSeguidores} onToggle={() => savePreference('email_novo_seguidor', !novosSeguidores)} trackColor={novosSeguidores ? '#3B82F6' : theme.switchTrack} thumbColor={theme.switchThumb} />
                     </View>
 
                     <View style={styles.fbtContainer}>
                         <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Comentou</Text>
-                        <ToggleSwitch value={comentou} onToggle={() => setComentou(!comentou)} trackColor={comentou ? '#3B82F6' : theme.switchTrack} thumbColor={theme.switchThumb} />
+                        <ToggleSwitch value={comentou} onToggle={() => Alert.alert('Indisponível', 'Esta opção ainda não está disponível.')} trackColor={comentou ? '#3B82F6' : theme.switchTrack} thumbColor={theme.switchThumb} />
                     </View>
 
                     <View style={styles.fbtContainer}>
                         <Text style={[styles.textoFiltro, { color: theme.textPrimary }]}>Receber e-mail no login</Text>
-                        <ToggleSwitch value={emailLogin} onToggle={() => setEmailLogin(!emailLogin)} trackColor={emailLogin ? '#3B82F6' : theme.switchTrack} thumbColor={theme.switchThumb} />
+                        <ToggleSwitch value={emailLogin} onToggle={() => savePreference('email_login', !emailLogin)} trackColor={emailLogin ? '#3B82F6' : theme.switchTrack} thumbColor={theme.switchThumb} />
                     </View>
 
 
                     {/* Botão do Modal */}
-                    <TouchableOpacity activeOpacity={0.7} style={styles.fbtContainer} onPress={() => setModalVisible(true)}>
+                    <TouchableOpacity activeOpacity={0.7} style={styles.fbtContainer} onPress={() => Alert.alert('Indisponível', 'O silenciamento por tempo ainda não está disponível.')}>
                         <Text style={[styles.textoFiltro, { color: theme.textPrimary, fontWeight: '700' }]}>Silenciar notificações</Text>
                         <Ionicons name="chevron-down" size={20} color={theme.textPrimary} />
                     </TouchableOpacity>

@@ -1,4 +1,5 @@
-import { api } from '@/src/services/api';
+import { api, apiErrorMessage, appendImage, fileUrl } from '@/src/services/api';
+import { usersApi } from '@/src/services/seek';
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Slider from '@react-native-community/slider';
@@ -27,9 +28,11 @@ const { width } = Dimensions.get('window');
 export default function InformacoesUser() {
   const router = useRouter();
 
+  const [perfil, setPerfil] = useState<any>(null);
   const [nomeUsuario, setNomeUsuario] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
+  const [fields, setFields] = useState<Record<string, string>>({});
   const [darkMode, setDarkMode] = useState(true);
 
   // Estados de Imagem
@@ -62,18 +65,23 @@ export default function InformacoesUser() {
       const userId = await AsyncStorage.getItem("userId");
       if (!userId) return;
 
-      const { data } = await api.get(`/usuarios/basico/${userId}`);
+      const { data } = await api.get(`/usuarios/${userId}`);
 
+      const profile = await api.get('/usuarios/perfil');
+      setPerfil(profile.data);
+      const details = profile.data.tipo_usuario === 'EMPRESA' ? profile.data.perfil_empresa : profile.data.perfil_pessoa_fisica;
+      setFields(Object.fromEntries(Object.entries(details || {}).map(([key, value]) => [key, value == null ? '' : String(value)])));
+      setUsername(profile.data.perfil_pessoa_fisica?.nome_usuario || '');
       setNomeUsuario(data?.nome ?? data?.nome_usuario ?? "");
-      setUsername(data?.nome_de_usuario ?? data?.username ?? data?.usuario ?? data?.login ?? "");
-      setBio(data?.descricao ?? data?.bio ?? data?.biografia ?? "");
+
+      setBio(details?.descricao ?? details?.sobre ?? data?.descricao ?? "");
 
       if (data?.foto_perfil ?? data?.foto) {
-        setPerfilImage(data.foto_perfil ?? data.foto);
+        setPerfilImage(fileUrl(data.foto_perfil ?? data.foto));
       }
 
       if (data?.banner ?? data?.foto_banner) {
-        setBannerImage(data.banner ?? data.foto_banner);
+        setBannerImage(fileUrl(data.banner ?? data.foto_banner));
       }
     } catch (error) {
       console.log("Erro ao carregar informações do usuário:", error);
@@ -90,70 +98,24 @@ export default function InformacoesUser() {
         return;
       }
 
-      // Construir FormData para envio multipart (texto + arquivos)
-      const formData = new FormData();
-      formData.append('nome', nomeUsuario ?? '');
-      formData.append('nome_de_usuario', username ?? '');
-      formData.append('descricao', bio ?? '');
-
-      // Converter URI para Blob e anexar ao FormData (compatível Android/iOS)
-      const makeFileAndAppend = async (field: string, uri: string, fallbackName: string) => {
-        try {
-          const name = uri.split('/').pop() || fallbackName;
-          const match = /\.(\w+)$/.exec(name);
-          const ext = match ? match[1].toLowerCase() : 'jpg';
-          const type = ext === 'png' ? 'image/png' : 'image/jpeg';
-
-          // Usar fetch para obter Blob a partir do URI (funciona para file:// e content:// em RN/Expo)
-          const fetched = await fetch(uri);
-          const blob = await fetched.blob();
-
-          // Em React Native, append(name, blob, filename) funciona para enviar arquivos
-          formData.append(field, blob as any, name);
-        } catch (err) {
-          console.log('Erro ao preparar arquivo para upload:', err);
-          throw err;
-        }
-      };
-
-      if (perfilChanged && perfilImage) {
-        await makeFileAndAppend('foto', perfilImage, `perfil_${userId}.jpg`);
-      }
-
-      if (bannerChanged && bannerImage) {
-        await makeFileAndAppend('banner', bannerImage, `banner_${userId}.jpg`);
-      }
-
-      // Se houver arquivos, usar fetch para enviar FormData (axios pode serializar indevidamente como urlencoded)
-      let responseData: any = null;
-      if (perfilChanged || bannerChanged) {
-        const token = await AsyncStorage.getItem('token');
-        const url = `${(api as any).defaults.baseURL}/usuarios/${userId}`;
-
-        const fetchResponse = await fetch(url, {
-          method: 'PUT',
-          headers: {
-            // Não setar Content-Type — deixe o runtime definir a boundary
-            Authorization: token ? `Bearer ${token}` : undefined,
-          } as any,
-          body: formData,
-        });
-
-        if (!fetchResponse.ok) {
-          const text = await fetchResponse.text().catch(() => null);
-          throw new Error(`Upload failed: ${fetchResponse.status} ${text}`);
-        }
-
-        responseData = await fetchResponse.json().catch(() => null);
-        console.log('Upload response (fetch):', responseData);
+      if (!perfil) throw new Error('Perfil não carregado.');
+      const values = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, value.trim() || null]));
+      if (perfil.tipo_usuario === 'EMPRESA') {
+        values.razao_social ??= '';
+        await usersApi.updateCompany({ razao_social: null, nome_fantasia: null, telefone_comercial: null, categoria_negocio: null, endereco_completo: null, site: null, ...values, numero_funcionarios: values.numero_funcionarios ? Number(values.numero_funcionarios) : null, descricao: bio });
       } else {
-        // Sem arquivos, usar o axios normal com JSON
-        const jsonBody = { nome: nomeUsuario, nome_de_usuario: username, descricao: bio };
-        const resp = await api.put(`/usuarios/${userId}`, jsonBody);
-        responseData = resp.data;
-        console.log('Update response (axios):', responseData);
+        await usersApi.updatePerson({ telefone: null, cidade: null, estado: null, linkedin: null, github: null, curriculo: null, ...values, nome_usuario: username, sobre: bio });
       }
-
+      if (perfilChanged && perfilImage) {
+        const form = new FormData();
+        await appendImage(form, 'foto', perfilImage, 'perfil.jpg');
+        await api.put('/usuarios/foto-perfil', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+      }
+      if (bannerChanged && bannerImage) {
+        const form = new FormData();
+        await appendImage(form, 'banner', bannerImage, 'banner.jpg');
+        await api.put('/usuarios/banner-perfil', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+      }
       Alert.alert("Sucesso", "Informações atualizadas com sucesso.");
       await carregarUsuario();
       // Resetar flags de alteração de imagem após sucesso
@@ -161,11 +123,11 @@ export default function InformacoesUser() {
       setBannerChanged(false);
     } catch (error) {
         console.log("Erro ao salvar informações do usuário:", error, (error as any)?.response, (error as any)?.request, (error as any)?.message);
-      Alert.alert("Erro", "Não foi possível salvar as informações.");
+      Alert.alert("Erro", apiErrorMessage(error, "Não foi possível salvar as informações."));
     } finally {
       setIsSaving(false);
     }
-  }, [nomeUsuario, username, bio, carregarUsuario]);
+  }, [perfil, fields, perfilChanged, perfilImage, bannerChanged, bannerImage, username, bio, carregarUsuario]);
 
   useEffect(() => { carregarTema(); }, [carregarTema]);
   useEffect(() => { carregarUsuario(); }, [carregarUsuario]);
@@ -274,13 +236,21 @@ export default function InformacoesUser() {
         {/* Demais Inputs mantidos conforme original */}
         <View style={styles.group}>
           <Text style={[styles.fieldLabel, { color: theme.textPrimary }]}>Nome de usuário</Text>
-          <TextInput value={nomeUsuario} onChangeText={setNomeUsuario} placeholder="Nome de usuário" placeholderTextColor={theme.placeholder} style={[styles.input, { backgroundColor: theme.inputBackground, color: theme.inputText }]} />
+          <TextInput editable={false} value={nomeUsuario} onChangeText={setNomeUsuario} placeholder="Nome de usuário" placeholderTextColor={theme.placeholder} style={[styles.input, { backgroundColor: theme.inputBackground, color: theme.inputText }]} />
         </View>
 
-        <View style={styles.group}>
+        {perfil?.tipo_usuario !== 'EMPRESA' && <View style={styles.group}>
           <Text style={[styles.fieldLabel, { color: theme.textPrimary }]}>@username</Text>
           <TextInput value={username} onChangeText={setUsername} placeholder="@username" placeholderTextColor={theme.placeholder} autoCapitalize="none" style={[styles.input, { backgroundColor: theme.inputBackground, color: theme.inputText }]} />
-        </View>
+        </View>}
+
+        {(perfil?.tipo_usuario === 'EMPRESA'
+          ? [['razao_social', 'Razão social'], ['nome_fantasia', 'Nome fantasia'], ['telefone_comercial', 'Telefone comercial'], ['categoria_negocio', 'Categoria do negócio'], ['numero_funcionarios', 'Número de funcionários'], ['endereco_completo', 'Endereço completo'], ['site', 'Site']]
+          : [['telefone', 'Telefone'], ['cidade', 'Cidade'], ['estado', 'Estado'], ['linkedin', 'LinkedIn'], ['github', 'GitHub']]
+        ).map(([key, label]) => <View key={key} style={styles.group}>
+          <Text style={[styles.fieldLabel, { color: theme.textPrimary }]}>{label}</Text>
+          <TextInput accessibilityLabel={label} value={fields[key] || ''} onChangeText={value => setFields(previous => ({ ...previous, [key]: value }))} keyboardType={key === 'numero_funcionarios' ? 'number-pad' : 'default'} autoCapitalize={['site', 'github', 'linkedin'].includes(key) ? 'none' : 'sentences'} placeholder={label} placeholderTextColor={theme.placeholder} style={[styles.input, { backgroundColor: theme.inputBackground, color: theme.inputText }]} />
+        </View>)}
 
         <View style={styles.group}>
           <Text style={[styles.fieldLabel, { color: theme.textPrimary }]}>Bio</Text>
@@ -294,7 +264,7 @@ export default function InformacoesUser() {
               { backgroundColor: theme.buttonBackground, opacity: isSaving ? 0.7 : 1 },
             ]}
             onPress={handleConfirmar}
-            disabled={isSaving}
+            disabled={isSaving || !perfil}
           >
             <Text style={[styles.confirmButtonText, { color: theme.buttonText }]}>
               {isSaving ? "Salvando..." : "Confirmar"}

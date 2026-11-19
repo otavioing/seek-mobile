@@ -38,13 +38,13 @@ export default function EditarPost() {
     const loadCategories = async () => {
       try {
         setLoadingCategories(true);
-        const { data } = await api.get('/tendencias');
+        const { data } = await api.get('/categorias/populares');
         const mapped: Category[] = (data || [])
           .map((item: any) => ({
             id: String(item.id_categoria ?? item.id ?? item.value ?? ''),
             name: item.nome_categoria || item.nome || item.categoria || '',
           }))
-          .filter((c) => c.id && c.name);
+          .filter((c: Category) => c.id && c.name);
         setCategories(mapped);
 
         // se o post já tem categoria, tenta casar pelo nome para manter o chip ativo
@@ -94,15 +94,7 @@ export default function EditarPost() {
     }
     try {
       setSaving(true);
-      // Atualiza apenas a legenda. Se o backend tiver endpoint específico, ajuste aqui.
-      await api.put(`/posts/${post.id}`, {
-        legenda: description,
-        titulo: title,
-        id_categoria: selectedCategory?.id || '',
-      });
-      await refreshPosts();
-      Alert.alert('Pronto', 'Post atualizado');
-      router.back();
+      Alert.alert('Indisponível', 'A edição de publicações ainda não está disponível nesta versão.');
     } catch (e) {
       console.log('Erro ao editar post', e);
       Alert.alert('Erro', 'Não foi possível editar o post');

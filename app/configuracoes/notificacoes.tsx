@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type NotificacaoApi = {
+ mensagem: string; data_criacao: string;
 	id: number;
 	destinatario_id: number;
 	remetente_id: number;
@@ -38,6 +39,7 @@ const formatRelativeTime = (dateIso: string) => {
 };
 
 const getNotificationMessage = (n: NotificacaoApi) => {
+	if (n.mensagem) return n.mensagem;
 	const sender = n.remetente_nome || 'Alguém';
 
 	if (n.tipo === 'like') return `${sender} curtiu seu post`;
@@ -94,7 +96,7 @@ export default function Notificacoes() {
 				return [];
 			}
 
-			const { data } = await api.get(`/notificacoes/${userId}`);
+			const { data } = await api.get('/notificacoes');
 			const notificacoesCarregadas = Array.isArray(data) ? data : [];
 			setNotificacoes(notificacoesCarregadas);
 			return notificacoesCarregadas;
@@ -116,7 +118,7 @@ export default function Notificacoes() {
 				naoLidas
 					.filter((n) => Number.isFinite(Number(n.id)))
 					.map((n) =>
-						api.put(`/notificacoes/${Number(n.id)}/lida`, {
+						api.patch(`/notificacoes/${Number(n.id)}/lida`, {
 							destinatario_id: destinatarioId,
 						})
 					)
@@ -175,7 +177,7 @@ export default function Notificacoes() {
 			const destinatarioId = userIdRef.current;
 			if (!destinatarioId) return;
 
-			await api.delete(`/notificacoes/usuario/${destinatarioId}`);
+			await api.delete('/notificacoes');
 			setNotificacoes([]);
 		} catch (error) {
 			console.log('Erro ao excluir todas as notificações:', error);
@@ -259,7 +261,7 @@ export default function Notificacoes() {
 
 			<View style={styles.notificationContent}>
 				<Text style={[styles.notificationText, { color: theme.textPrimary }]}>{getNotificationMessage(item)}</Text>
-				<Text style={[styles.notificationTime, { color: theme.textSecondary }]}>{formatRelativeTime(item.criada_em)}</Text>
+				<Text style={[styles.notificationTime, { color: theme.textSecondary }]}>{formatRelativeTime(item.data_criacao)}</Text>
 			</View>
 
 			{item.lida === 0 ? <View style={[styles.unreadDot, { backgroundColor: theme.badgeUnread }]} /> : null}

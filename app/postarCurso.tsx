@@ -14,7 +14,7 @@ export default function PostarCurso() {
       </TouchableOpacity>
 
       <Text style={styles.title}>Postar um curso</Text>
-      <Text style={styles.subtitle}>Tela específica para criação de curso.</Text>
+      <Text style={styles.subtitle}>Cursos ainda não estão disponíveis nesta versão.</Text>
     </View>
   );
 }

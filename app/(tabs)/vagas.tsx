@@ -1,11 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { listFilteredJobs } from '@/src/services/seek';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Linking,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -30,6 +31,7 @@ interface Vaga {
 }
 
 type ApiVaga = {
+ empresa_nome: string; link_linkedin: string; data_criacao: string; categorias: { id: number; nome: string }[];
   id: number;
   titulo: string;
   empresa: string | null;
@@ -47,24 +49,6 @@ interface JobCardProps {
   item: Vaga;
   theme: AppTheme;
 }
-
-const openApplicationLink = async (url?: string | null) => {
-  if (!url) {
-    Alert.alert('Link indisponível', 'Esta vaga não possui link para abrir.');
-    return;
-  }
-
-  try {
-    const supported = await Linking.canOpenURL(url);
-    if (supported) {
-      await Linking.openURL(url);
-    } else {
-      Alert.alert('Não foi possível abrir o link', url);
-    }
-  } catch (e) {
-    Alert.alert('Erro ao abrir o link', 'Tente novamente.');
-  }
-};
 
 const formatTimeAgo = (dateString?: string | null) => {
   if (!dateString) return '';
@@ -88,11 +72,15 @@ const formatTimeAgo = (dateString?: string | null) => {
   return `Há ${diffDays} dias`;
 };
 
+const favoritar = async (id: string) => {
+  try { await api.post(`/vagas/${id}/favoritar`); Alert.alert('Sucesso', 'Vaga adicionada aos favoritos.'); }
+  catch (e: any) { Alert.alert('Erro', e.response?.data?.message || 'Não foi possível favoritar.'); }
+};
 const JobCard: React.FC<JobCardProps> = ({ item, theme }) => (
   <TouchableOpacity
     activeOpacity={0.9}
     style={[styles.cardContainer, { backgroundColor: theme.card, borderColor: theme.border }]}
-    onPress={() => openApplicationLink(item.linkOriginal)}
+    onPress={() => router.push(`/vaga/${item.id}` as any)}
   >
     <View style={styles.cardTopRow}>
       <View style={[styles.categoryBadge, { borderColor: theme.border }]}>
@@ -116,6 +104,7 @@ const JobCard: React.FC<JobCardProps> = ({ item, theme }) => (
       </View>
     </View>
 
+    <TouchableOpacity onPress={() => favoritar(item.id)}><Text style={{ color: theme.textPrimary }}>Favoritar vaga</Text></TouchableOpacity>
     <Text style={[styles.description, { color: theme.textPrimary }]} numberOfLines={4}>
       {item.description}
     </Text>
@@ -125,39 +114,46 @@ const JobCard: React.FC<JobCardProps> = ({ item, theme }) => (
 
 // --- 6. Componente da Tela Principal ---
 const TrabalhoScreen = () => {
+  const params = useLocalSearchParams<{ categoria?: string; inicio?: string; fim?: string; minhas?: string }>();
+  const request = useRef(0);
   const [vagas, setVagas] = useState<Vaga[]>([]);
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const isFocused = useIsFocused();
+  const cancelRequests = useCallback(() => { request.current++; }, []);
 
   const theme = getAppTheme(darkMode);
 
-  const carregarVagas = async () => {
+  const carregarVagas = useCallback(async () => {
+    const current = ++request.current;
     setLoading(true);
     try {
-      const { data } = await api.get('/postsvagas');
+      const userId = params.minhas === '1' ? await AsyncStorage.getItem('userId') : undefined;
+      const data = await listFilteredJobs({ categoria: params.categoria, inicio: params.inicio, fim: params.fim, userId: userId || undefined });
+      if (current !== request.current) return;
       const lista = Array.isArray(data) ? data : [];
 
       setVagas(
         lista.map((item: ApiVaga) => ({
           id: String(item.id),
-          category: item.nome_categoria || 'Sem categoria',
+          category: item.categorias?.map(c => c.nome).join(', ') || 'Sem categoria',
           title: item.titulo || 'Vaga sem título',
-          authorName: item.nome || item.empresa || 'Nome do autor',
+          authorName: item.empresa_nome || 'Empresa',
           location: item.localizacao || 'Localização não informada',
-          timestamp: formatTimeAgo(item.criado_em),
+          timestamp: formatTimeAgo(item.data_criacao),
           description: item.descricao || '',
-          linkOriginal: item.link_original || '',
+          linkOriginal: item.link_linkedin || '',
         })),
       );
     } catch (error) {
+      if (current !== request.current) return;
       console.log('Erro ao carregar vagas:', error);
       setVagas([]);
       Alert.alert('Erro', 'Não foi possível carregar as vagas no momento.');
     } finally {
-      setLoading(false);
+      if (current === request.current) setLoading(false);
     }
-  };
+  }, [params.categoria, params.inicio, params.fim, params.minhas]);
 
   useEffect(() => {
     const loadTheme = async () => {
@@ -173,7 +169,8 @@ const TrabalhoScreen = () => {
       loadTheme();
       void carregarVagas();
     }
-  }, [isFocused]);
+    return cancelRequests;
+  }, [isFocused, carregarVagas, cancelRequests]);
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -181,11 +178,17 @@ const TrabalhoScreen = () => {
         data={vagas}
         renderItem={({ item }) => <JobCard item={item} theme={theme} />}
         keyExtractor={item => item.id}
+        refreshing={loading}
+        onRefresh={carregarVagas}
         contentContainerStyle={styles.listContainer}
         style={{ backgroundColor: theme.background }}
         // Adiciona um título no topo da lista
         ListHeaderComponent={
-          <Text style={[styles.pageTitle, { color: theme.textPrimary }]}>Vagas</Text>
+          <View style={{ gap: 14, marginBottom: 20 }}>
+            <Text style={[styles.pageTitle, { color: theme.textPrimary }]}>Vagas</Text>
+            <TouchableOpacity accessibilityRole="button" onPress={() => router.push({ pathname: '/filtrarV', params })}><Text style={{ color: theme.link }}>Filtrar vagas</Text></TouchableOpacity>
+            {!!(params.categoria || params.inicio || params.minhas) && <Text style={{ color: theme.textMuted }}>{[params.categoria, params.inicio && `${params.inicio} a ${params.fim}`, params.minhas && 'Publicadas por mim'].filter(Boolean).join(' · ')}</Text>}
+          </View>
         }
         ListEmptyComponent={
           loading ? (
